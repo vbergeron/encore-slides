@@ -11,3 +11,6 @@ build-all:
     for f in decks/*.typ; do \
         typst compile --root . "$f" "site/decks/$(basename "${f%.typ}").pdf"; \
     done
+
+bench-data results="../encore-benchmarks/results/benchmarks.jsonl":
+    python3 scripts/bench-data.py {{results}} > data/bench.json
