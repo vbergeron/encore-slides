@@ -1,0 +1,713 @@
+{
+ "w0_smoke": [
+  {
+   "n": 1,
+   "R": {
+    "insns": 17,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 3639,
+    "stack": 4964,
+    "heap": 104,
+    "heap_budget": 32768,
+    "vm_ops": 66,
+    "ram": 5068
+   },
+   "C": {
+    "insns": 497,
+    "stack": 392,
+    "ram": 8896
+   }
+  },
+  {
+   "n": 10,
+   "R": {
+    "insns": 23,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 12162,
+    "stack": 4964,
+    "heap": 612,
+    "heap_budget": 32768,
+    "vm_ops": 381,
+    "ram": 5576
+   },
+   "C": {
+    "insns": 1631,
+    "stack": 968,
+    "ram": 9472
+   }
+  },
+  {
+   "n": 100,
+   "R": {
+    "insns": 23,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 97392,
+    "stack": 4964,
+    "heap": 5476,
+    "heap_budget": 32768,
+    "vm_ops": 3531,
+    "ram": 10440
+   },
+   "C": {
+    "insns": 20887,
+    "stack": 6728,
+    "ram": 23424
+   }
+  },
+  {
+   "n": 1000,
+   "R": {
+    "insns": 23,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 2737430,
+    "stack": 4984,
+    "heap": 32752,
+    "heap_budget": 32768,
+    "vm_ops": 35031,
+    "ram": 37736
+   },
+   "C": {
+    "fail": "stack"
+   }
+  }
+ ],
+ "w1_apdu": [
+  {
+   "n": 5,
+   "R": {
+    "insns": 67,
+    "stack": 252,
+    "ram": 1828
+   },
+   "E": {
+    "insns": 11257,
+    "stack": 4964,
+    "heap": 780,
+    "heap_budget": 32768,
+    "vm_ops": 333,
+    "ram": 5744
+   },
+   "C": {
+    "insns": 4817,
+    "stack": 720,
+    "ram": 9224
+   }
+  },
+  {
+   "n": 32,
+   "R": {
+    "insns": 331,
+    "stack": 300,
+    "ram": 1876
+   },
+   "E": {
+    "insns": 148404,
+    "stack": 4964,
+    "heap": 10052,
+    "heap_budget": 32768,
+    "vm_ops": 4961,
+    "ram": 15016
+   },
+   "C": {
+    "insns": 22338,
+    "stack": 2664,
+    "ram": 19360
+   }
+  },
+  {
+   "n": 128,
+   "R": {
+    "insns": 791,
+    "stack": 396,
+    "ram": 1972
+   },
+   "E": {
+    "insns": 846795,
+    "stack": 4984,
+    "heap": 32632,
+    "heap_budget": 32768,
+    "vm_ops": 24814,
+    "ram": 37616
+   },
+   "C": {
+    "fail": "arena"
+   }
+  },
+  {
+   "n": 261,
+   "R": {
+    "insns": 819,
+    "stack": 396,
+    "ram": 1972
+   },
+   "E": {
+    "insns": 1825357,
+    "stack": 4984,
+    "heap": 32632,
+    "heap_budget": 32768,
+    "vm_ops": 49572,
+    "ram": 37616
+   },
+   "C": {
+    "fail": "stack"
+   }
+  }
+ ],
+ "w2_rlp": [
+  {
+   "n": 0,
+   "R": {
+    "insns": 3902,
+    "stack": 540,
+    "ram": 1964
+   },
+   "E": {
+    "insns": 499041,
+    "stack": 4984,
+    "heap": 23368,
+    "heap_budget": 32768,
+    "vm_ops": 14756,
+    "ram": 28352
+   },
+   "C": {
+    "insns": 75445,
+    "stack": 3608,
+    "ram": 20304
+   }
+  },
+  {
+   "n": 4,
+   "R": {
+    "insns": 2457,
+    "stack": 540,
+    "ram": 1964
+   },
+   "E": {
+    "insns": 350742,
+    "stack": 4984,
+    "heap": 32588,
+    "heap_budget": 32768,
+    "vm_ops": 9979,
+    "ram": 37572
+   },
+   "C": {
+    "insns": 54475,
+    "stack": 3248,
+    "ram": 19944
+   }
+  },
+  {
+   "n": 68,
+   "R": {
+    "insns": 3659,
+    "stack": 540,
+    "ram": 1964
+   },
+   "E": {
+    "insns": 698104,
+    "stack": 4984,
+    "heap": 32588,
+    "heap_budget": 32768,
+    "vm_ops": 21095,
+    "ram": 37572
+   },
+   "C": {
+    "insns": 115490,
+    "stack": 8000,
+    "ram": 24696
+   }
+  },
+  {
+   "n": 260,
+   "R": {
+    "insns": 9868,
+    "stack": 540,
+    "ram": 1964
+   },
+   "E": {
+    "insns": 2275170,
+    "stack": 4984,
+    "heap": 32592,
+    "heap_budget": 32768,
+    "vm_ops": 63436,
+    "ram": 37576
+   },
+   "C": {
+    "fail": "arena"
+   }
+  }
+ ],
+ "w3_policy": [
+  {
+   "n": 1,
+   "R": {
+    "insns": 3303,
+    "stack": 456,
+    "ram": 480
+   },
+   "E": {
+    "insns": 758683,
+    "stack": 4984,
+    "heap": 31056,
+    "heap_budget": 32768,
+    "vm_ops": 26542,
+    "ram": 36040
+   },
+   "C": {
+    "insns": 76365,
+    "stack": 2752,
+    "ram": 19448
+   }
+  },
+  {
+   "n": 4,
+   "R": {
+    "insns": 6028,
+    "stack": 456,
+    "ram": 480
+   },
+   "E": {
+    "insns": 2661323,
+    "stack": 4984,
+    "heap": 32660,
+    "heap_budget": 32768,
+    "vm_ops": 93914,
+    "ram": 37644
+   },
+   "C": {
+    "insns": 267450,
+    "stack": 3016,
+    "ram": 19712
+   }
+  },
+  {
+   "n": 16,
+   "R": {
+    "insns": 15335,
+    "stack": 456,
+    "ram": 480
+   },
+   "E": {
+    "insns": 9028858,
+    "stack": 4984,
+    "heap": 32664,
+    "heap_budget": 32768,
+    "vm_ops": 317452,
+    "ram": 37648
+   },
+   "C": {
+    "insns": 897012,
+    "stack": 4072,
+    "ram": 20768
+   }
+  },
+  {
+   "n": 64,
+   "R": {
+    "insns": 44455,
+    "stack": 456,
+    "ram": 480
+   },
+   "E": {
+    "insns": 28071611,
+    "stack": 4984,
+    "heap": 32664,
+    "heap_budget": 32768,
+    "vm_ops": 986811,
+    "ram": 37648
+   },
+   "C": {
+    "fail": "arena"
+   }
+  }
+ ],
+ "w4_pin": [
+  {
+   "n": 1,
+   "R": {
+    "insns": 118,
+    "stack": 312,
+    "ram": 1320
+   },
+   "E": {
+    "insns": 14530,
+    "stack": 4964,
+    "heap": 960,
+    "heap_budget": 32768,
+    "vm_ops": 455,
+    "ram": 5924
+   },
+   "C": {
+    "insns": 3328,
+    "stack": 720,
+    "ram": 9224
+   }
+  },
+  {
+   "n": 10,
+   "R": {
+    "insns": 694,
+    "stack": 312,
+    "ram": 1320
+   },
+   "E": {
+    "insns": 117829,
+    "stack": 4964,
+    "heap": 7952,
+    "heap_budget": 32768,
+    "vm_ops": 4176,
+    "ram": 12916
+   },
+   "C": {
+    "insns": 12406,
+    "stack": 1512,
+    "ram": 10016
+   }
+  },
+  {
+   "n": 100,
+   "R": {
+    "insns": 7003,
+    "stack": 312,
+    "ram": 1320
+   },
+   "E": {
+    "insns": 1455298,
+    "stack": 4984,
+    "heap": 32684,
+    "heap_budget": 32768,
+    "vm_ops": 48954,
+    "ram": 37668
+   },
+   "C": {
+    "insns": 172367,
+    "stack": 9444,
+    "ram": 26140
+   }
+  },
+  {
+   "n": 1000,
+   "R": {
+    "insns": 69692,
+    "stack": 312,
+    "ram": 1320
+   },
+   "E": {
+    "insns": 17289413,
+    "stack": 4984,
+    "heap": 32688,
+    "heap_budget": 32768,
+    "vm_ops": 492804,
+    "ram": 37672
+   },
+   "C": {
+    "fail": "arena"
+   }
+  }
+ ],
+ "w5_update": [
+  {
+   "n": 10,
+   "R": {
+    "insns": 2053,
+    "stack": 336,
+    "ram": 4408
+   },
+   "E": {
+    "insns": 264628,
+    "stack": 4964,
+    "heap": 12216,
+    "heap_budget": 32768,
+    "vm_ops": 9679,
+    "ram": 17180
+   },
+   "C": {
+    "insns": 27405,
+    "stack": 2528,
+    "ram": 19224
+   }
+  },
+  {
+   "n": 100,
+   "R": {
+    "insns": 17152,
+    "stack": 336,
+    "ram": 4408
+   },
+   "E": {
+    "insns": 2655750,
+    "stack": 4984,
+    "heap": 32560,
+    "heap_budget": 32768,
+    "vm_ops": 91252,
+    "ram": 37544
+   },
+   "C": {
+    "insns": 266593,
+    "stack": 11784,
+    "ram": 28480
+   }
+  },
+  {
+   "n": 1000,
+   "R": {
+    "insns": 164928,
+    "stack": 336,
+    "ram": 4408
+   },
+   "E": {
+    "insns": 30097071,
+    "stack": 4984,
+    "heap": 32564,
+    "heap_budget": 32768,
+    "vm_ops": 887925,
+    "ram": 37548
+   },
+   "C": {
+    "fail": "stack"
+   }
+  }
+ ],
+ "w6_cobs": [
+  {
+   "n": 16,
+   "R": {
+    "insns": 453,
+    "stack": 244,
+    "ram": 2308
+   },
+   "E": {
+    "insns": 75741,
+    "stack": 4996,
+    "heap": 3760,
+    "heap_budget": 40960,
+    "vm_ops": 2596,
+    "ram": 8756
+   },
+   "C": {
+    "insns": 14066,
+    "stack": 3240,
+    "ram": 19936
+   }
+  },
+  {
+   "n": 64,
+   "R": {
+    "insns": 1490,
+    "stack": 244,
+    "ram": 2308
+   },
+   "E": {
+    "insns": 278712,
+    "stack": 4996,
+    "heap": 21532,
+    "heap_budget": 40960,
+    "vm_ops": 9904,
+    "ram": 26528
+   },
+   "C": {
+    "insns": 57661,
+    "stack": 11256,
+    "ram": 27952
+   }
+  },
+  {
+   "n": 256,
+   "R": {
+    "insns": 6152,
+    "stack": 244,
+    "ram": 2308
+   },
+   "E": {
+    "insns": 1191117,
+    "stack": 5016,
+    "heap": 40888,
+    "heap_budget": 40960,
+    "vm_ops": 39217,
+    "ram": 45904
+   },
+   "C": {
+    "fail": "arena"
+   }
+  },
+  {
+   "n": 1024,
+   "R": {
+    "insns": 23331,
+    "stack": 288,
+    "ram": 2352
+   },
+   "E": {
+    "insns": 6541353,
+    "stack": 5016,
+    "heap": 40892,
+    "heap_budget": 40960,
+    "vm_ops": 162136,
+    "ram": 45908
+   },
+   "C": {
+    "fail": "stack"
+   }
+  }
+ ],
+ "w7_store": [
+  {
+   "n": 10,
+   "R": {
+    "insns": 4598,
+    "stack": 244,
+    "ram": 3384
+   },
+   "E": {
+    "insns": 213850,
+    "stack": 4964,
+    "heap": 9256,
+    "heap_budget": 32768,
+    "vm_ops": 7711,
+    "ram": 14220
+   },
+   "C": {
+    "insns": 23398,
+    "stack": 2900,
+    "ram": 11404
+   }
+  },
+  {
+   "n": 50,
+   "R": {
+    "insns": 22354,
+    "stack": 300,
+    "ram": 3440
+   },
+   "E": {
+    "insns": 753939,
+    "stack": 4984,
+    "heap": 32684,
+    "heap_budget": 32768,
+    "vm_ops": 25052,
+    "ram": 37668
+   },
+   "C": {
+    "insns": 92613,
+    "stack": 4960,
+    "ram": 21656
+   }
+  },
+  {
+   "n": 100,
+   "R": {
+    "insns": 61152,
+    "stack": 300,
+    "ram": 3440
+   },
+   "E": {
+    "insns": 1488893,
+    "stack": 4984,
+    "heap": 32692,
+    "heap_budget": 32768,
+    "vm_ops": 49118,
+    "ram": 37676
+   },
+   "C": {
+    "fail": "arena"
+   }
+  },
+  {
+   "n": 500,
+   "R": {
+    "insns": 910172,
+    "stack": 300,
+    "ram": 3440
+   },
+   "E": {
+    "insns": 8648430,
+    "stack": 4984,
+    "heap": 32696,
+    "heap_budget": 32768,
+    "vm_ops": 257662,
+    "ram": 37680
+   },
+   "C": {
+    "fail": "arena"
+   }
+  }
+ ],
+ "w8_crc": [
+  {
+   "n": 16,
+   "R": {
+    "insns": 272,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 425436,
+    "stack": 4980,
+    "heap": 16336,
+    "heap_budget": 32768,
+    "vm_ops": 16651,
+    "ram": 21316
+   }
+  },
+  {
+   "n": 64,
+   "R": {
+    "insns": 992,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 1783635,
+    "stack": 5000,
+    "heap": 32660,
+    "heap_budget": 32768,
+    "vm_ops": 66383,
+    "ram": 37660
+   }
+  },
+  {
+   "n": 256,
+   "R": {
+    "insns": 3872,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 7123170,
+    "stack": 5000,
+    "heap": 32672,
+    "heap_budget": 32768,
+    "vm_ops": 265311,
+    "ram": 37672
+   }
+  },
+  {
+   "n": 1024,
+   "R": {
+    "insns": 15392,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 28481923,
+    "stack": 5000,
+    "heap": 32672,
+    "heap_budget": 32768,
+    "vm_ops": 1061007,
+    "ram": 37672
+   }
+  }
+ ]
+}

@@ -13,6 +13,9 @@ published to GitHub Pages.
 
 ```
 template/lib.typ    the template: theme, page setup, slide + QR functions
+template/bench.typ  benchmark result tables, read from data/bench.json
+data/bench.json     numbers extracted from encore-benchmarks' results
+scripts/            bench-data.py, which writes data/bench.json
 decks/               one dated .typ file per talk
 site/index.html      the GitHub Pages site listing every deck
 ```
@@ -52,6 +55,17 @@ Or plain Typst — decks import the template with a root-absolute path, so
 
 ```sh
 typst compile --root . decks/2026-09-28-lirmm-seminar.typ out.pdf
+```
+
+## Benchmark data
+
+The result slides read `data/bench.json`, extracted from
+[encore-benchmarks](https://github.com/vbergeron/encore-benchmarks)'
+`results/benchmarks.jsonl` (latest row per case, QEMU Cortex-M3, E with the
+CPS optimizer, C with its 20 KiB arena). To refresh it after new runs:
+
+```sh
+just bench-data ../encore-benchmarks/results/benchmarks.jsonl
 ```
 
 ## Publishing
