@@ -213,52 +213,29 @@ The VM is a library inside a Rust application that keeps control of memory and I
 
 = Experiment plan
 
-== What the paper measured
+== Goal
 
-#text(size: 16pt)[Encore against CertiRocq (GC patched to abort, static bump allocator), seven micro-benchmarks on QEMU:]
-#v(0.2em)
-#{
-  set text(size: 14pt)
-  show table.cell.where(y: 0): set text(weight: "bold")
-  show table.cell.where(y: 1): set text(weight: "bold", fill: muted, size: 12pt)
-  table(
-    columns: (1fr, auto, auto, auto, auto, auto, auto),
-    align: (col, row) => if col == 0 { left } else { right },
-    stroke: (x, y) => (
-      bottom: if y == 1 { 0.8pt + black } else if y > 1 { 0.3pt + luma(220) } else { none },
-      left: if x in (1, 3, 5) and y > 0 { 0.3pt + luma(200) } else { none },
-    ),
-    inset: (x: 8pt, y: 5pt),
-    table.header(
-      table.cell(rowspan: 2, align: left + bottom)[Benchmark],
-      table.cell(colspan: 2, align: center)[Flash],
-      table.cell(colspan: 2, align: center)[Min heap],
-      table.cell(colspan: 2, align: center)[Build],
-      [CertiRocq], [Encore], [CertiRocq], [Encore], [CertiRocq], [Encore],
-    ),
-  [sum], [2.5 KB], [14.3 KB], [∼3 KB], [≤ 50 B], [1.1 s], [0.5 s],
-  [fibonacci], [2.5 KB], [14.4 KB], [∼3 KB], [∼200 B], [1.2 s], [0.5 s],
-  [gcd], [2.9 KB], [16.3 KB], [∼1 KB], [≤ 50 B], [1.2 s], [0.5 s],
-  [fsm], [2.8 KB], [14.9 KB], [∼200 B], [∼200 B], [0.8 s], [0.5 s],
-  [rbtree-10], [6.2 KB], [17.9 KB], [1.6 KB], [0.5 KB], [0.8 s], [0.6 s],
-  [rbtree-50], [29 KB], [17.9 KB], [∼21.7 KB], [2.0 KB], [7.5 s], [0.5 s],
-  [rbtree-100], [146 KB], [17.9 KB], [∼63 KB ✗], [3.7 KB], [397 s], [0.6 s],
-  )
-}
-#v(0.2em)
-#text(size: 14pt, fill: muted)[CertiRocq is 5–6× smaller on small programs; Encore's flash stays flat and its GC keeps the heap small · plus a transaction-signing app validated on a Ledger Flex]
+Show, on realistic firmware workloads, what logic proved in Rocq costs when
+Encore runs it, against CertiRocq and against hand-written Rust. The paper
+covers flash, heap and build time on seven micro-benchmarks; four gaps remain:
 
-== What the paper leaves open
-
-- *No execution speed*: flash, heap and build time only
-- *No native baseline*: nothing says what the proof costs against plain Rust
-- *No realistic workload*: micro-benchmarks, and a signing app the paper calls a toy
+- *No execution speed*
+- *No Rust baseline*
+- *No realistic workload*: the paper's signing app is a toy
 - *A handicapped CertiRocq*: collector disabled, Peano integers
 
-#v(0.3em)
-#text(size: 17pt, fill: muted)[Q1 · feasibility: what fits in 50 KiB of RAM? \ Q2 · cost: how many instructions, how much RAM?]
+== Research questions
 
-== Three ways to ship the same logic
+#simple-table((auto, auto, 1fr), size: 16pt,
+  [], [Question], [Asked as],
+  [Q1], [*Feasibility*], [which workloads fit in 50 KB of RAM and 256 KB of flash, for each toolchain?],
+  [Q2], [*Cost*], [overhead in flash, RAM, cycles and worst-case latency against Rust `no_std`; where does VM + bytecode flash cross native code?],
+  [Q3], [*Predictability*], [do the GC and CPS give a bounded latency, compatible with soft real time (APDU, USB)?],
+  [Q4], [*Value of the proof*], [which property is proved, with how many lines, and how much remains trusted?],
+  [Q5], [*Integration effort*], [size of the unverified Rust layer, number of externs, ease of evolving the logic],
+)
+
+== Systems compared
 
 #let pipe(..steps) = {
   set text(size: 15pt)
@@ -269,7 +246,7 @@ The VM is a library inside a Rust application that keeps control of memory and I
   width: 100%, inset: 14pt, radius: 4pt, stroke: 0.5pt + luma(200),
 )[
   #align(center)[
-    #text(size: 26pt, weight: "bold", fill: accent)[#name] \
+    #text(size: 20pt, weight: "bold", fill: accent)[#name] \
     #text(size: 14pt, fill: muted)[#role]
   ]
 ]
@@ -287,16 +264,17 @@ The VM is a library inside a Rust application that keeps control of memory and I
 
 #v(1fr)
 #grid(
-  columns: (1fr, 1fr, 1fr),
-  column-gutter: 0.8cm,
+  columns: (1fr, 1fr, 1fr, 1fr),
+  column-gutter: 0.6cm,
   variant-card([Encore], [system under study]),
   variant-card([CertiRocq], [closest verified competitor]),
   variant-card([Rust no_std], [performance ceiling, output oracle]),
+  variant-card(text(fill: muted)[Verified Rust], [Kani or Verus: planned, not measured]),
 )
 #v(1fr)
 #align(center, text(size: 14pt, fill: muted)[
-  Same inputs, same Rust driver and harness, every output checked against Rust ·
-  QEMU Cortex-M3, 50 KiB RAM budget · instructions counted per run
+  All linked against the same Rust I/O layer, so only the logic changes ·
+  verified Rust proves the Rust, not the Gallina: a different question
 ])
 
 == Encore
@@ -348,39 +326,87 @@ The VM is a library inside a Rust application that keeps control of memory and I
   - Memory-safe, but none of the workload properties are proved
 ]
 
-== How a case is measured
+== Secondary variants
 
-- *Budget at link time*: RAM and flash lengths are the budget (50 KiB RAM),
-  not the chip; what does not fit fails and is recorded
-- *Same driver*: every variant runs from the same Rust harness and input vectors
-- *Oracle first*: each output is hashed and compared with Rust's; a mismatch
-  is a bug, fixed before measuring
-- *Instructions, not time*: QEMU traces execution and counts instructions
-  between two markers, exact and reproducible
-- *Size N*: each workload is scaled, to get curves rather than points
+- *Encore AOT*: the Thumb-2 backend, once it exists. Tells whether the gap
+  comes from interpretation or from the CPS and GC model
+- *Rust with `alloc`*: a fixed-heap allocator and the functional style
+  (`Box`, linked lists). Separates the cost of allocation from the cost of the VM
+- *Encore without the CPS optimizer*: isolates its contribution
+
+== Metrics
+
+#simple-table((auto, auto, 1fr), size: 14pt,
+  [Metric], [Unit], [How],
+  [Flash], [bytes], [section sizes; runtime separate from the program],
+  [Static RAM, peak stack], [bytes], [`.data` + `.bss`; stack painting],
+  [Peak heap], [bytes], [heap high-water mark, and the smallest heap that still passes],
+  [Cycles], [CPU cycles], [DWT `CYCCNT` around each call, median and p99],
+  [Worst-case latency, GC count], [µs, count], [max GC pause and max `step` duration],
+  [Energy], [µJ / op], [Otii Arc or PPK2, optional],
+  [Build time], [s], [wall clock, 5 runs],
+  [Proof effort, TCB], [lines], [spec, proof, program; unverified Rust + VM + compiler + externs],
+)
+
+== Protocol
+
++ *Same Gallina* for Encore and CertiRocq; same calling interface and input
+  vectors for every variant
++ *Oracle*: Rust's output is the reference; a divergence is a bug, fixed
+  before measuring
++ *Size N* for each workload, to plot curves, not points
++ *RAM budget at link time*: 50 KB (ST33J2M0), then 64 KB (ST33K1M5); what
+  does not fit fails, which answers Q1
++ *Every run recorded* in `benchmarks.jsonl` with commit, variant, board and N
 
 == Eight firmware workloads
 
-#text(size: 16pt)[Tasks whose bug would be a security hole or a field failure, each written in the paper's `step : State × Event → State × list Effect` model, with one property proved in Rocq and a size N to scale it.]
+#text(size: 15pt)[Each is a `step` function whose bug is a security hole or a field failure.]
+#v(0.2em)
+#simple-table((auto, auto, 1fr, auto), size: 13pt,
+  [], [Workload], [Property proved], [N],
+  [W1], [APDU + BER-TLV parser], [an accepted APDU is exactly the encoding of what was parsed], [5 → 261 B],
+  [W2], [Ethereum RLP decoder], [what is displayed is what is signed], [0 → 260 B],
+  [W3], [BIP32 path policy], [only compliant paths, amounts and destinations are signed], [1 → 64 rules],
+  [W4], [PIN state machine], [the retry counter never goes up without the PIN or PUK], [1 → 1000 APDUs],
+  [W5], [A/B firmware update], [a power cut at any step still boots a valid, non-rolled-back image], [10 → 1000 events],
+  [W6], [COBS framing], [`decode (encode l) = Some l`, no zero byte], [16 → 1024 B],
+  [W7], [FIDO credential store], [red-black invariants; `lookup` after `insert`], [10 → 500 entries],
+  [W8], [CRC-16 and CRC-32], [equals the polynomial definition], [16 → 1024 B],
+)
+
+== Why these workloads
+
+- *W1, W2, W6 parse untrusted input*, the first source of vulnerabilities in
+  secure elements. Rust brings memory safety, not the round trip or the
+  display/signature correspondence
+- *W3, W4, W5 are security policies*: the bugs live in rare event sequences,
+  which fuzzing reaches poorly
+- *W7* takes the paper's red-black tree to a real use and 500 entries
+- *W8 is deliberately unfavourable* to Encore: pure arithmetic, kept in the
+  main results
+
+== Platforms
+
+#simple-table((auto, auto, 1fr), size: 15pt,
+  [Platform], [Core], [Role],
+  [QEMU `lm3s6965evb`], [Cortex-M3], [continuous integration, exact instruction counts],
+  [Cortex-M33 board (STM32U5)], [Cortex-M33], [main platform: cycles, GC pauses, energy],
+  [Cortex-M4 board (nRF52840)], [Cortex-M4], [sensitivity across cores],
+  [ST33 (Ledger Flex)], [Cortex-M35P], [final validation on W2 and W4],
+)
 #v(0.3em)
-#{
-  set text(size: 15pt)
-  show table.cell.where(y: 0): set text(weight: "bold")
-  table(
-    columns: (auto, auto, 1fr, auto),
-    stroke: (x, y) => (bottom: if y == 0 { 0.8pt + black } else { 0.3pt + luma(220) }),
-    inset: (x: 8pt, y: 5pt),
-    table.header([], [Workload], [Where it runs], [N]),
-    [W1], [APDU + BER-TLV parser], [secure element, first thing done with a command], [APDU 5 → 261 B],
-    [W2], [Ethereum RLP decoder], [hardware wallet, what the screen shows before signing], [calldata 0 → 260 B],
-    [W3], [BIP32 path policy], [hardware wallet, sign or refuse a request], [1 → 64 rules],
-    [W4], [PIN state machine], [secure element, ISO 7816 VERIFY and PUK], [1 → 1000 APDUs],
-    [W5], [A/B firmware update], [bootloader, anti-rollback under power cuts], [10 → 1000 events],
-    [W6], [COBS framing], [serial link, encode then decode a frame], [16 → 1024 B],
-    [W7], [FIDO credential store], [authenticator, persistent red-black tree], [10 → 500 entries],
-    [W8], [CRC-16 and CRC-32], [every frame and image; worst case for a VM], [16 → 1024 B],
-  )
-}
+#text(size: 15pt, fill: muted)[Fixed clock, caches and flash prefetch frozen, same gcc and Rust 1.88 everywhere.]
+
+== Threats to validity
+
+- *`nat` as machine integers*: faster but unproven, wrong beyond 2#super[23]:
+  Encore and CertiRocq use the same representation
+- *CertiRocq's handicap*: its real GC on a static arena, not the paper's abort mode
+- *Quality of the Rust baseline*: a weak baseline flatters Encore; reviewed and published
+- *Workload selection*: W8, unfavourable, stays in the main results
+- *Trusted base*: Encore's compiler and VM are not verified, unlike most of CertiRocq
+- *QEMU counts instructions, not cycles*: speed conclusions need the boards
 
 = Conclusion
 
