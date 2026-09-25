@@ -1,106 +1,79 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Encore Slides</title>
-<style>
-  :root {
-    --bg: #0b0f1a;
-    --panel: #131826;
-    --fg: #f5f6f8;
-    --muted: #8b93a7;
-    --accent: #5ee6c8;
-    --accent-dim: #1f5a4f;
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    height: 100%;
-    background: var(--bg);
-    color: var(--fg);
-    font-family: "Inter", "Segoe UI", Arial, sans-serif;
-  }
-  body {
-    display: flex;
-    flex-direction: column;
-  }
-  header {
-    padding: 1.5rem 1.5rem 1rem;
-    border-bottom: 1px solid var(--accent-dim);
-  }
-  header .bar {
-    width: 2rem;
-    height: 4px;
-    background: var(--accent);
-    margin-bottom: 0.75rem;
-  }
-  h1 {
-    margin: 0;
-    font-size: 1.5rem;
-  }
-  header p {
-    margin: 0.25rem 0 0;
-    color: var(--muted);
-    font-size: 0.95rem;
-  }
-  main {
-    flex: 1;
-    min-height: 0;
-    padding: 1rem 1.5rem;
-  }
-  .pdf-frame {
-    width: 100%;
-    height: 100%;
-    min-height: 60vh;
-    border: 1px solid var(--accent-dim);
-    border-radius: 8px;
-    background: var(--panel);
-  }
-  footer {
-    padding: 1.25rem 1.5rem 1.75rem;
-    border-top: 1px solid var(--accent-dim);
-  }
-  footer .links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  footer a {
-    color: var(--fg);
-    text-decoration: none;
-    font-size: 0.9rem;
-    padding: 0.5rem 0.9rem;
-    border: 1px solid var(--accent-dim);
-    border-radius: 6px;
-    transition: border-color 0.15s ease, color 0.15s ease;
-  }
-  footer a:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  footer a.download {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encore Slides</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            coral: { DEFAULT: '#B5303B', light: '#d4777e' },
+            anthracite: '#2d2d2d',
+            paper: '#faf8f5',
+          },
+          fontFamily: {
+            serif: ['"New Computer Modern"', '"Computer Modern Serif"', 'Georgia', 'serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts.css');
+  </style>
 </head>
-<body>
-  <header>
-    <div class="bar"></div>
-    <h1>Encore Slides</h1>
-    <p>Slide decks built with the encore-slides Typst template.</p>
-  </header>
-  <main>
-    <iframe class="pdf-frame" src="encore-slides.pdf" title="Encore Slides deck"></iframe>
-  </main>
-  <footer>
-    <div class="links">
-      <a class="download" href="encore-slides.pdf" download>Download PDF</a>
-      <a href="https://github.com/vbergeron/encore-slides">encore-slides</a>
-      <a href="https://github.com/vbergeron/encore">encore</a>
-      <a href="https://github.com/vbergeron/encore-benchmarks">encore-benchmarks</a>
-    </div>
-  </footer>
+<body class="bg-paper text-anthracite font-serif antialiased">
+
+  <div class="max-w-3xl mx-auto px-6 py-16">
+
+    <!-- Header -->
+    <header class="mb-16 text-center">
+      <h1 class="text-4xl font-bold tracking-tight mb-2">Encore Slides</h1>
+      <p class="text-lg text-gray-500">Talks built with the encore-slides Typst template</p>
+    </header>
+
+    <!-- Slides -->
+    <section class="mb-14">
+      <h2 class="text-2xl font-bold border-b-2 border-coral pb-1 mb-6">Slides</h2>
+      <ul class="space-y-1">
+        <li class="flex justify-between items-baseline">
+          <a href="encore-slides.pdf" class="hover:text-coral transition-colors">Encore Slides — template tour</a>
+          <span class="text-xs text-gray-400 ml-2 shrink-0">PDF</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Links -->
+    <section class="mb-14">
+      <h2 class="text-2xl font-bold border-b-2 border-coral pb-1 mb-6">Links</h2>
+      <ul class="space-y-1">
+        <li class="flex justify-between items-baseline">
+          <a href="https://github.com/vbergeron/encore-slides" class="hover:text-coral transition-colors">encore-slides — this site's source</a>
+          <span class="text-xs text-gray-400 ml-2 shrink-0">GitHub</span>
+        </li>
+        <li class="flex justify-between items-baseline">
+          <a href="https://github.com/vbergeron/encore" class="hover:text-coral transition-colors">encore</a>
+          <span class="text-xs text-gray-400 ml-2 shrink-0">GitHub</span>
+        </li>
+        <li class="flex justify-between items-baseline">
+          <a href="https://github.com/vbergeron/encore-benchmarks" class="hover:text-coral transition-colors">encore-benchmarks</a>
+          <span class="text-xs text-gray-400 ml-2 shrink-0">GitHub</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center text-sm text-gray-400 border-t border-gray-200 pt-6">
+      <p>Encore Slides &mdash; Typst slide template</p>
+      <p class="mt-1">
+        <a href="https://github.com/vbergeron/encore-slides" class="hover:text-coral transition-colors">Source on GitHub</a>
+      </p>
+    </footer>
+
+  </div>
+
 </body>
 </html>
