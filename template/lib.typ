@@ -1,4 +1,6 @@
-// encore-slides — a small, dependency-free Typst slide template.
+// encore-slides — a small Typst slide template.
+
+#import "@preview/cades:0.3.1": qr-code as cades-qr-code
 
 #let colors = (
   background: rgb("#0b0f1a"),
@@ -165,3 +167,41 @@
   gutter: 32pt,
   left, right,
 )
+
+// ---- QR codes --------------------------------------------------------
+
+// A single QR code on a white card (kept white-on-black for scan
+// reliability regardless of how the deck's own theme is projected),
+// with an optional label and the raw URL printed underneath.
+#let qr-card(url, label: none, size: 3.2cm) = align(center)[
+  #block(fill: white, radius: 8pt, inset: 14pt)[
+    #cades-qr-code(url, width: size, height: size, color: black, background: white)
+  ]
+  #v(8pt)
+  #if label != none [
+    #text(size: 13pt, fill: colors.foreground, weight: "bold")[#label]
+    #v(2pt)
+  ]
+  #text(size: 10pt, fill: colors.muted)[#url]
+]
+
+// A slide made of one or more QR cards, laid out side by side.
+// `items` is an array of (url: "...", label: "...") dictionaries.
+#let qr-slide(title: none, footer-title: none, items) = {
+  slide-counter.step()
+  block(width: 100%, height: 100%, inset: (x: 0.9in, top: 0.75in, bottom: 0.9in))[
+    #if title != none [
+      == #title
+      #v(0.6em)
+    ]
+    #align(center + horizon)[
+      #grid(
+        columns: items.len(),
+        column-gutter: 48pt,
+        ..items.map(it => qr-card(it.url, label: it.at("label", default: none)))
+      )
+    ]
+  ]
+  footer(title: footer-title)
+  pagebreak(weak: true)
+}

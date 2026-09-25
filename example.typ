@@ -1,5 +1,9 @@
 #import "template/lib.typ": *
 
+#let site-url = "https://vbergeron.github.io/encore-slides/"
+#let encore-url = "https://github.com/vbergeron/encore"
+#let benchmarks-url = "https://github.com/vbergeron/encore-benchmarks"
+
 #show: conf.with(
   title: "Encore Slides",
   subtitle: "A minimal Typst deck template",
@@ -13,6 +17,10 @@
   author: "Valentin Bergeron",
   date: "September 2026",
 )
+
+#qr-slide(title: "Follow along", footer-title: "Encore Slides", (
+  (url: site-url, label: "Slides + links"),
+))
 
 #section-slide("Getting started", number: "01")
 
@@ -59,3 +67,8 @@
   + Adjust the palette in `template/lib.typ`
   + Export with `just build example.typ`
 ]
+
+#qr-slide(title: "Go further", footer-title: "Encore Slides", (
+  (url: encore-url, label: "encore"),
+  (url: benchmarks-url, label: "encore-benchmarks"),
+))
