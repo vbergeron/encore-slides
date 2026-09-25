@@ -1,48 +1,32 @@
 # encore-slides
 
-A minimal Typst template for slide decks, with QR codes for handing the
-audience the deck and follow-up links, and a GitHub Pages site that hosts
-the compiled PDF.
+Talks and slide decks about [Encore](https://github.com/vbergeron/encore), a
+bytecode VM and compiler for running Rocq-extracted programs on
+resource-constrained targets. Built with a small Typst template; published
+to GitHub Pages.
+
+**Site:** https://vbergeron.github.io/encore-slides/
 
 ## Layout
 
 ```
-template/lib.typ   the template: theme, page setup, slide + QR functions
-example.typ        an example deck built with the template
-site/index.html    the GitHub Pages site that embeds the compiled PDF
+template/lib.typ    the template: theme, page setup, slide + QR functions
+decks/               one dated .typ file per talk
+site/index.html      the GitHub Pages site listing every deck
 ```
 
-## Usage
+## Adding a talk
 
-Start a new deck by importing the template and building slides with
-`title-slide`, `section-slide`, and `slide`:
+1. Add `decks/YYYY-MM-DD-name.typ`, importing the template with
+   `#import "/template/lib.typ": *` (root-absolute, since decks live in a
+   subdirectory).
+2. Add a matching entry to the Slides list in `site/index.html`, in
+   `DATE — NAME` format, linking to `decks/YYYY-MM-DD-name.pdf`.
 
-```typst
-#import "template/lib.typ": *
-
-#show: conf.with(title: "My Talk", author: "Your Name", date: "2026")
-
-#title-slide(title: "My Talk", author: "Your Name", date: "2026")
-
-#slide(title: "First slide", footer-title: "My Talk")[
-  - Point one
-  - Point two
-]
-```
-
-`slide` and `two-cols` also accept content bodies for callouts, code blocks,
-and two-column layouts. `qr-slide` drops in one or more QR codes on white
-cards (scan-reliable regardless of projector rendering):
-
-```typst
-#qr-slide(title: "Follow along", footer-title: "My Talk", (
-  (url: "https://example.com", label: "Slides"),
-))
-```
-
-See `example.typ` for a full tour — it opens with a QR code to the deck's
-Pages site and closes with QR codes to the `encore` and `encore-benchmarks`
-repos.
+A deck typically opens with `title-slide` and a `qr-slide` pointing back to
+this site, and closes with a `qr-slide` pointing to `encore` and
+`encore-benchmarks`. See `decks/2026-09-28-lirmm-seminar.typ` for a full
+example, including `slide`, `section-slide`, `two-cols`, and `callout`.
 
 ### Building
 
@@ -50,25 +34,23 @@ With [Typst](https://typst.app) and [just](https://github.com/casey/just)
 installed:
 
 ```sh
-just build example.typ   # -> example.pdf
-just watch example.typ   # live preview while editing
+just build                          # compile the default deck
+just build decks/some-other.typ     # compile a specific deck
+just watch                          # live preview while editing
+just build-all                      # compile every deck into site/decks/
 ```
 
-Or plain Typst:
+Or plain Typst — decks import the template with a root-absolute path, so
+`--root .` is required:
 
 ```sh
-typst compile example.typ example.pdf
-typst watch example.typ example.pdf
+typst compile --root . decks/2026-09-28-lirmm-seminar.typ out.pdf
 ```
 
 ## Publishing
 
-On every push to `main`, GitHub Actions compiles `example.typ` and deploys
-`site/` (plus the compiled PDF as `site/encore-slides.pdf`) to GitHub
-Pages: **https://vbergeron.github.io/encore-slides/**
-
-The Pages site embeds the PDF and links back to `encore-slides`, `encore`,
-and `encore-benchmarks`.
+On every push to `main`, GitHub Actions compiles every deck under `decks/`
+into `site/decks/*.pdf` and deploys `site/` to GitHub Pages.
 
 ## Customizing
 

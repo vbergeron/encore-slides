@@ -14,11 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: typst-community/setup-typst@v3
-      - run: typst compile example.typ example.pdf
+      - name: Compile all decks
+        run: |
+          mkdir -p out
+          for f in decks/*.typ; do
+            typst compile --root . "$f" "out/$(basename "${f%.typ}").pdf"
+          done
       - uses: actions/upload-artifact@v4
         with:
-          name: example-pdf
-          path: example.pdf
+          name: decks
+          path: out/*.pdf
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -33,7 +38,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: typst-community/setup-typst@v3
-      - run: typst compile example.typ site/encore-slides.pdf
+      - name: Compile decks into the site
+        run: |
+          mkdir -p site/decks
+          for f in decks/*.typ; do
+            typst compile --root . "$f" "site/decks/$(basename "${f%.typ}").pdf"
+          done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
