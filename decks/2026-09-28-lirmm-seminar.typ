@@ -85,17 +85,16 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   let arrow = text(fill: accent, size: 12pt)[↓]
   stack(dir: ttb, spacing: 6pt, ..steps.pos().map(s => align(center, s)).intersperse(align(center, arrow)))
 }
-#let variant-card(letter, name, role) = block(
+#let variant-card(name, role) = block(
   width: 100%, inset: 14pt, radius: 4pt, stroke: 0.5pt + luma(200),
 )[
   #align(center)[
-    #text(size: 40pt, weight: "bold", fill: accent)[#letter] \
-    #text(size: 20pt, weight: "bold")[#name] \
+    #text(size: 26pt, weight: "bold", fill: accent)[#name] \
     #text(size: 14pt, fill: muted)[#role]
   ]
 ]
 // One slide per variant: its pipeline on the left, what matters on the right.
-#let variant-slide(letter, name, role, pipeline, body) = {
+#let variant-slide(role, pipeline, body) = {
   text(size: 20pt, fill: muted, role)
   v(0.4em)
   grid(
@@ -110,19 +109,19 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
 #grid(
   columns: (1fr, 1fr, 1fr),
   column-gutter: 0.8cm,
-  variant-card("E", [Encore], [system under study]),
-  variant-card("C", [CertiRocq], [closest verified competitor]),
-  variant-card("R", [Rust no_std], [performance ceiling, output oracle]),
+  variant-card([Encore], [system under study]),
+  variant-card([CertiRocq], [closest verified competitor]),
+  variant-card([Rust no_std], [performance ceiling, output oracle]),
 )
 #v(1fr)
 #align(center, text(size: 14pt, fill: muted)[
-  Same inputs, same Rust driver and harness, every output checked against R ·
+  Same inputs, same Rust driver and harness, every output checked against Rust ·
   QEMU Cortex-M3, 50 KiB RAM budget · instructions counted per run
 ])
 
-== E · Encore
+== Encore
 
-#variant-slide("E", [Encore], [system under study], pipe(
+#variant-slide([system under study], pipe(
   [Gallina],
   [Rocq extraction → Scheme],
   [`encore compile` → bytecode],
@@ -137,26 +136,26 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
     (none of them verified)
 ]
 
-== C · CertiRocq
+== CertiRocq
 
-#variant-slide("C", [CertiRocq], [closest verified competitor], pipe(
+#variant-slide([closest verified competitor], pipe(
   [Gallina],
   [CertiRocq → Clight],
   [`arm-none-eabi-gcc -Os`],
   [CertiRocq runtime],
   [generational GC, 20 KiB arena],
 ))[
-  - *Same Gallina* as E, CertiRocq v0.9.1
-  - `nat` mapped to 31-bit machine integers: the same unproven assumption as E
+  - *Same Gallina* as Encore, CertiRocq v0.9.1
+  - `nat` mapped to 31-bit machine integers: the same unproven assumption as Encore
   - Real GC on a static arena, not the paper's "abort" mode
   - Compiler largely verified down to Clight; gcc, the runtime and the
     `nat` mapping are trusted
   - A case that does not fit the RAM budget is reported as ✗ arena / ✗ stack
 ]
 
-== R · Rust no_std
+== Rust no_std
 
-#variant-slide("R", [Rust no_std], [performance ceiling, output oracle], pipe(
+#variant-slide([performance ceiling, output oracle], pipe(
   [hand-written, not from the Gallina],
   [`rustc`, `opt-level = "s"`, LTO],
   [no allocator, static buffers],
@@ -164,7 +163,7 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
 ))[
   - Idiomatic firmware Rust: does not copy the functional structure
   - *Performance ceiling*: what the logic costs without proof
-  - *Output oracle*: every E and C output is hashed and compared with R's
+  - *Output oracle*: every Encore and CertiRocq output is hashed and compared with Rust's
     before any number is kept
   - Memory-safe, but none of the workload properties are proved
 ]
@@ -193,8 +192,8 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
 }
 
 #let legend(minheap) = [
-  ✗ arena / ✗ stack: C does not fit the RAM budget ·
-  † E heap full, the collector ran#if minheap != none [; smallest heap that passes: #minheap]
+  ✗ arena / ✗ stack: CertiRocq does not fit the RAM budget ·
+  † Encore heap full, the collector ran#if minheap != none [; smallest heap that passes: #minheap]
 ]
 
 == W1 · APDU + BER-TLV parser
@@ -242,7 +241,7 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
 #workload-slide("w6_cobs", n-label: [frame (B)],
   [Encode a frame so it contains no zero byte, then decode it back.],
   thm: ("cobs_roundtrip", [`decode (encode l) = Some l`, and the encoding contains no zero.]),
-  note: [#legend[32.25 KiB] · E heap is 40 KiB here],
+  note: [#legend[32.25 KiB] · Encore heap is 40 KiB here],
 )
 
 == W7 · FIDO credential store
@@ -258,7 +257,7 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
 #workload-slide("w8_crc", n-label: [block (B)], c: false,
   [Bit-serial CRCs streamed over a block: pure arithmetic, the least favourable case for a VM.],
   thm: ("crc32_input_correct", [the loop computes the polynomial definition of the CRC, the remainder over GF(2).]),
-  note: [No C variant yet · R does one table lookup per byte, E about 1,040 VM instructions per byte · † E heap full, the collector ran; smallest heap that passes: 0.5 KiB],
+  note: [No CertiRocq variant yet · Rust does one table lookup per byte, Encore about 1,040 VM instructions per byte · † Encore heap full, the collector ran; smallest heap that passes: 0.5 KiB],
 )
 
 == Across workloads
@@ -275,9 +274,9 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
 ))
 #v(0.3em)
 #text(size: 16pt)[
-  E runs every size of every workload within the 50 KiB budget, including the
-  10 where C runs out of arena or stack. The price is instructions: 2–10× C
-  and 10–2,000× hand-written Rust, the worst on pure arithmetic (W8).
+  Encore runs every size of every workload within the 50 KiB budget, including
+  the 10 where CertiRocq runs out of arena or stack. The price is instructions:
+  2–10× CertiRocq and 10–2,000× hand-written Rust, the worst on pure arithmetic (W8).
 ]
 
 == Quick start
