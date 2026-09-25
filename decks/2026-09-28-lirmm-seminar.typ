@@ -17,14 +17,73 @@
 
 #hero[Rocq extraction produces correct code. \ Running it anywhere below a full Lisp runtime hasn't.]
 
-== The problem
+= State of the art
 
-- Rocq's extraction mechanism produces correct-by-construction Scheme code
-- Running it anywhere below a full Lisp runtime has historically meant a
-  large porting effort
-- *Encore fills that gap* — a bytecode interpreter with a built-in GC that
-  compiles to a `no_std` Rust crate and links into firmware with a fixed
-  heap budget
+== Proved logic, on a microcontroller
+
+- Secure elements, hardware wallets, bootloaders: *a logic bug is a security
+  hole or a bricked device*
+- Parsers, policies and state machines are small and precise enough to be
+  proved in Rocq
+- But the target has *tens of KiB of RAM*, no OS, no allocator, and already
+  runs Rust or C firmware
+- The question: how does proved Gallina get onto that chip?
+
+== Getting Gallina out of Rocq
+
+#{
+  set text(size: 15pt)
+  show table.cell.where(y: 0): set text(weight: "bold")
+  table(
+    columns: (auto, 1fr, 1fr),
+    stroke: (x, y) => (bottom: if y == 0 { 0.8pt + black } else { 0.3pt + luma(220) }),
+    inset: (x: 8pt, y: 7pt),
+    table.header([Route], [What it gives], [What stops it on a microcontroller]),
+    [*Extraction*], [OCaml, Haskell or Scheme, from Rocq itself], [needs the language's full runtime],
+    [*CertiRocq*], [verified compilation to Clight, then C], [its own runtime and GC; evaluated with the GC off and Peano integers],
+    [*Crane*], [Rocq to C++], [standard library and smart pointers: a priori over budget on Cortex-M],
+    [*Verified Rust*], [Kani or Verus on hand-written Rust], [proves the Rust, not the Gallina: a different question],
+  )
+}
+
+== The gap
+
+- Nothing runs *extracted* Gallina inside existing firmware with a
+  *fixed memory budget*
+- A verified compiler is the strongest guarantee, but its runtime is not
+  built for a 50 KiB chip
+- Hand-porting the extracted code gives up the link with the proof
+
+= Why Encore
+
+== The approach
+
+#{
+  set text(size: 16pt)
+  show table.cell.where(y: 0): set text(weight: "bold")
+  table(
+    columns: (auto, 1fr, 1fr),
+    stroke: (x, y) => (bottom: if y == 0 { 0.8pt + black } else { 0.3pt + luma(220) }),
+    inset: (x: 8pt, y: 7pt),
+    table.header([], [Choice], [Why]),
+    [1], [Start from Rocq's own *Scheme extraction*], [reuse the standard mechanism; Scheme is the smallest, untyped target],
+    [2], [*Interpret bytecode*, do not emit native code], [one VM for every program, compact bytecode, portable across cores],
+    [3], [*CPS everywhere*: every call is a tail call], [no call stack; recursion depth lives in the heap, which is bounded and collected],
+    [4], [*`no_std` Rust runtime* over a fixed arena], [links into existing firmware; externs reach the Rust I/O layer],
+    [5], [*Explicit assumptions*, checked at run time], [`nat` as 24-bit integers: overflow traps, never a wrong value],
+  )
+}
+
+== What we accept in exchange
+
+- *The compiler and the VM are not verified*: they join the trusted base,
+  next to extraction
+- *Interpretation costs instructions*: the price to measure against native code
+- *Bounded integers*: `nat` below 2#super[23], stated in `ExtrEncore.v`
+  and enforced by the VM
+
+#v(0.5em)
+#text(size: 17pt, fill: muted)[Is the price acceptable on real firmware logic? That is what the experiment measures.]
 
 == The name
 
@@ -33,6 +92,8 @@ The name comes from the VM's single calling opcode: `ENCORE`.
 - Every function call sets the callee and continuation registers and jumps
 - There is no call stack
 - In French, *encore* means *again*, *still*, *more*
+
+= Architecture
 
 == Pipeline
 
@@ -48,16 +109,6 @@ extracted .scm
     ▼
   Value
 ```
-
-== encore_vm
-
-The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
-
-- Packed 32-bit values: closures, constructors, integers, byte strings
-- 256-register file, bump-allocation heap arena
-- Mark-compact garbage collector
-- Single calling convention: `ENCORE` opcode, set callee and continuation,
-  jump without returning
 
 == Compiler pipeline
 
@@ -76,7 +127,30 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   ],
 )
 
-= Results
+== encore_vm
+
+The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
+
+- Packed 32-bit values: closures, constructors, integers, byte strings
+- 256-register file, bump-allocation heap arena
+- Mark-compact garbage collector
+- Single calling convention: `ENCORE` opcode, set callee and continuation,
+  jump without returning
+
+= Experiment plan
+
+== What the paper leaves open
+
+The paper measures flash, heap and build time against CertiRocq on seven
+micro-benchmarks. This study fills four gaps:
+
+- *No execution speed*: instructions per run, on QEMU Cortex-M3
+- *No Rust baseline*: a hand-written `no_std` version of every workload
+- *No realistic workload*: eight firmware tasks instead of a "toy" app
+- *A handicapped CertiRocq*: its real GC on a static arena, machine integers
+
+#v(0.3em)
+#text(size: 17pt, fill: muted)[Q1 · feasibility: what fits in 50 KiB of RAM? \ Q2 · cost: how many instructions, how much RAM?]
 
 == Three ways to ship the same logic
 
@@ -168,9 +242,20 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   - Memory-safe, but none of the workload properties are proved
 ]
 
+== How a case is measured
+
+- *Budget at link time*: RAM and flash lengths are the budget (50 KiB RAM),
+  not the chip; what does not fit fails and is recorded
+- *Same driver*: every variant runs from the same Rust harness and input vectors
+- *Oracle first*: each output is hashed and compared with Rust's; a mismatch
+  is a bug, fixed before measuring
+- *Instructions, not time*: QEMU traces execution and counts instructions
+  between two markers, exact and reproducible
+- *Size N*: each workload is scaled, to get curves rather than points
+
 == Eight firmware workloads
 
-#text(size: 16pt)[Each is a `step` function whose bug would be a security hole or a field failure, with one property proved in Rocq and a size N to scale it.]
+#text(size: 16pt)[Tasks whose bug would be a security hole or a field failure, each written in the paper's `step : State × Event → State × list Effect` model, with one property proved in Rocq and a size N to scale it.]
 #v(0.3em)
 #{
   set text(size: 15pt)
@@ -191,6 +276,8 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   )
 }
 
+= Conclusion
+
 == Across workloads
 
 #recap-table((
@@ -208,6 +295,22 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   Encore runs every size of every workload within the 50 KiB budget, including
   the 10 where CertiRocq runs out of arena or stack. The price is instructions:
   2–10× CertiRocq and 10–2,000× hand-written Rust, the worst on pure arithmetic (W8).
+]
+
+== Takeaways
+
+- *Feasible*: proved Gallina, extracted as is, runs inside Rust firmware on a
+  fixed 50 KiB budget, where CertiRocq runs out of memory on 10 cases
+- *Costly in instructions*: an interpreter pays 2–10× against CertiRocq, and
+  10–2,000× against hand-written Rust, the worst on arithmetic
+- *Suited to* parsers, policies and state machines, where a proof matters more
+  than throughput
+
+#v(0.3em)
+#text(size: 16pt, fill: muted)[
+  Next: cycles on real boards, GC pauses (Q3), trusted base and proof effort
+  (Q4, Q5), and an ahead-of-time Thumb-2 backend to separate interpretation
+  from the CPS and GC model.
 ]
 
 == Quick start
