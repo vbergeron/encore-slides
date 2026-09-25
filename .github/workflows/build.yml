@@ -1,0 +1,18 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: typst-community/setup-typst@v3
+      - run: typst compile example.typ example.pdf
+      - uses: actions/upload-artifact@v4
+        with:
+          name: example-pdf
+          path: example.pdf
