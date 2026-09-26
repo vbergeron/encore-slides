@@ -24,11 +24,18 @@
   )
 }
 
+#let logo(file, height: 2cm) = image("/assets/logos/" + file, height: height)
+// An alternative's slide: its logo in the top-right corner, then the points.
+#let logo-slide(file, body, height: 1.6cm) = {
+  place(top + right, dy: -0.4cm, logo(file, height: height))
+  block(width: 78%, body)
+}
+
 == \
 
 #hero[Standard extraction targets for proof assistants \ need runtimes too large for embedded devices.]
 
-= State of the art
+= Introduction
 
 == Why verify firmware logic
 
@@ -40,6 +47,53 @@
 - But extracted code needs a runtime, and the usual answer is to *translate
   the specification by hand* into the host language, weakening the link to
   the proof
+
+= A firmware architecture for proof
+
+== Firmware as a state transition
+
+#text(size: 18pt)[Push the pure frontier as far as it goes: *maximise the part Rocq can prove*.]
+#v(0.2em)
+#align(center, text(size: 22pt)[`step : State × Event → State × list Effect`])
+#v(0.3em)
+- *State*: the application's; *Event*: from the device (APDU, button);
+  *Effect*: a description of what to do, interpreted by the host
+- Copy instead of mutate, describe effects instead of performing them
+- The *event poller* and *effect interpreter* are the unverified boundary:
+  its size does not grow with the application
+- Hashes, CRCs, field arithmetic: admitted as axioms, provided as host callbacks
+
+== What is proved, what is trusted
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 1cm,
+  [
+    *Proved in Rocq*
+    - the `step` function and its lemmas
+    - grows with the application
+  ],
+  [
+    *Trusted*
+    - Rocq kernel and extraction
+    - the compiler and VM that run it
+    - the Rust compiler
+    - host callbacks for admitted axioms
+    - event poller and effect interpreter
+  ],
+)
+#v(0.5em)
+#text(size: 17pt, fill: muted)[The trusted boundary changes only when new hardware actions, externs or primitives are added. \ Left to find: a way to run the proved `step` on a 50 KB chip.]
+
+= Why did we build Encore?
+
+== The approach
+
++ *Fix the constraint first*: 50 KB of RAM, no hosted runtime
++ *Survey the extraction paths*: Lean 4, OCaml, CertiRocq, Scheme
++ *Pick Scheme extraction*: compact, untyped, no mandatory runtime
++ *Try existing Scheme runtimes on the target* before writing one: Chibi, Ribbit
++ *Build a purpose-built runtime* for the Scheme that Rocq actually emits
 
 == The target: ST33 secure elements
 
@@ -64,30 +118,179 @@
 == Extraction paths
 
 #simple-table((auto, 1fr, auto, auto, auto),
-  [Path], [Runtime needs], [`no_std`], [Cortex-M], [Proof kept],
-  [*Lean 4*], [C++ library, ref-counting + cycle GC, tasks, hosted IO], [no], [no], [none],
-  [*OCaml / OMicroB*], [generational GC, libc/libm; OMicroB: AVR and PIC32 only], [no], [no], [none],
-  [*CertiRocq*], [GC-aware heap; Peano `nat`, no machine arithmetic], [partial], [partial], [compiler chain],
-  [*Scheme*], [compact semantics, no mandatory hosted runtime], [yes], [yes], [full],
+  [Path], [Runtime needs], [`no_std`], [Cortex-M], [Verified compilation],
+  [*Lean 4*], [C++ library, ref-counting + cycle GC, tasks, hosted IO], [no], [no], [no],
+  [*Rocq → OCaml*], [generational GC, libc/libm], [no], [no], [no],
+  [*CertiRocq*], [GC-aware heap; Peano `nat`, no machine arithmetic], [partial], [partial], [Gallina → Clight, largely],
+  [*Rocq → Scheme*], [a small runtime, to find or to build], [yes], [yes], [no],
 )
 #v(0.3em)
 #text(size: 15pt, fill: muted)[
-  Verified compilers (CompCert, CakeML) show the strongest story is possible;
-  small Scheme systems (PICOBIT, Ribbit) show Scheme fits a microcontroller.
+  Every path but CertiRocq trusts its extraction and compiler: the proof
+  covers the Gallina, not the code that runs. Verified compilers (CompCert,
+  CakeML) show the stronger story is possible.
 ]
 
-= Why Encore
+== Lean 4
 
-== The approach
+#logo-slide("lean.png", height: 2.2cm)[
+  - Mature native code generation, active proof ecosystem
+  - Its runtime assumes a *C++ library*, *reference counting with cycle
+    collection*, tasks and hosted IO
+  - Targets smaller than a Raspberry Pi need substantial runtime work; the
+    ESP32-C3 port needed a patched libc++/picolibc, on *384 KB of RAM*
+  - Bare metal is not on the Lean FRO roadmap
+]
 
-+ *Fix the constraint first*: 50 KB of RAM, no hosted runtime
-+ *Survey the extraction paths*: Lean 4 and OCaml fall on their runtimes;
-  CertiRocq only for bounded allocation
-+ *Pick Scheme extraction*: compact, untyped, no mandatory runtime
-+ *Try existing Scheme runtimes on the target* before writing one
-+ *Build a purpose-built runtime* for the Scheme that Rocq actually emits
+== Rocq extraction to OCaml
 
-== Existing Scheme runtimes, on the target
+#logo-slide("ocaml.svg")[
+  - Rocq's most mature extraction target
+  - The OCaml runtime needs a *generational GC*, *libc and libm*, and
+    native-code conventions that do not match Cortex-M object formats
+  - A native OCaml port to a microcontroller needed assembly patching, a
+    custom linker script and standard-library stubs, on a larger target
+  - *OMicroB*, an OCaml VM for microcontrollers, supports AVR and PIC32; its
+    Cortex-M0 port is unmerged, and the ST33 needs full Thumb-2
+]
+
+== CertiRocq
+
+#logo-slide("certirocq.svg")[
+  - The most principled path: Gallina to Clight through a *largely verified*
+    compiler chain, then C
+  - Generated code allocates, and correctness is stated against a GC-aware
+    heap: a new runtime means *proving a new collector*, or bounded allocation
+  - No standard `nat` to machine integer mapping: arithmetic stays in *Peano*
+  - To run on the target at all, the paper patches its runtime: static
+    nursery, and a collection *aborts the program*
+]
+
+== Rocq extraction to Scheme
+
+#logo-slide("scheme.png", height: 2cm)[
+  - Less mature than OCaml extraction, but Scheme has *compact semantics* and
+    *no mandatory hosted runtime*
+  - Small Scheme systems fit microcontrollers: PICOBIT, Ribbit (a VM,
+    compiler and REPL in 4 KB)
+  - The extracted code is a narrow subset: curried definitions and
+    applications, constructor matching, from Rocq's `macros_extr.scm`
+  - Candidates on the target: *Chibi*, *Ribbit*, then our own
+]
+
+== From Rocq to Scheme
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 0.8cm,
+  align: top,
+  [
+    #text(size: 14pt, fill: muted)[Gallina (W4, PIN state machine)]
+    #v(-0.3em)
+    #text(size: 14pt)[
+```coq
+Fixpoint digits_eqb (a b : list nat) : bool :=
+  match a, b with
+  | [], [] => true
+  | x :: a', y :: b' =>
+      if x =? y then digits_eqb a' b'
+      else false
+  | _, _ => false
+  end.
+```
+    ]
+  ],
+  [
+    #text(size: 14pt, fill: muted)[Extracted Scheme]
+    #v(-0.3em)
+    #text(size: 14pt)[
+```scheme
+(define digits_eqb (lambdas (a b)
+  (match a
+     ((Nil) (match b
+               ((Nil) `(True))
+               ((Cons _ _) `(False))))
+     ((Cons x a~)
+       (match b
+          ((Nil) `(False))
+          ((Cons y b~)
+            (match (@ eqb x y)
+               ((True) (@ digits_eqb a~ b~))
+               ((False) `(False)))))))))
+```
+    ]
+  ],
+)
+#v(0.2em)
+#text(size: 15pt)[
+  Curried functions (`lambdas`, `@`), constructors as tagged lists (#raw("`(Cons ,x ,l)")),
+  `match` on the tag. Even `bool` is a constructor: #raw("`(True)").
+]
+
+== macros_extr.scm
+
+Extracted code starts with `(load "macros_extr.scm")`: three macros, shipped with Rocq's Scheme extraction.
+
+#grid(
+  columns: (1.1fr, 1fr),
+  column-gutter: 0.8cm,
+  align: top,
+  text(size: 13pt)[
+    #text(size: 13pt, fill: muted, font: "Libertinus Serif")[In essence (simplified):]
+```scheme
+(define-syntax lambdas
+  (syntax-rules ()
+    ((lambdas () e) e)
+    ((lambdas (x) e) (lambda (x) e))
+    ((lambdas (x y ...) e)
+     (lambda (x) (lambdas (y ...) e)))))
+
+(define-syntax @
+  (syntax-rules ()
+    ((@ e) e)
+    ((@ f e) (f e))
+    ((@ f e1 e2 ...) (@ (f e1) e2 ...))))
+
+;; match: compare the tag (car) of a
+;; tagged list, bind its fields
+```
+  ],
+  [
+    #set text(size: 16pt)
+    - `lambdas`: a curried multi-argument function
+    - `@`: curried application, one argument at a time
+    - `match`: dispatch on a constructor's tag
+    - Constructors are plain quasiquoted lists
+    #v(0.3em)
+    *Encore makes them core primitives* instead of supporting `define-syntax`:
+    `@` becomes a saturated call after uncurrying, `match` the `MATCH` opcode,
+    a constructor the `PACK` opcode. Its only addition: `extern`, for host functions.
+  ],
+)
+
+== Chibi Scheme
+
+#logo-slide("chibi.png", height: 2.2cm)[
+  - A small, embeddable *interpreter* written in C
+  - On the target: the C runtime, about 50 files, cross-compiled with custom
+    POSIX stubs
+  - The extracted Scheme is embedded as a C string literal, *loaded and
+    evaluated on every boot*
+  - #text(fill: accent, weight: "bold")[✗ The binary exceeds the 256 KB flash budget]
+]
+
+== Ribbit
+
+#logo-slide("ribbit.png", height: 1.4cm)[
+  - A compact Scheme *VM*: the compiler `rsc.scm` emits bytecode and a minimal VM in C
+  - On the target: generated from `build.rs`, patched for a static heap and a
+    semihosting shim, cross-compiled for Cortex-M35P
+  - #text(fill: rgb("#2e7d32"), weight: "bold")[✓ The binary fits]
+  - #text(fill: accent, weight: "bold")[✗ No `quasiquote`: it cannot compile the extracted code.]
+    The test ran hand-written Scheme: the verified logic never ran on the device
+]
+
+== Scheme runtimes on the target
 
 #simple-table((1fr, auto, auto, auto),
   [], [Chibi], [Ribbit], [Encore],
@@ -112,8 +315,6 @@ Rocq-extracted Scheme is *heavily curried* and already close to CPS form.
 - Every intermediate value is named: register allocation is natural
 - GC roots are trivial: every live register is a root, and CPS keeps them
   contiguous, so no stack scanning
-- Only the macros of `macros_extr.scm` are supported, as core primitives,
-  plus `define-extern` for host functions
 
 == The name
 
@@ -123,40 +324,7 @@ The name comes from the VM's single calling opcode: `ENCORE`.
 - There is no call stack
 - In French, *encore* means *again*, *still*, *more*
 
-= Architecture
-
-== Firmware as a state transition
-
-#align(center, text(size: 22pt)[`step : State × Event → State × list Effect`])
-#v(0.3em)
-- *State*: the application's; *Event*: from the device (APDU, button);
-  *Effect*: a description of what to do, interpreted by the host
-- Copy instead of mutate, describe effects instead of performing them
-- The *event poller* and *effect interpreter* are the unverified boundary:
-  its size does not grow with the application
-- Hashes, CRCs, field arithmetic: admitted as axioms, provided as host callbacks
-
-== What is proved, what is trusted
-
-#grid(
-  columns: (1fr, 1fr),
-  column-gutter: 1cm,
-  [
-    *Proved in Rocq*
-    - the `step` function and its lemmas
-    - grows with the application
-  ],
-  [
-    *Trusted*
-    - Rocq kernel and extraction
-    - Encore's Scheme frontend, compiler and VM
-    - the Rust compiler
-    - host callbacks for admitted axioms
-    - event poller and effect interpreter
-  ],
-)
-#v(0.5em)
-#text(size: 17pt, fill: muted)[The trusted boundary changes only when new hardware actions, externs or primitives are added.]
+= Encore: compiler and VM
 
 == Pipeline
 
@@ -273,6 +441,7 @@ The VM is a library inside a Rust application that keeps control of memory and I
 
 == CertiRocq
 
+#place(top + right, dy: -0.4cm, logo("certirocq.svg", height: 1.4cm))
 #variant-slide([closest verified competitor], pipe(
   [Gallina],
   [CertiRocq → Clight],
@@ -290,6 +459,7 @@ The VM is a library inside a Rust application that keeps control of memory and I
 
 == Rust no_std
 
+#place(top + right, dy: -0.4cm, logo("rust.svg", height: 1.4cm))
 #variant-slide([performance ceiling, output oracle], pipe(
   [hand-written, not from the Gallina],
   [`rustc`, `opt-level = "s"`, LTO],

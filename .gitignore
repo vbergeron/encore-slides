@@ -1,3 +1,4 @@
 *.pdf
 *.png
 .typst-cache/
+!assets/**/*.png
