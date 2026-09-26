@@ -330,14 +330,14 @@ The name comes from the VM's single calling opcode: `ENCORE`.
 #let op(body) = text(size: 13pt, raw(body))
 
 #align(center + horizon, text(size: 15pt, diagram(
-  spacing: (2.2cm, 1.5cm),
+  spacing: (2.2cm, 0.9cm),
   node-stroke: 0.8pt + luma(60),
   node-inset: 8pt,
   node-corner-radius: 3pt,
   edge-stroke: 0.8pt + luma(60),
   mark-scale: 80%,
 
-  node((0, 0), name: <code>, part([Bytecode (flash)], [code · arity table], note: [read-only, `u16` code pointers])),
+  node((0, 1), name: <code>, part([Bytecode (flash)], [code · arity table], note: [read-only, `u16` code pointers])),
   node((1, 0), name: <regs>, part([Register file: 256 values], strip(
     ([`SELF`], auto, accent.lighten(80%)),
     ([`CONT`], auto, accent.lighten(80%)),
@@ -345,19 +345,23 @@ The name comes from the VM's single calling opcode: `ENCORE`.
     ([`X01` …], 2.2cm),
     ([`NULL`], auto, luma(230)),
   ), note: [no stack, no frames])),
-  node((2, 0), name: <host>, part([Rust host], [`extern_fns[32]` \ `fn(Value) -> Value`])),
-  node((1, 1), name: <arena>, part([Arena: one fixed `&mut [Value]` (RAM)], strip(
+  node((1, 1), name: <vm>, fill: accent, stroke: none, inset: 12pt,
+    text(fill: white)[#text(size: 20pt, weight: "bold")[Encore VM] \ #text(size: 13pt)[fetch · decode · dispatch]]),
+  node((2, 1), name: <host>, part([Rust host], [`extern_fns[32]` \ `fn(Value) -> Value`])),
+  node((1, 2), name: <arena>, part([Arena: one fixed `&mut [Value]` (RAM)], strip(
     ([heap], 3.2cm, accent.lighten(80%)),
     ([`hp` →], auto),
     ([free], 3cm),
     ([globals], auto, luma(230)),
   ), note: [bump allocation, no `malloc`])),
-  node((2, 1), name: <gc>, part([Mark-compact GC], [roots: registers + globals], note: [in place, on allocation failure])),
+  node((2, 2), name: <gc>, part([Mark-compact GC], [roots: registers + globals], note: [in place, on allocation failure])),
 
-  edge(<code>, <regs>, "-|>", label: op("ENCORE"), label-side: left),
-  edge(<regs>, <host>, "<|-|>", label: op("EXTERN"), label-side: left),
-  edge(<regs>, <arena>, "-|>", label: op("PACK · CLOSURE"), label-side: right, shift: -0.35cm),
-  edge(<arena>, <regs>, "-|>", label: op("FIELD · CAPTURE · GLOBAL"), label-side: right, shift: -0.35cm),
+  edge(<code>, <vm>, "-|>", label: text(size: 13pt)[load], label-side: left),
+  edge(<vm>, <regs>, "<|-|>", label: op("MOV · ENCORE"), label-side: right),
+  edge(<vm>, <host>, "<|-|>", label: op("EXTERN"), label-side: left),
+  edge(<vm>, <arena>, "-|>", label: op("PACK · CLOSURE"), label-side: left, shift: 0.35cm),
+  edge(<arena>, <vm>, "-|>", label: op("FIELD · CAPTURE · GLOBAL"), label-side: left, shift: 0.35cm),
+  edge(<vm>, <gc>, "-|>", label: text(size: 13pt)[heap full], label-side: left),
   edge(<gc>, <arena>, "-|>", label: text(size: 13pt)[compacts], label-side: right),
 )))
 #v(0.6em)
