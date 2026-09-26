@@ -1,5 +1,6 @@
 #import "/template/lib.typ": *
 #import "/template/bench.typ": *
+#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
 #show: encore-theme.with(
   title: [Encore],
@@ -290,22 +291,6 @@ Extracted code starts with `(load "macros_extr.scm")`: three macros, shipped wit
     The test ran hand-written Scheme: the verified logic never ran on the device
 ]
 
-== Scheme runtimes on the target
-
-#simple-table((1fr, auto, auto, auto),
-  [], [Chibi], [Ribbit], [Encore],
-  [Runtime model], [interpreter], [VM], [VM],
-  [Runs Rocq-extracted Scheme], [✓], [✗ no quasiquote], [✓],
-  [Fits 256 KB flash], [✗], [✓], [✓],
-  [Pipeline complexity], [high], [medium], [low],
-  [Working bare-metal], [✗], [✓], [✓],
-)
-#v(0.3em)
-#text(size: 16pt)[
-  Chibi evaluates the source on every boot and is too big; Ribbit fits but runs
-  hand-written Scheme, not the extracted code. *Encore is the only one that does all four.*
-]
-
 == The key insight: CPS
 
 Rocq-extracted Scheme is *heavily curried* and already close to CPS form.
@@ -325,6 +310,141 @@ The name comes from the VM's single calling opcode: `ENCORE`.
 - In French, *encore* means *again*, *still*, *more*
 
 = Encore: compiler and VM
+
+== VM architecture
+
+// A row of labelled cells, for the register file and the arena.
+#let strip(..cells) = grid(
+  columns: cells.pos().map(c => c.at(1)),
+  stroke: 0.6pt + luma(90),
+  inset: (x: 5pt, y: 7pt),
+  align: center + horizon,
+  ..cells.pos().map(c => grid.cell(fill: c.at(2, default: none), c.at(0))),
+)
+#let part(title, body, note: none) = block[
+  #text(size: 16pt, weight: "bold")[#title]
+  #v(-0.5em)
+  #body
+  #if note != none { v(-0.5em); text(size: 13pt, fill: muted, note) }
+]
+#let op(body) = text(size: 13pt, raw(body))
+
+#align(center + horizon, text(size: 15pt, diagram(
+  spacing: (2.2cm, 0.9cm),
+  node-stroke: 0.8pt + luma(60),
+  node-inset: 8pt,
+  node-corner-radius: 3pt,
+  edge-stroke: 0.8pt + luma(60),
+  mark-scale: 80%,
+
+  node((0, 1), name: <code>, part([Bytecode (flash)], [code · arity table], note: [read-only, `u16` code pointers])),
+  node((1, 0), name: <regs>, part([Register file: 256 values], strip(
+    ([`SELF`], auto, accent.lighten(80%)),
+    ([`CONT`], auto, accent.lighten(80%)),
+    ([`A1`–`A8`], auto),
+    ([`X01` …], 2.2cm),
+    ([`NULL`], auto, luma(230)),
+  ), note: [no stack, no frames])),
+  node((1, 1), name: <vm>, fill: accent, stroke: none, inset: 12pt,
+    text(fill: white)[#text(size: 20pt, weight: "bold")[Encore VM] \ #text(size: 13pt)[fetch · decode · dispatch]]),
+  node((2, 1), name: <host>, part([Rust host], [`extern_fns[32]` \ `fn(Value) -> Value`])),
+  node((1, 2), name: <arena>, part([Arena: one fixed `&mut [Value]` (RAM)], strip(
+    ([heap], 3.2cm, accent.lighten(80%)),
+    ([`hp` →], auto),
+    ([free], 3cm),
+    ([globals], auto, luma(230)),
+  ), note: [bump allocation, no `malloc`])),
+  node((2, 2), name: <gc>, part([Mark-compact GC], [roots: registers + globals], note: [in place, on allocation failure])),
+
+  edge(<code>, <vm>, "-|>", label: text(size: 13pt)[load], label-side: left),
+  edge(<vm>, <regs>, "<|-|>", label: op("MOV · ENCORE"), label-side: right),
+  edge(<vm>, <host>, "<|-|>", label: op("EXTERN"), label-side: left),
+  edge(<vm>, <arena>, "-|>", label: op("PACK · CLOSURE"), label-side: left, shift: 0.35cm),
+  edge(<arena>, <vm>, "-|>", label: op("FIELD · CAPTURE · GLOBAL"), label-side: left, shift: 0.35cm),
+  edge(<vm>, <gc>, "-|>", label: text(size: 13pt)[heap full], label-side: left),
+  edge(<gc>, <arena>, "-|>", label: text(size: 13pt)[compacts], label-side: right),
+)))
+#v(0.6em)
+#align(center, text(size: 16pt, fill: muted)[
+  All VM state is 256 registers and one arena the host hands over: no stack, no `malloc`, no OS.
+])
+
+== Values and the heap
+
+// One 32-bit heap word: address, type, payload.
+#let word(x, addr, typ, val, fill: none) = node((x, 0), name: label("w" + str(x)),
+  width: 2.35cm, height: 1.7cm, inset: 3pt, corner-radius: 0pt, fill: fill,
+  stack(spacing: 5pt,
+    text(size: 9pt, fill: muted, raw(addr)),
+    text(size: 12pt, weight: "bold", typ),
+    text(size: 11pt, val),
+  ),
+)
+#let reg(x, name) = node((x, 2), name: label("r-" + name), stroke: none, fill: luma(235), inset: 6pt, text(size: 13pt, raw(name)))
+#let obj(x, body) = node((x, 1), width: 2.35cm, stroke: none, inset: 2pt, text(size: 12pt, fill: muted, body))
+
+#grid(
+  columns: (1.15fr, 1fr),
+  column-gutter: 1cm,
+  align: horizon,
+  [
+    #set text(size: 13pt)
+    #grid(
+      columns: (2fr, 1fr, 1fr),
+      align: center,
+      inset: (x: 4pt, y: 6pt),
+      text(fill: muted)[31 … 16], text(fill: muted)[15 … 8], text(fill: muted)[7 … 0],
+      grid.cell(stroke: 0.8pt, fill: accent.lighten(80%))[*payload* (16)],
+      grid.cell(stroke: 0.8pt)[*meta* (8)],
+      grid.cell(stroke: 0.8pt, fill: luma(230))[*typ* (8)],
+    )
+    #v(-0.2em)
+    #text(size: 14pt)[
+      *One 32-bit word per value*: `typ` says how to read the rest.
+      Integers, functions and nullary constructors are *unboxed*;
+      a pointer targets its object's GC header.
+    ]
+  ],
+  simple-table((auto, 1fr), size: 13pt,
+    [typ], [payload / meta],
+    [Integer], [24-bit signed, over payload + meta],
+    [Function], [code address, no allocation],
+    [Closure], [heap address],
+    [Constructor], [heap address, tag in meta; `NULL` if nullary],
+    [Bytes], [heap address],
+    [Headers], [first words of a heap object],
+  ),
+)
+
+#v(0.3em)
+#align(center, diagram(
+  spacing: (0pt, 0.9cm),
+  node-stroke: 0.6pt + luma(90),
+  edge-stroke: 0.8pt + accent,
+  mark-scale: 80%,
+
+  word(0, "0x10", [GC hdr], [size 3], fill: luma(238)),
+  word(1, "0x11", [Int], [2], fill: luma(238)),
+  word(2, "0x12", [Ctor Nil], [`NULL`], fill: luma(238)),
+  word(3, "0x13", [GC hdr], [size 3], fill: accent.lighten(85%)),
+  word(4, "0x14", [Int], [1], fill: accent.lighten(85%)),
+  word(5, "0x15", [Ctor Cons], [`0x10`], fill: accent.lighten(85%)),
+  word(6, "0x16", [GC hdr], [size 4], fill: rgb("#e3ecf5")),
+  word(7, "0x17", [Clos hdr], [env 2, `@0140`], fill: rgb("#e3ecf5")),
+  word(8, "0x18", [Ctor Cons], [`0x13`], fill: rgb("#e3ecf5")),
+  word(9, "0x19", [Int], [7], fill: rgb("#e3ecf5")),
+
+  obj(1, [list `[2]`]),
+  obj(4, [list `[1; 2]`]),
+  obj(8, [closure]),
+  reg(3, "A1"),
+  reg(6, "SELF"),
+
+  edge(<w5>, <w0>, "-|>", bend: -35deg),
+  edge(<w8>, <w3>, "-|>", bend: -35deg),
+  edge(<r-A1>, <w3>, "-|>"),
+  edge(<r-SELF>, <w6>, "-|>"),
+))
 
 == Pipeline
 
@@ -378,6 +498,22 @@ The VM is a library inside a Rust application that keeps control of memory and I
 - `VmList<T>`, `VmBytes`: lazy traversal, bounded copies into caller buffers
 - `build.rs` runs the compiler: `bytecode.bin` and `bindings.rs` (function
   and constructor constants), so host and bytecode cannot drift apart
+
+== Scheme runtimes on the target
+
+#simple-table((1fr, auto, auto, auto),
+  [], [Chibi], [Ribbit], [Encore],
+  [Runtime model], [interpreter], [VM], [VM],
+  [Runs Rocq-extracted Scheme], [✓], [✗ no quasiquote], [✓],
+  [Fits 256 KB flash], [✗], [✓], [✓],
+  [Pipeline complexity], [high], [medium], [low],
+  [Working bare-metal], [✗], [✓], [✓],
+)
+#v(0.3em)
+#text(size: 16pt)[
+  Chibi evaluates the source on every boot and is too big; Ribbit fits but runs
+  hand-written Scheme, not the extracted code. *Encore is the only one that does all four.*
+]
 
 = Experiment plan
 
