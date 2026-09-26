@@ -290,22 +290,6 @@ Extracted code starts with `(load "macros_extr.scm")`: three macros, shipped wit
     The test ran hand-written Scheme: the verified logic never ran on the device
 ]
 
-== Scheme runtimes on the target
-
-#simple-table((1fr, auto, auto, auto),
-  [], [Chibi], [Ribbit], [Encore],
-  [Runtime model], [interpreter], [VM], [VM],
-  [Runs Rocq-extracted Scheme], [✓], [✗ no quasiquote], [✓],
-  [Fits 256 KB flash], [✗], [✓], [✓],
-  [Pipeline complexity], [high], [medium], [low],
-  [Working bare-metal], [✗], [✓], [✓],
-)
-#v(0.3em)
-#text(size: 16pt)[
-  Chibi evaluates the source on every boot and is too big; Ribbit fits but runs
-  hand-written Scheme, not the extracted code. *Encore is the only one that does all four.*
-]
-
 == The key insight: CPS
 
 Rocq-extracted Scheme is *heavily curried* and already close to CPS form.
@@ -378,6 +362,22 @@ The VM is a library inside a Rust application that keeps control of memory and I
 - `VmList<T>`, `VmBytes`: lazy traversal, bounded copies into caller buffers
 - `build.rs` runs the compiler: `bytecode.bin` and `bindings.rs` (function
   and constructor constants), so host and bytecode cannot drift apart
+
+== Scheme runtimes on the target
+
+#simple-table((1fr, auto, auto, auto),
+  [], [Chibi], [Ribbit], [Encore],
+  [Runtime model], [interpreter], [VM], [VM],
+  [Runs Rocq-extracted Scheme], [✓], [✗ no quasiquote], [✓],
+  [Fits 256 KB flash], [✗], [✓], [✓],
+  [Pipeline complexity], [high], [medium], [low],
+  [Working bare-metal], [✗], [✓], [✓],
+)
+#v(0.3em)
+#text(size: 16pt)[
+  Chibi evaluates the source on every boot and is too big; Ribbit fits but runs
+  hand-written Scheme, not the extracted code. *Encore is the only one that does all four.*
+]
 
 = Experiment plan
 
