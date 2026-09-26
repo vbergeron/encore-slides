@@ -131,7 +131,7 @@
 
 == Rocq extraction to Scheme
 
-#logo-slide("rocq.svg")[
+#logo-slide("scheme.svg", height: 2cm)[
   - Less mature than OCaml extraction, but Scheme has *compact semantics* and
     *no mandatory hosted runtime*
   - Small Scheme systems fit microcontrollers: PICOBIT, Ribbit (a VM,
