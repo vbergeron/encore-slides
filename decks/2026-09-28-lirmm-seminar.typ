@@ -369,6 +369,83 @@ The name comes from the VM's single calling opcode: `ENCORE`.
   All VM state is 256 registers and one arena the host hands over: no stack, no `malloc`, no OS.
 ])
 
+== Values and the heap
+
+// One 32-bit heap word: address, type, payload.
+#let word(x, addr, typ, val, fill: none) = node((x, 0), name: label("w" + str(x)),
+  width: 2.35cm, height: 1.7cm, inset: 3pt, corner-radius: 0pt, fill: fill,
+  stack(spacing: 5pt,
+    text(size: 9pt, fill: muted, raw(addr)),
+    text(size: 12pt, weight: "bold", typ),
+    text(size: 11pt, val),
+  ),
+)
+#let reg(x, name) = node((x, 2), name: label("r-" + name), stroke: none, fill: luma(235), inset: 6pt, text(size: 13pt, raw(name)))
+#let obj(x, body) = node((x, 1), width: 2.35cm, stroke: none, inset: 2pt, text(size: 12pt, fill: muted, body))
+
+#grid(
+  columns: (1.15fr, 1fr),
+  column-gutter: 1cm,
+  align: horizon,
+  [
+    #set text(size: 13pt)
+    #grid(
+      columns: (2fr, 1fr, 1fr),
+      align: center,
+      inset: (x: 4pt, y: 6pt),
+      text(fill: muted)[31 … 16], text(fill: muted)[15 … 8], text(fill: muted)[7 … 0],
+      grid.cell(stroke: 0.8pt, fill: accent.lighten(80%))[*payload* (16)],
+      grid.cell(stroke: 0.8pt)[*meta* (8)],
+      grid.cell(stroke: 0.8pt, fill: luma(230))[*typ* (8)],
+    )
+    #v(-0.2em)
+    #text(size: 14pt)[
+      *One 32-bit word per value*: `typ` says how to read the rest.
+      Integers, functions and nullary constructors are *unboxed*;
+      a pointer targets its object's GC header.
+    ]
+  ],
+  simple-table((auto, 1fr), size: 13pt,
+    [typ], [payload / meta],
+    [Integer], [24-bit signed, over payload + meta],
+    [Function], [code address, no allocation],
+    [Closure], [heap address],
+    [Constructor], [heap address, tag in meta; `NULL` if nullary],
+    [Bytes], [heap address],
+    [Headers], [first words of a heap object],
+  ),
+)
+
+#v(0.3em)
+#align(center, diagram(
+  spacing: (0pt, 0.9cm),
+  node-stroke: 0.6pt + luma(90),
+  edge-stroke: 0.8pt + accent,
+  mark-scale: 80%,
+
+  word(0, "0x10", [GC hdr], [size 3], fill: luma(238)),
+  word(1, "0x11", [Int], [2], fill: luma(238)),
+  word(2, "0x12", [Ctor Nil], [`NULL`], fill: luma(238)),
+  word(3, "0x13", [GC hdr], [size 3], fill: accent.lighten(85%)),
+  word(4, "0x14", [Int], [1], fill: accent.lighten(85%)),
+  word(5, "0x15", [Ctor Cons], [`0x10`], fill: accent.lighten(85%)),
+  word(6, "0x16", [GC hdr], [size 4], fill: rgb("#e3ecf5")),
+  word(7, "0x17", [Clos hdr], [env 2, `@0140`], fill: rgb("#e3ecf5")),
+  word(8, "0x18", [Ctor Cons], [`0x13`], fill: rgb("#e3ecf5")),
+  word(9, "0x19", [Int], [7], fill: rgb("#e3ecf5")),
+
+  obj(1, [list `[2]`]),
+  obj(4, [list `[1; 2]`]),
+  obj(8, [closure]),
+  reg(3, "A1"),
+  reg(6, "SELF"),
+
+  edge(<w5>, <w0>, "-|>", bend: -35deg),
+  edge(<w8>, <w3>, "-|>", bend: -35deg),
+  edge(<r-A1>, <w3>, "-|>"),
+  edge(<r-SELF>, <w6>, "-|>"),
+))
+
 == Pipeline
 
 ```
