@@ -1,5 +1,6 @@
 #import "/template/lib.typ": *
 #import "/template/bench.typ": *
+#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
 #show: encore-theme.with(
   title: [Encore],
@@ -309,6 +310,60 @@ The name comes from the VM's single calling opcode: `ENCORE`.
 - In French, *encore* means *again*, *still*, *more*
 
 = Encore: compiler and VM
+
+== VM architecture
+
+// A row of labelled cells, for the register file and the arena.
+#let strip(..cells) = grid(
+  columns: cells.pos().map(c => c.at(1)),
+  stroke: 0.6pt + luma(90),
+  inset: (x: 5pt, y: 7pt),
+  align: center + horizon,
+  ..cells.pos().map(c => grid.cell(fill: c.at(2, default: none), c.at(0))),
+)
+#let part(title, body, note: none) = block[
+  #text(size: 16pt, weight: "bold")[#title]
+  #v(-0.5em)
+  #body
+  #if note != none { v(-0.5em); text(size: 13pt, fill: muted, note) }
+]
+#let op(body) = text(size: 13pt, raw(body))
+
+#align(center + horizon, text(size: 15pt, diagram(
+  spacing: (2.2cm, 1.5cm),
+  node-stroke: 0.8pt + luma(60),
+  node-inset: 8pt,
+  node-corner-radius: 3pt,
+  edge-stroke: 0.8pt + luma(60),
+  mark-scale: 80%,
+
+  node((0, 0), name: <code>, part([Bytecode (flash)], [code · arity table], note: [read-only, `u16` code pointers])),
+  node((1, 0), name: <regs>, part([Register file: 256 values], strip(
+    ([`SELF`], auto, accent.lighten(80%)),
+    ([`CONT`], auto, accent.lighten(80%)),
+    ([`A1`–`A8`], auto),
+    ([`X01` …], 2.2cm),
+    ([`NULL`], auto, luma(230)),
+  ), note: [no stack, no frames])),
+  node((2, 0), name: <host>, part([Rust host], [`extern_fns[32]` \ `fn(Value) -> Value`])),
+  node((1, 1), name: <arena>, part([Arena: one fixed `&mut [Value]` (RAM)], strip(
+    ([heap], 3.2cm, accent.lighten(80%)),
+    ([`hp` →], auto),
+    ([free], 3cm),
+    ([globals], auto, luma(230)),
+  ), note: [bump allocation, no `malloc`])),
+  node((2, 1), name: <gc>, part([Mark-compact GC], [roots: registers + globals], note: [in place, on allocation failure])),
+
+  edge(<code>, <regs>, "-|>", label: op("ENCORE"), label-side: left),
+  edge(<regs>, <host>, "<|-|>", label: op("EXTERN"), label-side: left),
+  edge(<regs>, <arena>, "-|>", label: op("PACK · CLOSURE"), label-side: right, shift: -0.35cm),
+  edge(<arena>, <regs>, "-|>", label: op("FIELD · CAPTURE · GLOBAL"), label-side: right, shift: -0.35cm),
+  edge(<gc>, <arena>, "-|>", label: text(size: 13pt)[compacts], label-side: right),
+)))
+#v(0.6em)
+#align(center, text(size: 16pt, fill: muted)[
+  All VM state is 256 registers and one arena the host hands over: no stack, no `malloc`, no OS.
+])
 
 == Pipeline
 
