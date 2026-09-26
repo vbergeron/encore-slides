@@ -7,3 +7,4 @@ Logos used on the slides, each from its project's own repository:
 - `rust.svg`: rust-lang/rust-artwork, `logo/rust-logo.svg`
 - `scheme.svg`: drawn for this deck after Scheme's traditional lambda emblem
 - `chibi.png`: provided by the author
+- `ribbit.png`: provided by the author

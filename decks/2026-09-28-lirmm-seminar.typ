@@ -154,12 +154,14 @@
 
 == Ribbit
 
-- A compact Scheme *VM*: the compiler `rsc.scm` emits bytecode and a minimal VM in C
-- On the target: generated from `build.rs`, patched for a static heap and a
-  semihosting shim, cross-compiled for Cortex-M35P
-- #text(fill: rgb("#2e7d32"), weight: "bold")[✓ The binary fits]
-- #text(fill: accent, weight: "bold")[✗ No `quasiquote`: it cannot compile the extracted code.]
-  The test ran hand-written Scheme: the verified logic never ran on the device
+#logo-slide("ribbit.png", height: 1.4cm)[
+  - A compact Scheme *VM*: the compiler `rsc.scm` emits bytecode and a minimal VM in C
+  - On the target: generated from `build.rs`, patched for a static heap and a
+    semihosting shim, cross-compiled for Cortex-M35P
+  - #text(fill: rgb("#2e7d32"), weight: "bold")[✓ The binary fits]
+  - #text(fill: accent, weight: "bold")[✗ No `quasiquote`: it cannot compile the extracted code.]
+    The test ran hand-written Scheme: the verified logic never ran on the device
+]
 
 == Scheme runtimes on the target
 
