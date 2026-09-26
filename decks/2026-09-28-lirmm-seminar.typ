@@ -143,12 +143,14 @@
 
 == Chibi Scheme
 
-- A small, embeddable *interpreter* written in C
-- On the target: the C runtime, about 50 files, cross-compiled with custom
-  POSIX stubs
-- The extracted Scheme is embedded as a C string literal, *loaded and
-  evaluated on every boot*
-- #text(fill: accent, weight: "bold")[✗ The binary exceeds the 256 KB flash budget]
+#logo-slide("chibi.png", height: 2.2cm)[
+  - A small, embeddable *interpreter* written in C
+  - On the target: the C runtime, about 50 files, cross-compiled with custom
+    POSIX stubs
+  - The extracted Scheme is embedded as a C string literal, *loaded and
+    evaluated on every boot*
+  - #text(fill: accent, weight: "bold")[✗ The binary exceeds the 256 KB flash budget]
+]
 
 == Ribbit
 
