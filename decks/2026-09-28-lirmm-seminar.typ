@@ -35,7 +35,7 @@
 
 #hero[Standard extraction targets for proof assistants \ need runtimes too large for embedded devices.]
 
-= State of the art
+= Introduction
 
 == Why verify firmware logic
 
@@ -47,6 +47,53 @@
 - But extracted code needs a runtime, and the usual answer is to *translate
   the specification by hand* into the host language, weakening the link to
   the proof
+
+= A firmware architecture for proof
+
+== Firmware as a state transition
+
+#text(size: 18pt)[Push the pure frontier as far as it goes: *maximise the part Rocq can prove*.]
+#v(0.2em)
+#align(center, text(size: 22pt)[`step : State × Event → State × list Effect`])
+#v(0.3em)
+- *State*: the application's; *Event*: from the device (APDU, button);
+  *Effect*: a description of what to do, interpreted by the host
+- Copy instead of mutate, describe effects instead of performing them
+- The *event poller* and *effect interpreter* are the unverified boundary:
+  its size does not grow with the application
+- Hashes, CRCs, field arithmetic: admitted as axioms, provided as host callbacks
+
+== What is proved, what is trusted
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 1cm,
+  [
+    *Proved in Rocq*
+    - the `step` function and its lemmas
+    - grows with the application
+  ],
+  [
+    *Trusted*
+    - Rocq kernel and extraction
+    - the compiler and VM that run it
+    - the Rust compiler
+    - host callbacks for admitted axioms
+    - event poller and effect interpreter
+  ],
+)
+#v(0.5em)
+#text(size: 17pt, fill: muted)[The trusted boundary changes only when new hardware actions, externs or primitives are added. \ Left to find: a way to run the proved `step` on a 50 KB chip.]
+
+= Why did we build Encore?
+
+== The approach
+
++ *Fix the constraint first*: 50 KB of RAM, no hosted runtime
++ *Survey the extraction paths*: Lean 4, OCaml, CertiRocq, Scheme
++ *Pick Scheme extraction*: compact, untyped, no mandatory runtime
++ *Try existing Scheme runtimes on the target* before writing one: Chibi, Ribbit
++ *Build a purpose-built runtime* for the Scheme that Rocq actually emits
 
 == The target: ST33 secure elements
 
@@ -67,16 +114,6 @@
     - Applications often ship with *no runtime at all*
   ],
 )
-
-= Why did we build Encore?
-
-== The approach
-
-+ *Fix the constraint first*: 50 KB of RAM, no hosted runtime
-+ *Survey the extraction paths*: Lean 4, OCaml, CertiRocq, Scheme
-+ *Pick Scheme extraction*: compact, untyped, no mandatory runtime
-+ *Try existing Scheme runtimes on the target* before writing one: Chibi, Ribbit
-+ *Build a purpose-built runtime* for the Scheme that Rocq actually emits
 
 == Extraction paths
 
@@ -199,40 +236,7 @@ The name comes from the VM's single calling opcode: `ENCORE`.
 - There is no call stack
 - In French, *encore* means *again*, *still*, *more*
 
-= Architecture
-
-== Firmware as a state transition
-
-#align(center, text(size: 22pt)[`step : State × Event → State × list Effect`])
-#v(0.3em)
-- *State*: the application's; *Event*: from the device (APDU, button);
-  *Effect*: a description of what to do, interpreted by the host
-- Copy instead of mutate, describe effects instead of performing them
-- The *event poller* and *effect interpreter* are the unverified boundary:
-  its size does not grow with the application
-- Hashes, CRCs, field arithmetic: admitted as axioms, provided as host callbacks
-
-== What is proved, what is trusted
-
-#grid(
-  columns: (1fr, 1fr),
-  column-gutter: 1cm,
-  [
-    *Proved in Rocq*
-    - the `step` function and its lemmas
-    - grows with the application
-  ],
-  [
-    *Trusted*
-    - Rocq kernel and extraction
-    - Encore's Scheme frontend, compiler and VM
-    - the Rust compiler
-    - host callbacks for admitted axioms
-    - event poller and effect interpreter
-  ],
-)
-#v(0.5em)
-#text(size: 17pt, fill: muted)[The trusted boundary changes only when new hardware actions, externs or primitives are added.]
+= Encore: compiler and VM
 
 == Pipeline
 
