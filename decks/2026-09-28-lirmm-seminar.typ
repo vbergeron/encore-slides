@@ -178,6 +178,96 @@
   - Candidates on the target: *Chibi*, *Ribbit*, then our own
 ]
 
+== From Rocq to Scheme
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 0.8cm,
+  align: top,
+  [
+    #text(size: 14pt, fill: muted)[Gallina (W4, PIN state machine)]
+    #v(-0.3em)
+    #text(size: 14pt)[
+```coq
+Fixpoint digits_eqb (a b : list nat) : bool :=
+  match a, b with
+  | [], [] => true
+  | x :: a', y :: b' =>
+      if x =? y then digits_eqb a' b'
+      else false
+  | _, _ => false
+  end.
+```
+    ]
+  ],
+  [
+    #text(size: 14pt, fill: muted)[Extracted Scheme]
+    #v(-0.3em)
+    #text(size: 14pt)[
+```scheme
+(define digits_eqb (lambdas (a b)
+  (match a
+     ((Nil) (match b
+               ((Nil) `(True))
+               ((Cons _ _) `(False))))
+     ((Cons x a~)
+       (match b
+          ((Nil) `(False))
+          ((Cons y b~)
+            (match (@ eqb x y)
+               ((True) (@ digits_eqb a~ b~))
+               ((False) `(False)))))))))
+```
+    ]
+  ],
+)
+#v(0.2em)
+#text(size: 15pt)[
+  Curried functions (`lambdas`, `@`), constructors as tagged lists (#raw("`(Cons ,x ,l)")),
+  `match` on the tag. Even `bool` is a constructor: #raw("`(True)").
+]
+
+== macros_extr.scm
+
+Extracted code starts with `(load "macros_extr.scm")`: three macros, shipped with Rocq's Scheme extraction.
+
+#grid(
+  columns: (1.1fr, 1fr),
+  column-gutter: 0.8cm,
+  align: top,
+  text(size: 13pt)[
+    #text(size: 13pt, fill: muted, font: "Libertinus Serif")[In essence (simplified):]
+```scheme
+(define-syntax lambdas
+  (syntax-rules ()
+    ((lambdas () e) e)
+    ((lambdas (x) e) (lambda (x) e))
+    ((lambdas (x y ...) e)
+     (lambda (x) (lambdas (y ...) e)))))
+
+(define-syntax @
+  (syntax-rules ()
+    ((@ e) e)
+    ((@ f e) (f e))
+    ((@ f e1 e2 ...) (@ (f e1) e2 ...))))
+
+;; match: compare the tag (car) of a
+;; tagged list, bind its fields
+```
+  ],
+  [
+    #set text(size: 16pt)
+    - `lambdas`: a curried multi-argument function
+    - `@`: curried application, one argument at a time
+    - `match`: dispatch on a constructor's tag
+    - Constructors are plain quasiquoted lists
+    #v(0.3em)
+    *Encore makes them core primitives* instead of supporting `define-syntax`:
+    `@` becomes a saturated call after uncurrying, `match` the `MATCH` opcode,
+    a constructor the `PACK` opcode. Its only addition: `extern`, for host functions.
+  ],
+)
+
 == Chibi Scheme
 
 #logo-slide("chibi.png", height: 2.2cm)[
@@ -225,8 +315,6 @@ Rocq-extracted Scheme is *heavily curried* and already close to CPS form.
 - Every intermediate value is named: register allocation is natural
 - GC roots are trivial: every live register is a root, and CPS keeps them
   contiguous, so no stack scanning
-- Only the macros of `macros_extr.scm` are supported, as core primitives,
-  plus `define-extern` for host functions
 
 == The name
 
