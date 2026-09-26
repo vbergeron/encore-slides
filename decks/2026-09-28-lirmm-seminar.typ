@@ -3,7 +3,7 @@
 
 #show: encore-theme.with(
   title: [Encore],
-  subtitle: [A bytecode VM and compiler for Rocq-extracted programs],
+  subtitle: [From Rocq to Metal: formally verified microcontroller firmware],
   institution: [Encore — LIRMM Seminar],
   date: datetime(year: 2026, month: 9, day: 28),
   slug: "2026-09-28-lirmm-seminar",
@@ -13,18 +13,107 @@
   ),
 )
 
+#let simple-table(columns, size: 15pt, ..cells) = {
+  set text(size: size)
+  show table.cell.where(y: 0): set text(weight: "bold")
+  table(
+    columns: columns,
+    stroke: (x, y) => (bottom: if y == 0 { 0.8pt + black } else { 0.3pt + luma(220) }),
+    inset: (x: 8pt, y: 6pt),
+    ..cells,
+  )
+}
+
 == \
 
-#hero[Rocq extraction produces correct code. \ Running it anywhere below a full Lisp runtime hasn't.]
+#hero[Standard extraction targets for proof assistants \ need runtimes too large for embedded devices.]
 
-== The problem
+= State of the art
 
-- Rocq's extraction mechanism produces correct-by-construction Scheme code
-- Running it anywhere below a full Lisp runtime has historically meant a
-  large porting effort
-- *Encore fills that gap* — a bytecode interpreter with a built-in GC that
-  compiles to a `no_std` Rust crate and links into firmware with a fixed
-  heap budget
+== Why verify firmware logic
+
+- Generated code is getting cheap: *more code to review*, same assurance level
+- seL4 showed machine-checked correctness at the systems level; firmware
+  wants the same rigour
+- Formal specifications scale: a generated implementation is checked against
+  theorem statements
+- But extracted code needs a runtime, and the usual answer is to *translate
+  the specification by hand* into the host language, weakening the link to
+  the proof
+
+== The target: ST33 secure elements
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 1cm,
+  simple-table((auto, 1fr, 1fr),
+    [], [ST33K1M5], [ST33J2M0],
+    [ISA], [ARM + Thumb-2], [ARM + Thumb-2],
+    [Flash], [1.5 MB], [2 MB],
+    [RAM], [64 KB], [*50 KB*],
+    [Clock], [70 MHz], [60 MHz],
+    [Cache], [2 KB], [none],
+  ),
+  [
+    - *50 KB of RAM* is the binding constraint
+    - No libc, no libm, no Rust `std`
+    - Applications often ship with *no runtime at all*
+  ],
+)
+
+== Extraction paths
+
+#simple-table((auto, 1fr, auto, auto, auto),
+  [Path], [Runtime needs], [`no_std`], [Cortex-M], [Proof kept],
+  [*Lean 4*], [C++ library, ref-counting + cycle GC, tasks, hosted IO], [no], [no], [none],
+  [*OCaml / OMicroB*], [generational GC, libc/libm; OMicroB: AVR and PIC32 only], [no], [no], [none],
+  [*CertiRocq*], [GC-aware heap; Peano `nat`, no machine arithmetic], [partial], [partial], [compiler chain],
+  [*Scheme*], [compact semantics, no mandatory hosted runtime], [yes], [yes], [full],
+)
+#v(0.3em)
+#text(size: 15pt, fill: muted)[
+  Verified compilers (CompCert, CakeML) show the strongest story is possible;
+  small Scheme systems (PICOBIT, Ribbit) show Scheme fits a microcontroller.
+]
+
+= Why Encore
+
+== The approach
+
++ *Fix the constraint first*: 50 KB of RAM, no hosted runtime
++ *Survey the extraction paths*: Lean 4 and OCaml fall on their runtimes;
+  CertiRocq only for bounded allocation
++ *Pick Scheme extraction*: compact, untyped, no mandatory runtime
++ *Try existing Scheme runtimes on the target* before writing one
++ *Build a purpose-built runtime* for the Scheme that Rocq actually emits
+
+== Existing Scheme runtimes, on the target
+
+#simple-table((1fr, auto, auto, auto),
+  [], [Chibi], [Ribbit], [Encore],
+  [Runtime model], [interpreter], [VM], [VM],
+  [Runs Rocq-extracted Scheme], [✓], [✗ no quasiquote], [✓],
+  [Fits 256 KB flash], [✗], [✓], [✓],
+  [Pipeline complexity], [high], [medium], [low],
+  [Working bare-metal], [✗], [✓], [✓],
+)
+#v(0.3em)
+#text(size: 16pt)[
+  Chibi evaluates the source on every boot and is too big; Ribbit fits but runs
+  hand-written Scheme, not the extracted code. *Encore is the only one that does all four.*
+]
+
+== The key insight: CPS
+
+Rocq-extracted Scheme is *heavily curried* and already close to CPS form.
+
+- The CPS rewrite removes the call stack *semantically*; a register VM
+  removes it *physically*: no hidden control flow, no frames
+- Every intermediate value is named: register allocation is natural
+- GC roots are trivial: every live register is a root, and CPS keeps them
+  contiguous, so no stack scanning
+- Only the macros of `macros_extr.scm` are supported, as core primitives,
+  plus `define-extern` for host functions
 
 == The name
 
@@ -33,6 +122,41 @@ The name comes from the VM's single calling opcode: `ENCORE`.
 - Every function call sets the callee and continuation registers and jumps
 - There is no call stack
 - In French, *encore* means *again*, *still*, *more*
+
+= Architecture
+
+== Firmware as a state transition
+
+#align(center, text(size: 22pt)[`step : State × Event → State × list Effect`])
+#v(0.3em)
+- *State*: the application's; *Event*: from the device (APDU, button);
+  *Effect*: a description of what to do, interpreted by the host
+- Copy instead of mutate, describe effects instead of performing them
+- The *event poller* and *effect interpreter* are the unverified boundary:
+  its size does not grow with the application
+- Hashes, CRCs, field arithmetic: admitted as axioms, provided as host callbacks
+
+== What is proved, what is trusted
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 1cm,
+  [
+    *Proved in Rocq*
+    - the `step` function and its lemmas
+    - grows with the application
+  ],
+  [
+    *Trusted*
+    - Rocq kernel and extraction
+    - Encore's Scheme frontend, compiler and VM
+    - the Rust compiler
+    - host callbacks for admitted axioms
+    - event poller and effect interpreter
+  ],
+)
+#v(0.5em)
+#text(size: 17pt, fill: muted)[The trusted boundary changes only when new hardware actions, externs or primitives are added.]
 
 == Pipeline
 
@@ -48,16 +172,6 @@ extracted .scm
     ▼
   Value
 ```
-
-== encore_vm
-
-The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
-
-- Packed 32-bit values: closures, constructors, integers, byte strings
-- 256-register file, bump-allocation heap arena
-- Mark-compact garbage collector
-- Single calling convention: `ENCORE` opcode, set callee and continuation,
-  jump without returning
 
 == Compiler pipeline
 
@@ -76,7 +190,28 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   ],
 )
 
-= Results
+== The VM
+
+The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
+
+- Packed 32-bit values: closures, constructors, integers, byte strings
+- 256-register file, bump-allocation heap arena
+- Mark-compact garbage collector
+- Single calling convention: `ENCORE` opcode, set callee and continuation,
+  jump without returning
+
+== Host–VM interface
+
+The VM is a library inside a Rust application that keeps control of memory and I/O.
+
+- *Two entry points*: call a global or closure with typed arguments; register
+  externs the VM reaches through `EXTERN`
+- `#[derive(ValueEncode, ValueDecode)]` map Rust types to constructor tags
+- `VmList<T>`, `VmBytes`: lazy traversal, bounded copies into caller buffers
+- `build.rs` runs the compiler: `bytecode.bin` and `bindings.rs` (function
+  and constructor constants), so host and bytecode cannot drift apart
+
+= Experiment plan
 
 == Three ways to ship the same logic
 
@@ -191,74 +326,7 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   )
 }
 
-#let legend(minheap) = [
-  ✗ arena / ✗ stack: CertiRocq does not fit the RAM budget ·
-  † Encore heap full, the collector ran#if minheap != none [; smallest heap that passes: #minheap]
-]
-
-== W1 · APDU + BER-TLV parser
-
-#workload-slide("w1_apdu", n-label: [APDU (B)],
-  [Split an ISO 7816 command APDU, then parse the BER-TLV tree of its data field.],
-  thm: ("run_roundtrip", [an accepted APDU is exactly the encoding of what was parsed, and the decoder never runs out of fuel.]),
-  note: legend[10.5 KiB],
-)
-
-== W2 · Ethereum transaction decoder
-
-#workload-slide("w2_rlp", n-label: [calldata (B)],
-  [Strict RLP decoding of a legacy transaction, rendered to the screen the user approves.],
-  thm: ("what_you_see_is_what_you_sign", [two accepted payloads that show the same screen are the same bytes.]),
-  note: legend[16.75 KiB],
-)
-
-== W3 · BIP32 path policy
-
-#workload-slide("w3_policy", n-label: [rules],
-  [Check 16 signing requests (path, amount, destination) against the first N rules.],
-  thm: ("run_signs_only_compliant", [a request is signed iff some rule allows its path, amount and destination.]),
-  note: legend[1 KiB],
-)
-
-== W4 · PIN state machine
-
-#workload-slide("w4_pin", n-label: [APDUs],
-  [VERIFY, CHANGE, RESET RETRY COUNTER and SELECT over a stream of N commands.],
-  thm: ("tries_up_only_with_secret", [the retry counter never goes back up without the correct PIN or PUK.]),
-  note: legend(none),
-)
-
-== W5 · A/B firmware update
-
-#workload-slide("w5_update", n-label: [events],
-  [Download, seal, trial-boot and confirm images, with power cuts between flash writes.],
-  thm: ("power_cut_safe", [a cut after any number of writes still boots a valid image, never below the anti-rollback counter.]),
-  note: legend[28 KiB],
-)
-
-== W6 · COBS framing
-
-#workload-slide("w6_cobs", n-label: [frame (B)],
-  [Encode a frame so it contains no zero byte, then decode it back.],
-  thm: ("cobs_roundtrip", [`decode (encode l) = Some l`, and the encoding contains no zero.]),
-  note: [#legend[32.25 KiB] · Encore heap is 40 KiB here],
-)
-
-== W7 · FIDO credential store
-
-#workload-slide("w7_store", n-label: [entries],
-  [Register N credentials in a persistent red-black tree, then answer 32 assertions.],
-  thm: ("lookup_insert", [after `insert x v`, `lookup x` finds `v`, every other handle is unchanged, and the tree stays balanced.]),
-  note: legend[12.75 KiB],
-)
-
-== W8 · CRC-16 and CRC-32
-
-#workload-slide("w8_crc", n-label: [block (B)], c: false,
-  [Bit-serial CRCs streamed over a block: pure arithmetic, the least favourable case for a VM.],
-  thm: ("crc32_input_correct", [the loop computes the polynomial definition of the CRC, the remainder over GF(2).]),
-  note: [No CertiRocq variant yet · Rust does one table lookup per byte, Encore about 1,040 VM instructions per byte · † Encore heap full, the collector ran; smallest heap that passes: 0.5 KiB],
-)
+= Conclusion
 
 == Across workloads
 
@@ -278,6 +346,26 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   the 10 where CertiRocq runs out of arena or stack. The price is instructions:
   2–10× CertiRocq and 10–2,000× hand-written Rust, the worst on pure arithmetic (W8).
 ]
+
+== Takeaways
+
+- *Proved logic runs on bare metal*: extracted to Scheme, compiled by Encore,
+  deployed on a Ledger Flex, and within 50 KiB on all eight workloads, where
+  CertiRocq runs out of memory on 10 cases
+- *The price is instructions*: 2–10× CertiRocq, 10–2,000× hand-written Rust,
+  the worst on arithmetic
+- *The architecture scales*: the proved `step` grows with the application,
+  the trusted boundary does not
+
+== Next steps
+
+- *Prove the optimizer*: port the nine CPS passes and prove them
+  semantics-preserving, CompCert style
+- *Ahead-of-time Thumb-2 backend*: no interpreter dispatch; separates the cost
+  of interpretation from the CPS and GC model
+- *Verify the VM* with `rocq-of-rust`: a simulation between the CPS semantics
+  and the Rust interpreter, GC and `ENCORE` dispatch first
+- *Measure the rest*: cycles on real boards, GC pauses, proof effort
 
 == Quick start
 
