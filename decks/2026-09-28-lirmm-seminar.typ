@@ -47,18 +47,66 @@
 
 = Making firmware provable
 
-== Firmware as a state transition
+== Maximise the pure core
 
 #text(size: 18pt)[Push the pure frontier as far as it goes: *maximise the part Rocq can prove*.]
 #v(0.2em)
 #align(center, text(size: 22pt)[`step : State × Event → State × list Effect`])
 #v(0.3em)
-- *State*: the application's; *Event*: from the device (APDU, button);
-  *Effect*: a description of what to do, interpreted by the host
+- The whole application is one pure function: a state and an event in, the
+  next state and a list of effects out
 - Copy instead of mutate, describe effects instead of performing them
-- The *event poller* and *effect interpreter* are the unverified boundary:
-  its size does not grow with the application
-- Hashes, CRCs, field arithmetic: admitted as axioms, provided as host callbacks
+- Parsing, policy, state machines, storage layout: all Gallina, all under `step`
+- Proofs are stated over `step`: an invariant that holds before an event
+  holds after it
+
+== Admitted pure functions
+
+#text(size: 18pt)[Some functions are pure but not worth proving, or too slow in a VM: *axiomatise them*.]
+#v(0.2em)
+#text(size: 15pt)[
+```coq
+Parameter sha256 : bytes -> bytes.
+Axiom sha256_len : forall b, bytes_len (sha256 b) = 32.
+Extract Constant sha256 => "(extern (slot 3) b)".
+```
+]
+#v(0.2em)
+- Hashes, CRCs, MACs, signatures: still functions, so `step` stays pure
+- A `Parameter` for the function, an `Axiom` for each property the proofs use
+- Realised by an Encore extern, a host callback (often a hardware
+  accelerator), *trusted* to satisfy the axioms
+
+== A formal SDK
+
+#text(size: 18pt)[The contract between the proved code and the device, *written once in Rocq*.]
+#v(0.4em)
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 1cm,
+  {
+    set text(size: 19pt)
+    [*In Rocq: the SDK*]
+    [
+      - `Event`: APDU, button, timer
+      - `Effect`: send, write flash
+      - Axioms for admitted functions
+      - Extraction directives
+    ]
+  },
+  {
+    set text(size: 19pt)
+    [*On the host: its Rust side*]
+    [
+      - Event poller → `Event`
+      - `Effect` → device action
+      - Externs realising the axioms
+      - VM and driver loop around `step`
+    ]
+  },
+)
+#v(0.5em)
+#text(size: 17pt, fill: muted)[An application is a `State` and a `step`; the SDK and its host side are reused unchanged.]
 
 == What is proved, what is trusted
 
