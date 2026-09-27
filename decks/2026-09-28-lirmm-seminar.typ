@@ -553,20 +553,21 @@ let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
 
 == Compiler pipeline
 
-// An intermediate representation: its name on the left, what it is on the right,
-// and an optional note for the pass that rewrites it in place.
-#let ir(name, sub, body, note: none) = grid(
+// An intermediate representation: its name on the left, what it is on the right.
+#let ir(name, sub, body) = grid(
   columns: (1.6cm, 11.8cm),
   column-gutter: 0.3cm,
   align: (left + horizon, left + horizon),
   text(size: 18pt, weight: "bold", fill: accent)[#name],
   {
-    set par(leading: 0.45em)
     text(size: 13pt)[#text(fill: muted)[#sub:] #body]
-    if note != none { linebreak(); text(size: 12pt, fill: muted, style: "italic", note) }
   },
 )
 #let pass(body) = text(size: 12pt, body)
+// A pass that rewrites an IR in place, noted beside its box.
+// Same width as the optimizer box, so the notes line up with its left edge.
+#let aside(pos, body) = node(pos, stroke: none, inset: 6pt, block(width: 5.4cm,
+  align(left, text(size: 12pt, fill: muted, style: "italic", body))))
 
 #align(center + horizon, diagram(
   spacing: (1.6cm, 0.75cm),
@@ -577,15 +578,15 @@ let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
   mark-scale: 80%,
 
   node((0, 0), name: <src>, stroke: none, inset: 2pt, text(size: 14pt)[Scheme (Rocq) · Fleche]),
-  node((0, 1), name: <ds>, ir([DS], [direct style], [named binders, lambdas, applications, `match`],
-    note: [then uncurried: multi-argument lambdas, saturated calls])),
+  node((0, 1), name: <ds>, ir([DS], [direct style], [named binders, lambdas, applications, `match`])),
+  aside((1, 1), [then uncurried: multi-argument \ lambdas, saturated calls]),
   node((0, 2), name: <dsi>, ir([DSI], [de Bruijn indexed])[variables are indices, capture-safe]),
   node((0, 3), name: <cps>, ir([CPS], [continuations explicit])[only tail calls, `encore f(x) -> k`]),
-  node((1, 3), name: <opt>, inset: 6pt, align(center, text(size: 13pt)[
+  node((1, 3), name: <opt>, inset: 6pt, block(width: 5.4cm, align(center, text(size: 13pt)[
     #text(weight: "bold")[CPS optimizer] \
-    #text(size: 11pt, fill: muted)[simplify, rewrite, to a fixpoint]])),
-  node((0, 4), name: <asm>, ir([ASM], [registers], [`SELF`, `CONT`, `A1`–`A8`, `X01`…; captures, globals],
-    note: [then peephole-optimized])),
+    #text(size: 11pt, fill: muted)[simplify, rewrite, to a fixpoint]]))),
+  node((0, 4), name: <asm>, ir([ASM], [registers], [`SELF`, `CONT`, `A1`–`A8`, `X01`…; captures, globals])),
+  aside((1, 4), [then peephole-optimized]),
   node((0, 5), name: <bin>, fill: accent, stroke: none, inset: 8pt,
     text(size: 15pt, fill: white, weight: "bold")[ENCR bytecode]),
 
