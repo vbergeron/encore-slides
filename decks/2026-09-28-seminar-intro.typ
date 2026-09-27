@@ -136,6 +136,7 @@
 #grid(
   columns: (1fr, 1fr),
   column-gutter: 1cm,
+  align: top,
   [
     #text(size: 19pt, weight: "bold")[Critical logic]
     #v(-0.3em)
