@@ -1338,6 +1338,25 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
   2–10× CertiRocq and 10–2,000× hand-written Rust, the worst on pure arithmetic (W8).
 ]
 
+== Memory and GC across workloads
+
+#memory-table((
+  ([W1], "w1_apdu", [APDU + BER-TLV parser]),
+  ([W2], "w2_rlp", [Ethereum RLP decoder]),
+  ([W3], "w3_policy", [BIP32 path policy]),
+  ([W4], "w4_pin", [PIN state machine]),
+  ([W5], "w5_update", [A/B firmware update]),
+  ([W6], "w6_cobs", [COBS framing]),
+  ([W7], "w7_store", [FIDO credential store]),
+  ([W8], "w8_crc", [CRC-16 and CRC-32]),
+))
+#v(0.3em)
+#text(size: 16pt)[
+  Encore collects only when the heap is full, so it peaks at its 32 KiB heap
+  (40 KiB for W6) plus 5 KiB of stack; what is live after a collection is at most
+  28 KiB. Collection costs 3–22% of VM time, with pauses up to 309 k instructions.
+]
+
 == Takeaways
 
 - *Proved logic fits a secure-element budget*: extracted to Scheme, compiled
@@ -1345,6 +1364,8 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
   eight workloads, where CertiRocq runs out of memory on 10 cases
 - *The price is instructions*: 2–10× CertiRocq, 10–2,000× hand-written Rust,
   the worst on arithmetic
+- *Memory is fixed, not minimal*: a 32–40 KiB heap plus 5 KiB of stack whatever
+  the size, at most 28 KiB of it live; collection takes 3–22% of VM time
 - *The architecture scales*: the proved `step` grows with the application,
   the trusted boundary does not
 
@@ -1356,7 +1377,8 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
   of interpretation from the CPS and GC model
 - *Verify the VM* with `rocq-of-rust`: a simulation between the CPS semantics
   and the Rust interpreter, GC and `ENCORE` dispatch first
-- *Measure the rest*: cycles on real boards, GC pauses, proof effort
+- *Measure the rest*: cycles and GC pauses in time on real boards, a heap
+  sized to the live data, proof effort
 
 == Quick start
 

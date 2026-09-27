@@ -13,7 +13,13 @@
     "heap": 104,
     "heap_budget": 32768,
     "vm_ops": 66,
-    "ram": 5068
+    "ram": 5068,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 497,
@@ -34,7 +40,13 @@
     "heap": 612,
     "heap_budget": 32768,
     "vm_ops": 381,
-    "ram": 5576
+    "ram": 5576,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 1631,
@@ -55,7 +67,13 @@
     "heap": 5476,
     "heap_budget": 32768,
     "vm_ops": 3531,
-    "ram": 10440
+    "ram": 10440,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 20887,
@@ -76,7 +94,13 @@
     "heap": 32752,
     "heap_budget": 32768,
     "vm_ops": 35031,
-    "ram": 37736
+    "ram": 37736,
+    "gc": {
+     "count": 7,
+     "pct": 56.93,
+     "pause_max": 294480,
+     "live": 31912
+    }
    },
    "C": {
     "fail": "stack"
@@ -97,7 +121,13 @@
     "heap": 780,
     "heap_budget": 32768,
     "vm_ops": 333,
-    "ram": 5744
+    "ram": 5744,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 4817,
@@ -118,7 +148,13 @@
     "heap": 10052,
     "heap_budget": 32768,
     "vm_ops": 4961,
-    "ram": 15016
+    "ram": 15016,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 22338,
@@ -139,7 +175,13 @@
     "heap": 32632,
     "heap_budget": 32768,
     "vm_ops": 24814,
-    "ram": 37616
+    "ram": 37616,
+    "gc": {
+     "count": 2,
+     "pct": 13.2,
+     "pause_max": 90160,
+     "live": 3408
+    }
    },
    "C": {
     "fail": "arena"
@@ -158,7 +200,13 @@
     "heap": 32632,
     "heap_budget": 32768,
     "vm_ops": 49572,
-    "ram": 37616
+    "ram": 37616,
+    "gc": {
+     "count": 4,
+     "pct": 15.84,
+     "pause_max": 119280,
+     "live": 6620
+    }
    },
    "C": {
     "fail": "stack"
@@ -179,7 +227,13 @@
     "heap": 23368,
     "heap_budget": 32768,
     "vm_ops": 14756,
-    "ram": 28352
+    "ram": 28352,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 75445,
@@ -200,7 +254,13 @@
     "heap": 32588,
     "heap_budget": 32768,
     "vm_ops": 9979,
-    "ram": 37572
+    "ram": 37572,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 69680,
+     "live": 1556
+    }
    },
    "C": {
     "insns": 54475,
@@ -221,7 +281,13 @@
     "heap": 32588,
     "heap_budget": 32768,
     "vm_ops": 21095,
-    "ram": 37572
+    "ram": 37572,
+    "gc": {
+     "count": 1,
+     "pct": 7.45,
+     "pause_max": 76640,
+     "live": 2336
+    }
    },
    "C": {
     "insns": 115490,
@@ -242,7 +308,13 @@
     "heap": 32592,
     "heap_budget": 32768,
     "vm_ops": 63436,
-    "ram": 37576
+    "ram": 37576,
+    "gc": {
+     "count": 4,
+     "pct": 13.24,
+     "pause_max": 133280,
+     "live": 5356
+    }
    },
    "C": {
     "fail": "arena"
@@ -263,7 +335,13 @@
     "heap": 31056,
     "heap_budget": 32768,
     "vm_ops": 26542,
-    "ram": 36040
+    "ram": 36040,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 76365,
@@ -284,7 +362,13 @@
     "heap": 32660,
     "heap_budget": 32768,
     "vm_ops": 93914,
-    "ram": 37644
+    "ram": 37644,
+    "gc": {
+     "count": 4,
+     "pct": 4.41,
+     "pause_max": 48240,
+     "live": 628
+    }
    },
    "C": {
     "insns": 267450,
@@ -305,7 +389,13 @@
     "heap": 32664,
     "heap_budget": 32768,
     "vm_ops": 317452,
-    "ram": 37648
+    "ram": 37648,
+    "gc": {
+     "count": 12,
+     "pct": 3.93,
+     "pause_max": 48640,
+     "live": 684
+    }
    },
    "C": {
     "insns": 897012,
@@ -326,7 +416,13 @@
     "heap": 32664,
     "heap_budget": 32768,
     "vm_ops": 986811,
-    "ram": 37648
+    "ram": 37648,
+    "gc": {
+     "count": 36,
+     "pct": 3.79,
+     "pause_max": 48640,
+     "live": 592
+    }
    },
    "C": {
     "fail": "arena"
@@ -347,7 +443,13 @@
     "heap": 960,
     "heap_budget": 32768,
     "vm_ops": 455,
-    "ram": 5924
+    "ram": 5924,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 3328,
@@ -368,7 +470,13 @@
     "heap": 7952,
     "heap_budget": 32768,
     "vm_ops": 4176,
-    "ram": 12916
+    "ram": 12916,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 12406,
@@ -389,7 +497,13 @@
     "heap": 32684,
     "heap_budget": 32768,
     "vm_ops": 48954,
-    "ram": 37668
+    "ram": 37668,
+    "gc": {
+     "count": 2,
+     "pct": 4.74,
+     "pause_max": 57120,
+     "live": 1764
+    }
    },
    "C": {
     "insns": 172367,
@@ -410,7 +524,13 @@
     "heap": 32688,
     "heap_budget": 32768,
     "vm_ops": 492804,
-    "ram": 37672
+    "ram": 37672,
+    "gc": {
+     "count": 31,
+     "pct": 14.56,
+     "pause_max": 203760,
+     "live": 20000
+    }
    },
    "C": {
     "fail": "arena"
@@ -431,7 +551,13 @@
     "heap": 12216,
     "heap_budget": 32768,
     "vm_ops": 9679,
-    "ram": 17180
+    "ram": 17180,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 27405,
@@ -452,7 +578,13 @@
     "heap": 32560,
     "heap_budget": 32768,
     "vm_ops": 91252,
-    "ram": 37544
+    "ram": 37544,
+    "gc": {
+     "count": 4,
+     "pct": 5.39,
+     "pause_max": 62480,
+     "live": 2008
+    }
    },
    "C": {
     "insns": 266593,
@@ -473,7 +605,13 @@
     "heap": 32564,
     "heap_budget": 32768,
     "vm_ops": 887925,
-    "ram": 37548
+    "ram": 37548,
+    "gc": {
+     "count": 48,
+     "pct": 13.17,
+     "pause_max": 271440,
+     "live": 27592
+    }
    },
    "C": {
     "fail": "stack"
@@ -494,7 +632,13 @@
     "heap": 3760,
     "heap_budget": 40960,
     "vm_ops": 2596,
-    "ram": 8756
+    "ram": 8756,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 14066,
@@ -515,7 +659,13 @@
     "heap": 21532,
     "heap_budget": 40960,
     "vm_ops": 9904,
-    "ram": 26528
+    "ram": 26528,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 57661,
@@ -536,7 +686,13 @@
     "heap": 40888,
     "heap_budget": 40960,
     "vm_ops": 39217,
-    "ram": 45904
+    "ram": 45904,
+    "gc": {
+     "count": 2,
+     "pct": 10.1,
+     "pause_max": 112080,
+     "live": 5928
+    }
    },
    "C": {
     "fail": "arena"
@@ -555,7 +711,13 @@
     "heap": 40892,
     "heap_budget": 40960,
     "vm_ops": 162136,
-    "ram": 45908
+    "ram": 45908,
+    "gc": {
+     "count": 10,
+     "pct": 21.97,
+     "pause_max": 309360,
+     "live": 28172
+    }
    },
    "C": {
     "fail": "stack"
@@ -576,7 +738,13 @@
     "heap": 9256,
     "heap_budget": 32768,
     "vm_ops": 7711,
-    "ram": 14220
+    "ram": 14220,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    },
    "C": {
     "insns": 23398,
@@ -597,7 +765,13 @@
     "heap": 32684,
     "heap_budget": 32768,
     "vm_ops": 25052,
-    "ram": 37668
+    "ram": 37668,
+    "gc": {
+     "count": 1,
+     "pct": 4.42,
+     "pause_max": 51280,
+     "live": 940
+    }
    },
    "C": {
     "insns": 92613,
@@ -618,7 +792,13 @@
     "heap": 32692,
     "heap_budget": 32768,
     "vm_ops": 49118,
-    "ram": 37676
+    "ram": 37676,
+    "gc": {
+     "count": 2,
+     "pct": 4.59,
+     "pause_max": 56640,
+     "live": 2292
+    }
    },
    "C": {
     "fail": "arena"
@@ -637,7 +817,13 @@
     "heap": 32696,
     "heap_budget": 32768,
     "vm_ops": 257662,
-    "ram": 37680
+    "ram": 37680,
+    "gc": {
+     "count": 13,
+     "pct": 9.75,
+     "pause_max": 132960,
+     "live": 12036
+    }
    },
    "C": {
     "fail": "arena"
@@ -658,7 +844,13 @@
     "heap": 16336,
     "heap_budget": 32768,
     "vm_ops": 16651,
-    "ram": 21316
+    "ram": 21316,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0
+    }
    }
   },
   {
@@ -674,7 +866,13 @@
     "heap": 32660,
     "heap_budget": 32768,
     "vm_ops": 66383,
-    "ram": 37660
+    "ram": 37660,
+    "gc": {
+     "count": 2,
+     "pct": 3.39,
+     "pause_max": 48560,
+     "live": 356
+    }
    }
   },
   {
@@ -690,7 +888,13 @@
     "heap": 32672,
     "heap_budget": 32768,
     "vm_ops": 265311,
-    "ram": 37672
+    "ram": 37672,
+    "gc": {
+     "count": 8,
+     "pct": 3.35,
+     "pause_max": 50640,
+     "live": 356
+    }
    }
   },
   {
@@ -706,7 +910,13 @@
     "heap": 32672,
     "heap_budget": 32768,
     "vm_ops": 1061007,
-    "ram": 37672
+    "ram": 37672,
+    "gc": {
+     "count": 32,
+     "pct": 3.35,
+     "pause_max": 50640,
+     "live": 356
+    }
    }
   }
  ]

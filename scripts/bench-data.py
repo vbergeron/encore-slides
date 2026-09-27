@@ -7,7 +7,10 @@ Keeps the latest row for each (workload, variant, N) on the QEMU Cortex-M3
 board, with the default configurations of the study: E with the CPS
 optimizer on, C with its 20 KiB arena. For every case it gives
 instructions per run (median) and peak RAM: R static RAM + stack,
-C arena high-water + stack, E heap high-water + stack. A C case left out
+C arena high-water + stack, E heap high-water + stack, and for E the
+garbage collector's activity on the memory run: collections, share of VM
+time spent collecting, longest pause since boot (instructions) and bytes
+live after the latest collection. A C case left out
 of the run (it does not fit the RAM budget) is reported with its reason.
 """
 
@@ -67,6 +70,9 @@ def main(path):
             cell["heap_budget"] = r["build"]["heap_bytes"]
             cell["vm_ops"] = mem["vm_ops"]
             cell["ram"] = mem["heap_peak_bytes"] + r["stack_peak_bytes"]
+            gc = mem["gc"]
+            cell["gc"] = {"count": gc["count"], "pct": gc["pct"],
+                          "pause_max": gc["pause_max_since_boot"], "live": gc["live_bytes"]}
         case[v] = cell
 
     for (w, n), why in C_SKIPPED.items():
