@@ -305,10 +305,6 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
 - Single calling convention: `ENCORE` opcode, set callee and continuation,
   jump without returning
 
-== The name
-
-#hero[Named after the `ENCORE` opcode: \ in French, *encore* means *again*, *still*, *more*.]
-
 == VM architecture
 
 // A row of labelled cells, for the register file and the arena.
