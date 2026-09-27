@@ -186,7 +186,7 @@
   column-gutter: 0.8cm,
   align: top,
   [
-    #text(size: 14pt, fill: muted)[Gallina (W4, PIN state machine)]
+    #text(size: 14pt, fill: muted)[Gallina]
     #v(-0.3em)
     #text(size: 14pt)[
 ```coq
@@ -718,7 +718,7 @@ The VM is a library inside a Rust application that keeps control of memory and I
   - *Performance ceiling*: what the logic costs without proof
   - *Output oracle*: every Encore and CertiRocq output is hashed and compared with Rust's
     before any number is kept
-  - Memory-safe, but none of the workload properties are proved
+  - Memory-safe, but nothing about it is proved
 ]
 
 == Eight firmware workloads
