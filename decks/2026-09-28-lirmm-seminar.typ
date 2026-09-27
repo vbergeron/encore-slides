@@ -386,31 +386,30 @@ The name comes from the VM's single calling opcode: `ENCORE`.
 )
 #let typ(n) = ([#raw(n)], 8, typ-c)
 #let none-f = (text(fill: muted)[unused], 8)
-#let group(body) = grid.cell(colspan: 3, align: left, inset: (top: 6pt, bottom: 1pt), text(size: 13pt, weight: "bold", fill: accent, body))
-#let ex(..xs) = text(size: 11pt, xs.pos().map(raw).join(linebreak()))
+#let group(body) = grid.cell(colspan: 2, align: left, inset: (top: 6pt, bottom: 1pt), text(size: 13pt, weight: "bold", fill: accent, body))
 
 #align(center, text(size: 15pt, grid(
-  columns: (auto, 32 * bit-w, auto),
+  columns: (auto, 32 * bit-w),
   column-gutter: 0.5cm,
   row-gutter: 5pt,
-  align: (right + horizon, center + horizon, left + horizon),
+  align: (right + horizon, center + horizon),
   [], grid(
     columns: (16 * bit-w, 8 * bit-w, 8 * bit-w),
     align: center,
     ..([31 … 16], [15 … 8], [7 … 0]).map(t => text(size: 11pt, fill: muted, t)),
-  ), text(size: 11pt, fill: muted)[example],
+  ),
 
   group[Values: registers, globals, fields],
-  [Integer], bits(([signed integer, 24 bits], 24, num-c), typ("0x04")), ex("3  = 0x0000_0304", "-1 = 0xFFFF_FF04"),
-  [Function], bits(([code address], 16, code-c), none-f, typ("0x05")), ex("@0140 = 0x0140_0005"),
-  [Closure], bits(([heap address], 16, heap-c), none-f, typ("0x00")), ex("@0016 = 0x0016_0000"),
-  [Constructor], bits(([heap address · `NULL` if nullary], 16, heap-c), ([tag], 8), typ("0x01")), ex("Cons @0013 = 0x0013_0101", "Nil        = 0xFFFF_0001"),
-  [Bytes], bits(([heap address], 16, heap-c), none-f, typ("0x06")), ex("@0029 = 0x0029_0006"),
+  [Integer], bits(([signed integer, 24 bits], 24, num-c), typ("0x04")),
+  [Function], bits(([code address], 16, code-c), none-f, typ("0x05")),
+  [Closure], bits(([heap address], 16, heap-c), none-f, typ("0x00")),
+  [Constructor], bits(([heap address · `NULL` if nullary], 16, heap-c), ([tag], 8), typ("0x01")),
+  [Bytes], bits(([heap address], 16, heap-c), none-f, typ("0x06")),
 
   group[Headers: first words of a heap object],
-  [GC header], bits(([forwarding address], 16, heap-c), ([mark · size:7], 8, num-c), typ("0x03")), ex("size 3 = 0x0000_0303"),
-  [Closure header], bits(([code address], 16, code-c), ([env_len], 8, num-c), typ("0x02")), ex("env 2, @0140 = 0x0140_0202"),
-  [Bytes header], bits(([byte length, 24 bits], 24, num-c), typ("0x07")), ex("5 bytes = 0x0000_0507"),
+  [GC header], bits(([forwarding address], 16, heap-c), ([mark · size:7], 8, num-c), typ("0x03")),
+  [Closure header], bits(([code address], 16, code-c), ([env_len], 8, num-c), typ("0x02")),
+  [Bytes header], bits(([byte length, 24 bits], 24, num-c), typ("0x07")),
 )))
 #v(0.2em)
 #align(center, text(size: 14pt, fill: muted)[
