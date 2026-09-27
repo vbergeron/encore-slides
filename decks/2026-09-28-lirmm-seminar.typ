@@ -1364,6 +1364,8 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
   CertiRocq runs out of memory on 10 cases
 - *The price is instructions*: 2–10× CertiRocq, 10–2,000× hand-written Rust,
   the worst on arithmetic
+- *Memory is fixed, not minimal*: a 32–40 KiB heap plus 5 KiB of stack whatever
+  the size, at most 28 KiB of it live; collection takes 3–22% of VM time
 - *The architecture scales*: the proved `step` grows with the application,
   the trusted boundary does not
 
@@ -1375,7 +1377,8 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
   of interpretation from the CPS and GC model
 - *Verify the VM* with `rocq-of-rust`: a simulation between the CPS semantics
   and the Rust interpreter, GC and `ENCORE` dispatch first
-- *Measure the rest*: cycles on real boards, GC pauses, proof effort
+- *Measure the rest*: cycles and GC pauses in time on real boards, a heap
+  sized to the live data, proof effort
 
 == Quick start
 
