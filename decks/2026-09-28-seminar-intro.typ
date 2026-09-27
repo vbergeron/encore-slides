@@ -30,9 +30,9 @@
     codebases: how we apply formal methods to industrial goals, and how we
     generate proofs
   ]),
-  item("2", [Encore: carrying Rocq proofs down to firmware], [
-    Rocq → Scheme → Encore: properties proved at the source still hold on
-    bare-metal firmware, with no operating system beneath it
+  item("2", [Encore: running Rocq programs on microcontrollers], [
+    A compiler and bytecode VM for Rocq programs extracted to Scheme, running
+    on bare-metal targets with no operating system
   ]),
   item("3", [Zorya: concolic execution of Go binaries], [
     Not a formal method, but the same constraint-solving machinery: exploring
