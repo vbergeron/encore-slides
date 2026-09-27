@@ -65,7 +65,7 @@
   entry([Scala + tacit], [Scala is historically our backend language]),
   entry([CUE as an ontology], [Domain concepts described in CUE]),
   entry([Critical logic in Rocq], [Served by an OCaml + gRPC service]),
-  entry([Rocq as a spec], [Data structures modelled in Rocq]),
+  entry([Rocq as a spec], [Data structures designed in Rocq]),
 )
 
 #let logo(file, height: 1.6cm) = place(
@@ -149,9 +149,8 @@
     #text(size: 19pt, weight: "bold")[Rocq as a spec]
     #v(-0.3em)
     #text(size: 14pt)[
-      - Data structures modelled in Rocq
-      - Invariants stated and proved on the model
-      - The model is the reference the implementation follows
+      - Data structures designed in Rocq
+      - Published as a document that references the proofs
     ]
   ],
 )
