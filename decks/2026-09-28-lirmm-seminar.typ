@@ -587,16 +587,202 @@ extracted .scm
   ],
 )
 
+// A code listing on a light panel, with an optional caption above it.
+#let codebox(caption: none, size: 12pt, body) = {
+  if caption != none { block(below: 5pt, text(size: 13pt, weight: "bold", fill: accent, caption)) }
+  block(above: 5pt, fill: luma(242), inset: 9pt, radius: 3pt, width: 100%, text(size: size, body))
+}
+
 == Host–VM interface
 
 The VM is a library inside a Rust application that keeps control of memory and I/O.
 
-- *Two entry points*: call a global or closure with typed arguments; register
-  externs the VM reaches through `EXTERN`
-- `#[derive(ValueEncode, ValueDecode)]` map Rust types to constructor tags
-- `VmList<T>`, `VmBytes`: lazy traversal, bounded copies into caller buffers
-- `build.rs` runs the compiler: `bytecode.bin` and `bindings.rs` (function
-  and constructor constants), so host and bytecode cannot drift apart
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 0.8cm,
+  align: top,
+  [
+    #codebox(caption: [Host → VM: call a global or a closure])[
+```rust
+encore_heap!(HEAP, 40_000);  // static arena
+let mut vm = boot(HEAP())?;
+
+let r: StepResult =
+    vm.call_global(funcs::STEP, (state, Event::Inc))?;
+let y: i32 = vm.call_closure(&k, (x,))?;
+```
+    ]
+    #text(size: 14pt)[Arguments are encoded, the result decoded: \ type errors come back as `Err`, not a trap.]
+  ],
+  [
+    #codebox(caption: [VM → host: `EXTERN` slots])[
+```
+let extern read_adc 0     # Fleche: slot 0
+let sample = read_adc 3
+```
+    ]
+    #codebox[
+```rust
+fn read_adc(vm: &mut Vm, ch: i32)
+    -> Result<i32, ExternError> {
+    Ok(adc::read(ch))
+}
+vm.register_extern(0, extern_fn!(read_adc));
+```
+    ]
+    #text(size: 14pt)[Up to 32 slots of `fn(Value) -> Value`: \ the only way the program touches the outside.]
+  ],
+)
+
+== `build.rs`: one source of truth
+
+#grid(
+  columns: (1.1fr, 1fr),
+  column-gutter: 0.8cm,
+  align: top,
+  [
+    #codebox(caption: [`build.rs` runs the compiler at `cargo build`])[
+```rust
+let src = fs::read_to_string("fsm.fleche")?;
+let (module, ctors) =
+    encore_fleche::parse_with_metadata(&src);
+pipeline::compile_to_dir_with_ctors(
+    &module, Some(OptimizeConfig::default()),
+    true,       // also emit bindings.rs
+    out_dir, &ctors)?;
+```
+    ]
+    #v(4pt)
+    #codebox(caption: [`main.rs` embeds both outputs])[
+```rust
+encore_vm::encore_program!(env!("OUT_DIR"));
+// include_bytes!("bytecode.bin")
+// mod bindings { include!("bindings.rs") }
+// use bindings::{ctors, funcs}; fn boot(..)
+```
+    ]
+  ],
+  [
+    #codebox(caption: [Generated `bindings.rs`])[
+```rust
+pub mod funcs {
+  pub const INIT: GlobalAddress = GlobalAddress::new(0);
+  pub const STEP: GlobalAddress = GlobalAddress::new(1);
+}
+pub mod ctors {
+  pub const NIL: u8 = 2;   pub const CONS: u8 = 3;
+  pub const PAIR: u8 = 4;  pub const INC: u8 = 5;
+  pub const DEC: u8 = 6;   pub const RESET: u8 = 7;
+  pub const PRINT: u8 = 8; pub const BEEP: u8 = 9;
+}
+```
+    ]
+    #v(4pt)
+    #text(size: 15pt)[
+      Globals and tags are numbered by the compiler. The host only uses names:
+      rename `Inc` in `fsm.fleche` and `ctors::INC` *stops compiling*.
+      Host and bytecode cannot drift apart.
+    ]
+  ],
+)
+
+== Typed values: `#[derive(ValueEncode, ValueDecode)]`
+
+#grid(
+  columns: (0.8fr, 1.2fr),
+  column-gutter: 0.8cm,
+  align: top,
+  [
+    #codebox(caption: [Fleche], size: 12pt)[
+```
+data Inc | Dec | Reset
+data Print(val) | Beep
+data Nil | Cons(head, tail)
+data Pair(fst, snd)
+
+let step = state -> event -> ...
+```
+    ]
+    #v(4pt)
+    #text(size: 15pt)[
+      - Enum: one variant per constructor
+      - Struct: a single constructor
+      - Fields in declaration order
+      - Decode checks the tag: a mismatch is `DecodeError::TypeMismatch`
+    ]
+  ],
+  [
+    #codebox(caption: [Rust host], size: 12pt)[
+```rust
+#[derive(ValueEncode)]           // Rust → VM
+enum Event {
+    #[ctor(ctors::INC)]   Inc,
+    #[ctor(ctors::DEC)]   Dec,
+    #[ctor(ctors::RESET)] Reset,
+}
+
+#[derive(ValueDecode)]           // VM → Rust
+enum Effect {
+    #[ctor(ctors::BEEP)]  Beep,
+    #[ctor(ctors::PRINT)] Print(i32),
+}
+
+#[derive(ValueDecode)]
+#[ctor(ctors::PAIR)]
+struct StepResult { state: i32, effects: VmList<Effect> }
+```
+    ]
+  ],
+)
+
+== Lists and bytes: `VmList<T>`, `VmBytes`
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 0.8cm,
+  align: top,
+  [
+    #codebox(caption: [`VmList<T>`: a handle to `Nil | Cons`])[
+```rust
+// lazy: decode one cell at a time, no copy
+let mut l = effects;
+while let Some((e, rest)) = l.next(&vm) {
+    handle(e);
+    l = rest;
+}
+
+// bounded: copy into a caller buffer
+let mut buf = [Effect::Beep; 4];
+let effs: &[Effect] =
+    effects.materialize(&vm, &mut buf)?;
+
+// in: a Rust slice, encoded on the call
+vm.call_global(funcs::SORT,
+               (VmList::view(&[3, 1, 2]),))?;
+```
+    ]
+  ],
+  [
+    #codebox(caption: [`VmBytes`: a handle to a heap byte string])[
+```rust
+let msg: VmBytes = vm.call_global(
+    funcs::HASH, (VmBytes::view(b"hello"),))?;
+
+let n  = msg.len(&vm);
+let b0 = msg.get(&vm, 0);
+
+let mut buf = [0u8; 32];
+let out: &[u8] = msg.materialize(&vm, &mut buf)?;
+```
+    ]
+    #v(4pt)
+    #text(size: 15pt)[
+      - A handle is one `Value`: `Copy`, no allocation on the host side
+      - Copies land in *caller-owned buffers*; too short is an `Err`, never an overflow
+      - No `alloc`: fits `#![no_std]` hosts
+    ]
+  ],
+)
 
 == Scheme runtimes on the target
 
