@@ -34,7 +34,7 @@
 
 == \
 
-#hero[Standard extraction targets for proof assistants \ need runtimes too large for embedded devices.]
+#hero[Code extracted from a proof assistant needs a runtime, \ and the usual ones are too large for a microcontroller.]
 
 = Introduction
 
@@ -49,7 +49,7 @@
   the specification by hand* into the host language, weakening the link to
   the proof
 
-= A firmware architecture for proof
+= Making firmware provable
 
 == Firmware as a state transition
 
