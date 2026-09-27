@@ -369,82 +369,194 @@ The name comes from the VM's single calling opcode: `ENCORE`.
   All VM state is 256 registers and one arena the host hands over: no stack, no `malloc`, no OS.
 ])
 
-== Values and the heap
+== Value representation
 
-// One 32-bit heap word: address, type, payload.
-#let word(x, addr, typ, val, fill: none) = node((x, 0), name: label("w" + str(x)),
-  width: 2.35cm, height: 1.7cm, inset: 3pt, corner-radius: 0pt, fill: fill,
+// A 32-bit word as a strip of fields: (body, bits, fill).
+#let bit-w = 0.4cm
+#let heap-c = accent.lighten(80%)
+#let code-c = rgb("#dce8f4")
+#let num-c = rgb("#f6eed3")
+#let typ-c = luma(225)
+#let bits(..fields) = grid(
+  columns: fields.pos().map(f => f.at(1) * bit-w),
+  stroke: 0.6pt + luma(90),
+  inset: (x: 3pt, y: 5pt),
+  align: center + horizon,
+  ..fields.pos().map(f => grid.cell(fill: f.at(2, default: none), text(size: 12pt, f.at(0)))),
+)
+#let typ(n) = ([#raw(n)], 8, typ-c)
+#let none-f = (text(fill: muted)[unused], 8)
+#let group(body) = grid.cell(colspan: 2, align: left, inset: (top: 6pt, bottom: 1pt), text(size: 13pt, weight: "bold", fill: accent, body))
+
+#align(center, text(size: 15pt, grid(
+  columns: (auto, 32 * bit-w),
+  column-gutter: 0.5cm,
+  row-gutter: 5pt,
+  align: (right + horizon, center + horizon),
+  [], grid(
+    columns: (bit-w,) * 32,
+    stroke: 0.4pt + luma(190),
+    fill: luma(242),
+    inset: (x: 0pt, y: 4pt),
+    align: center + horizon,
+    ..range(31, -1, step: -1).map(i => text(size: 8pt, fill: muted, str(i))),
+  ),
+
+  group[Values: registers, globals, fields],
+  [Integer], bits(([signed integer, 24 bits], 24, num-c), typ("0x04")),
+  [Function], bits(([code address], 16, code-c), none-f, typ("0x05")),
+  [Closure], bits(([heap address], 16, heap-c), none-f, typ("0x00")),
+  [Constructor], bits(([heap address · `NULL` if nullary], 16, heap-c), ([tag], 8), typ("0x01")),
+  [Bytes], bits(([heap address], 16, heap-c), none-f, typ("0x06")),
+
+  group[Headers: first words of a heap object],
+  [GC header], bits(([forwarding address], 16, heap-c), ([mark · size:7], 8, num-c), typ("0x03")),
+  [Closure header], bits(([code address], 16, code-c), ([env_len], 8, num-c), typ("0x02")),
+  [Bytes header], bits(([byte length, 24 bits], 24, num-c), typ("0x07")),
+)))
+#v(0.2em)
+#align(center, text(size: 14pt, fill: muted)[
+  Integers, functions and nullary constructors never allocate. \ Heap addresses are 16-bit word indices: at most 64 Ki words of arena.
+])
+
+== Heap objects
+
+// One heap word: address, raw hex, decoded meaning.
+#let word(pos, addr, hex, val, fill: none) = node(pos, name: label("w" + addr),
+  width: 2.5cm, height: 1.65cm, inset: 3pt, corner-radius: 0pt, fill: fill,
   stack(spacing: 5pt,
     text(size: 9pt, fill: muted, raw(addr)),
-    text(size: 12pt, weight: "bold", typ),
-    text(size: 11pt, val),
+    text(size: 10pt, raw(hex)),
+    text(size: 12pt, val),
   ),
 )
-#let reg(x, name) = node((x, 2), name: label("r-" + name), stroke: none, fill: luma(235), inset: 6pt, text(size: 13pt, raw(name)))
-#let obj(x, body) = node((x, 1), width: 2.35cm, stroke: none, inset: 2pt, text(size: 12pt, fill: muted, body))
-
-#grid(
-  columns: (1.15fr, 1fr),
-  column-gutter: 1cm,
-  align: horizon,
-  [
-    #set text(size: 13pt)
-    #grid(
-      columns: (2fr, 1fr, 1fr),
-      align: center,
-      inset: (x: 4pt, y: 6pt),
-      text(fill: muted)[31 … 16], text(fill: muted)[15 … 8], text(fill: muted)[7 … 0],
-      grid.cell(stroke: 0.8pt, fill: accent.lighten(80%))[*payload* (16)],
-      grid.cell(stroke: 0.8pt)[*meta* (8)],
-      grid.cell(stroke: 0.8pt, fill: luma(230))[*typ* (8)],
-    )
-    #v(-0.2em)
-    #text(size: 14pt)[
-      *One 32-bit word per value*: `typ` says how to read the rest.
-      Integers, functions and nullary constructors are *unboxed*;
-      a pointer targets its object's GC header.
-    ]
-  ],
-  simple-table((auto, 1fr), size: 13pt,
-    [typ], [payload / meta],
-    [Integer], [24-bit signed, over payload + meta],
-    [Function], [code address, no allocation],
-    [Closure], [heap address],
-    [Constructor], [heap address, tag in meta; `NULL` if nullary],
-    [Bytes], [heap address],
-    [Headers], [first words of a heap object],
-  ),
+// The value that refers to an object, as held in a register.
+#let root(y, name, reg, hex, val) = node((0, y), name: label("v" + str(y)), stroke: none, inset: 4pt,
+  align(right, stack(spacing: 4pt,
+    text(size: 15pt, weight: "bold", name),
+    text(size: 11pt)[#raw(reg) = #raw(hex)],
+    text(size: 11pt, fill: muted, val),
+  )),
 )
+#let o1 = rgb("#dce8f4")
+#let o2 = accent.lighten(85%)
 
-#v(0.3em)
 #align(center, diagram(
-  spacing: (0pt, 0.9cm),
+  spacing: (0pt, 1.3cm),
   node-stroke: 0.6pt + luma(90),
   edge-stroke: 0.8pt + accent,
   mark-scale: 80%,
 
-  word(0, "0x10", [GC hdr], [size 3], fill: luma(238)),
-  word(1, "0x11", [Int], [2], fill: luma(238)),
-  word(2, "0x12", [Ctor Nil], [`NULL`], fill: luma(238)),
-  word(3, "0x13", [GC hdr], [size 3], fill: accent.lighten(85%)),
-  word(4, "0x14", [Int], [1], fill: accent.lighten(85%)),
-  word(5, "0x15", [Ctor Cons], [`0x10`], fill: accent.lighten(85%)),
-  word(6, "0x16", [GC hdr], [size 4], fill: rgb("#e3ecf5")),
-  word(7, "0x17", [Clos hdr], [env 2, `@0140`], fill: rgb("#e3ecf5")),
-  word(8, "0x18", [Ctor Cons], [`0x13`], fill: rgb("#e3ecf5")),
-  word(9, "0x19", [Int], [7], fill: rgb("#e3ecf5")),
+  root(0, [pair `(3, 4)`], "A1", "0x0020_0201", [Ctor · tag 2 · `@0020`]),
+  word((2, 0), "0020", "0x0000_0303", [GC hdr · 3], fill: o1),
+  word((3, 0), "0021", "0x0000_0304", [Int 3], fill: o1),
+  word((4, 0), "0022", "0x0000_0404", [Int 4], fill: o1),
 
-  obj(1, [list `[2]`]),
-  obj(4, [list `[1; 2]`]),
-  obj(8, [closure]),
-  reg(3, "A1"),
-  reg(6, "SELF"),
+  root(1, [list `[1; 2]`], "A2", "0x0026_0101", [Cons · tag 1 · `@0026`]),
+  word((2, 1), "0023", "0x0000_0303", [GC hdr · 3], fill: o1),
+  word((3, 1), "0024", "0x0000_0204", [Int 2], fill: o1),
+  word((4, 1), "0025", "0xFFFF_0001", [Nil · `NULL`], fill: o1),
+  word((5, 1), "0026", "0x0000_0303", [GC hdr · 3], fill: o2),
+  word((6, 1), "0027", "0x0000_0104", [Int 1], fill: o2),
+  word((7, 1), "0028", "0x0023_0101", [Cons `@0023`], fill: o2),
 
-  edge(<w5>, <w0>, "-|>", bend: -35deg),
-  edge(<w8>, <w3>, "-|>", bend: -35deg),
-  edge(<r-A1>, <w3>, "-|>"),
-  edge(<r-SELF>, <w6>, "-|>"),
+  node((8, 1), stroke: none, inset: 10pt, align(left, text(size: 12pt, fill: accent)[
+    Pointers only go *down*: \ no mutation, so a field \ always holds an older object
+  ])),
+
+  root(2, [bytes `"hello"`], "A3", "0x0029_0006", [Bytes · `@0029`]),
+  word((2, 2), "0029", "0x0000_0403", [GC hdr · 4], fill: o1),
+  word((3, 2), "002A", "0x0000_0507", [Bytes hdr · 5], fill: o1),
+  word((4, 2), "002B", "0x6C6C_6568", [`h e l l`], fill: o1),
+  word((5, 2), "002C", "0x0000_006F", [`o` + pad], fill: o1),
+
+  node((1, 0), width: 0.6cm, stroke: none),
+  edge(<v0>, <w0020>, "-|>"),
+  edge(<v1>, (1, 1), (1, 0.5), (5, 0.5), <w0026>, "-|>", corner-radius: 6pt),
+  edge((7, 1.28), (2, 1.28), "-|>", bend: 22deg),
+  edge(<v2>, <w0029>, "-|>"),
 ))
+#v(0.2em)
+#align(center, text(size: 14pt, fill: muted)[
+  A value points at its object's GC header; `FIELD i` reads word `addr + 1 + i`.
+  Byte strings pack 4 bytes per word, little-endian. Addresses and tags are illustrative.
+])
+
+== Opcodes
+
+#let opgroup(body) = table.cell(colspan: 2, inset: (top: 7pt, bottom: 2pt, x: 0pt),
+  text(size: 15pt, weight: "bold", fill: accent, body))
+#let opc(name, args) = [#raw(name) #text(size: 12pt, fill: muted, raw(args))]
+
+#align(center + horizon, box({
+  set text(size: 16pt)
+  set align(left)
+  table(
+      columns: (auto, auto),
+      stroke: none,
+      inset: (x: 6pt, y: 4pt),
+      opgroup[Control],
+      opc("ENCORE", "rf rk"), [`SELF ← rf`, `CONT ← rk`, jump: *the only call*],
+      opc("FIN", "rs"), [halt, hand `rs` back to the host],
+      opgroup[Data movement],
+      opc("MOV", "rd rs"), [copy; stages arguments in `A1`–`A8`],
+      opc("GLOBAL · CAPTURE", ""), [read a global, or a slot of `SELF`],
+      opgroup[Allocation],
+      opc("PACK", "rd tag f…"), [build a constructor (nullary: no allocation)],
+      opc("CLOSURE", "rd @code c…"), [capture registers into a heap closure],
+      opgroup[Destructuring],
+      opc("BRANCH · MATCH", ""), [jump on a constructor tag],
+      opc("UNPACK", "rd tag rs"), [fields into consecutive registers],
+      opgroup[Primitives and host],
+      opc("ADD · EQ · LT …", ""), [24-bit integers; overflow traps],
+      opc("BYTES_*", ""), [length, get, concat, slice, equal],
+      opc("EXTERN", "rd ra slot"), [call a host function],
+    )
+}))
+
+== Bytecode: `digits_eqb`
+
+#grid(
+  columns: (1.25fr, 1fr),
+  column-gutter: 0.8cm,
+  align: horizon,
+  block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: 11pt)[
+```
+01dc  MOV     X01, A1            ; a
+01df  MOV     X02, A2            ; b
+01e2  GLOBAL  X03, g13           ; digits_eqb
+01e5  BRANCH  X01, @01ec, @0203  ; a: Nil | Cons
+01ec  BRANCH  X02, @01f3, @01f9  ; b: Nil | Cons
+01f3  PACK    A1, tag=1          ; True
+01f6  ENCORE  CONT, NULL         ; return
+01f9  UNPACK  X04, tag=3, X02
+01fd  PACK    A1, tag=0          ; False
+0200  ENCORE  CONT, NULL         ; return
+0203  UNPACK  X04, tag=3, X01    ; x, a~
+0207  BRANCH  X02, @020e, @0214  ; b: Nil | Cons
+020e  PACK    A1, tag=0          ; False
+0211  ENCORE  CONT, NULL         ; return
+0214  UNPACK  X06, tag=3, X02    ; y, b~
+0218  EQ      X08, X04, X06      ; eqb x y
+021c  BRANCH  X08, @0223, @0229  ; False | True
+0223  PACK    A1, tag=0          ; False
+0226  ENCORE  CONT, NULL         ; return
+0229  MOV     A1, X05            ; a~
+022c  MOV     A2, X07            ; b~
+022f  ENCORE  X03, CONT          ; tail call
+```
+  ]),
+  [
+    #set text(size: 16pt)
+    `digits_eqb a b` checks that two lists of digits are equal, element by element. As `encore disasm` prints it:
+    - *Uncurried*: both arguments arrive in `A1`, `A2`
+    - *`eqb` inlined* into a single `EQ`
+    - Each `match` is a `BRANCH` on the tag; `UNPACK` spills the fields
+    - `True` / `False` are `PACK`s with no fields: *no allocation*
+    - Return: `ENCORE CONT, NULL`
+    - Recursion: `ENCORE X03, CONT` passes its own continuation: *no stack growth*
+  ],
+)
 
 == Pipeline
 
