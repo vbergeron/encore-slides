@@ -772,6 +772,43 @@ fin f
   The rewrites loop while anything changes, within one fuel budget (100). \ Rewrites expose redexes; simplify removes them.
 ])
 
+== Simplify
+
+#align(center + horizon, diagram(
+  spacing: (1.6cm, 0.6cm),
+  node-stroke: 0.8pt + luma(60),
+  node-inset: 6pt,
+  node-corner-radius: 3pt,
+  edge-stroke: 0.8pt + luma(60),
+  mark-scale: 80%,
+
+  node((1, 0), name: <in>, stroke: none, inset: 2pt, text(size: 14pt)[CPS, after a rewrite]),
+  node((1, 1), name: <dce>, step[Dead code]),
+  aside((2, 1), [drop a binding its body never uses]),
+  node((1, 2), name: <copy>, step[Copy propagation]),
+  aside((2, 2), [`let y = x`: every `y` becomes `x`]),
+  node((1, 3), name: <fold>, step[Constant folding]),
+  aside((2, 3), [arithmetic, fields and matches on known values]),
+  node((1, 4), name: <beta>, step[β-contraction]),
+  aside((2, 4), [a continuation called once is inlined at its call]),
+  node((1, 5), name: <eta>, step[η-reduction]),
+  aside((2, 5), [`cont(x) => encore k(x)` becomes `k`]),
+  node((1, 6), name: <out>, fill: accent, stroke: none, inset: 7pt,
+    text(size: 15pt, fill: white, weight: "bold")[Simplified CPS]),
+
+  edge(<in>, <dce>, "-|>"),
+  edge(<dce>, <copy>, "-|>"),
+  edge(<copy>, <fold>, "-|>"),
+  edge(<fold>, <beta>, "-|>"),
+  edge(<beta>, <eta>, "-|>"),
+  edge(<eta>, <out>, "-|>"),
+  edge(<eta>, (1.36, 5), (1.36, 1), <dce>, "-|>"),
+))
+#v(0.2em)
+#align(center, text(size: 15pt, fill: muted)[
+  The steps loop while anything changes. None of them grows the code.
+])
+
 == ASM: registers
 
 #ir-slide[
