@@ -77,7 +77,7 @@
 #logo("scala.svg")
 #block(width: 85%)[
   #text(size: 16pt)[Scala is historically our backend language.
-  #link("https://github.com/lampepfl/tacit")[TACIT] (EPFL) is a safety harness
+  #link("https://github.com/lampepfl/tacit")[TACIT] (Odersky et al., CAIS 2026) is a safety harness
   for AI agents: *the agent writes Scala 3 code instead of calling tools*.]
 ]
 #v(0.2em)
@@ -93,6 +93,13 @@
   ],
   align(horizon, image("/assets/diagrams/tacit-overview.png", width: 100%)),
 )
+#place(bottom + left, text(size: 10pt, fill: luma(110))[
+  M. Odersky, Y. Zhao, Y. Xu, O. Bračevac, C. N. Pham.
+  _Securing Agents With Tracked Capabilities._ Proc. ACM Conference on AI and
+  Agentic Systems (CAIS), 2026, pp. 812–838.
+  #link("https://doi.org/10.1145/3786335.3813127")[doi:10.1145/3786335.3813127].
+  Figure from the TACIT repository.
+])
 
 == CUE as an ontology
 
