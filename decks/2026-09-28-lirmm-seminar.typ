@@ -88,14 +88,6 @@
 
 = Why did we build Encore?
 
-== The approach
-
-+ *Fix the constraint first*: 50 KB of RAM, no hosted runtime
-+ *Survey the extraction paths*: Lean 4, OCaml, CertiRocq, Scheme
-+ *Pick Scheme extraction*: compact, untyped, no mandatory runtime
-+ *Try existing Scheme runtimes on the target* before writing one: Chibi, Ribbit
-+ *Build a purpose-built runtime* for the Scheme that Rocq actually emits
-
 == The target: ST33 secure elements
 
 #grid(
@@ -301,6 +293,8 @@ Rocq-extracted Scheme is *heavily curried* and already close to CPS form.
 - GC roots are trivial: every live register is a root, and CPS keeps them
   contiguous, so no stack scanning
 
+= Encore: compiler and VM
+
 == The name
 
 The name comes from the VM's single calling opcode: `ENCORE`.
@@ -308,8 +302,6 @@ The name comes from the VM's single calling opcode: `ENCORE`.
 - Every function call sets the callee and continuation registers and jumps
 - There is no call stack
 - In French, *encore* means *again*, *still*, *more*
-
-= Encore: compiler and VM
 
 == VM architecture
 
@@ -349,8 +341,7 @@ The name comes from the VM's single calling opcode: `ENCORE`.
     text(fill: white)[#text(size: 20pt, weight: "bold")[Encore VM] \ #text(size: 13pt)[fetch · decode · dispatch]]),
   node((2, 1), name: <host>, part([Rust host], [`extern_fns[32]` \ `fn(Value) -> Value`])),
   node((1, 2), name: <arena>, part([Arena: one fixed `&mut [Value]` (RAM)], strip(
-    ([heap], 3.2cm, accent.lighten(80%)),
-    ([`hp` →], auto),
+    ([heap #h(1fr) `hp` →], 4.4cm, accent.lighten(80%)),
     ([free], 3cm),
     ([globals], auto, luma(230)),
   ), note: [bump allocation, no `malloc`])),
