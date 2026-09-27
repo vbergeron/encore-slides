@@ -1151,7 +1151,6 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
 // The same five stages on every variant slide, so the three read side by side.
 #let pipe-stages = ([Source], [Compiler], [Output], [Runtime], [Memory])
 #let pipe(..steps) = {
-  let arrow = text(fill: accent, size: 12pt)[↓]
   let rows = pipe-stages.zip(steps.pos()).map(((stage, step)) => (
     align(right + horizon, text(size: 12pt, fill: muted, stage)),
     align(center + horizon, text(size: 15pt, step)),
@@ -1159,8 +1158,8 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
   grid(
     columns: (auto, 1fr),
     column-gutter: 10pt,
-    row-gutter: 7pt,
-    ..rows.intersperse(([], align(center, arrow))).flatten(),
+    row-gutter: 12pt,
+    ..rows.flatten(),
   )
 }
 #let variant-card(name, role) = block(
