@@ -307,11 +307,7 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
 
 == The name
 
-The name comes from the VM's single calling opcode: `ENCORE`.
-
-- Every function call sets the callee and continuation registers and jumps
-- There is no call stack
-- In French, *encore* means *again*, *still*, *more*
+#hero[Named after the `ENCORE` opcode: \ in French, *encore* means *again*, *still*, *more*.]
 
 == VM architecture
 
