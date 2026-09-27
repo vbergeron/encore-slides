@@ -750,13 +750,9 @@ fin f
 
   // Zero-size content: the box takes its height from the rows it encloses,
   // without stretching the middle row.
-  node((0, 3), name: <simp>, enclose: ((0, 1), (0, 5)), inset: 8pt, width: 5cm,
-    box(width: 0pt, height: 0pt, place(center + horizon, block(width: 4.6cm, align(center, text(size: 13pt)[
-      #text(size: 15pt, weight: "bold")[Simplify] \
-      #text(size: 12pt)[dead code \ copy propagation \ constant folding \ β- and η-reduction]
-      #v(-0.3em)
-      #text(size: 11pt, fill: muted)[never grows the code \ runs to a fixpoint \ after every rewrite]
-    ]))))),
+  node((0, 3), name: <simp>, enclose: ((0, 1), (0, 5)), inset: 8pt, width: 3cm,
+    box(width: 0pt, height: 0pt, place(center + horizon,
+      text(size: 15pt, weight: "bold")[Simplify]))),
 
   edge(<in>, <glob>, "-|>"),
   edge(<glob>, <inl>, "-|>"),
