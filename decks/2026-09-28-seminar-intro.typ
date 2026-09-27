@@ -68,11 +68,47 @@
   entry([Rocq as a spec], [Data structures modelled in Rocq]),
 )
 
-== Boulodrome
+== Boulodrome: Rocq as an MCP server
 
-#text(size: 15pt, fill: luma(90))[Personal project]
+#text(size: 16pt)[Personal project. An MCP server that gives an AI assistant
+interactive access to Rocq through coq-lsp's Petanque API: *theorem proving
+becomes a tool-calling loop*.]
+#v(0.3em)
 
-- An MCP server that pairs the AI session with a proof session
+#let group(title, body) = [
+  #text(size: 16pt, weight: "bold", fill: rgb("#B5303B"))[#title]
+  #v(-0.5em)
+  #text(size: 13pt)[#body]
+]
+
+#grid(
+  columns: (1fr, 1.15fr),
+  column-gutter: 0.8cm,
+  stack(
+    spacing: 0.7em,
+    group([Explore], [`rocq_file_toc`, `rocq_search`, `rocq_inspect`,
+      `rocq_premises`]),
+    group([Prove], [`rocq_start_proof`, `rocq_try_tactics` (side-effect
+      free), `rocq_run_tactics`, `rocq_goals`, `rocq_undo` to any
+      indexed proof state]),
+    group([Check], [`rocq_verify`: the file compiles, and every theorem is
+      audited with `Print Assumptions` against a list of allowed axioms;
+      `rocq_proof_script` returns the committed tactics]),
+  ),
+  text(size: 11pt)[
+#text(size: 13pt, fill: luma(110))[`rocq_verify` output]
+```
+Verification of Foo.v:
+No compile errors.
+2 theorem(s)/lemma(s) checked for axioms:
+- plus_comm: closed, no axioms
+- shady_thm: DEPENDS ON UNLISTED AXIOM(S):
+    Classical_Prop.classic : forall P : Prop, P \/ ~ P
+
+NOT VERIFIED: see flagged item(s) above.
+```
+  ],
+)
 
 == Outlook
 
