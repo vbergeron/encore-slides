@@ -727,7 +727,7 @@ fin f
 #let step(name) = block(width: 4.4cm, align(center, text(size: 15pt, weight: "bold", name)))
 
 #align(center + horizon, diagram(
-  spacing: (1.6cm, 0.35cm),
+  spacing: (1.6cm, 0.6cm),
   node-stroke: 0.8pt + luma(60),
   node-inset: 6pt,
   node-corner-radius: 3pt,
@@ -736,18 +736,15 @@ fin f
 
   node((1, 0), name: <in>, stroke: none, inset: 2pt, text(size: 14pt)[CPS, from the transform]),
   node((1, 1), name: <glob>, step[Global inlining]),
-  aside((2, 1), [small non-recursive globals, once],
-    note: [`eqb` becomes `int.eq` in `digits_eqb`]),
+  aside((2, 1), [small non-recursive globals, once: `eqb` → `int.eq`]),
   node((1, 2), name: <inl>, step[Inlining]),
   aside((2, 2), [local functions under 8 nodes, never recursive]),
   node((1, 3), name: <hoist>, step[Hoisting]),
   aside((2, 3), [loop-invariant values out of recursive functions]),
   node((1, 4), name: <cse>, step[CSE]),
-  aside((2, 4), [a field, primitive or constructor computed twice: \ the second use reuses the first name],
-    note: [every value is named in CPS, so repeats are easy to spot; \ a repeated constructor saves an allocation]),
+  aside((2, 4), [a value computed twice reuses the first name]),
   node((1, 5), name: <contif>, step[Contification]),
-  aside((2, 5), [a non-recursive function that never escapes, \ always called with the same continuation `k`],
-    note: [one call: inlined; several: becomes a continuation, \ a plain jump with no closure and no `k` to pass]),
+  aside((2, 5), [a function with one continuation becomes a jump]),
   node((1, 6), name: <out>, fill: accent, stroke: none, inset: 7pt,
     text(size: 15pt, fill: white, weight: "bold")[Optimized CPS]),
 
