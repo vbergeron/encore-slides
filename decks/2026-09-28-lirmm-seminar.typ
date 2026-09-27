@@ -507,6 +507,195 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
     )
 }))
 
+== Compiler pipeline
+
+// An intermediate representation: its name, what it adds, and its shape.
+#let ir(name, sub, body) = block(width: 4.2cm)[
+  #text(size: 18pt, weight: "bold", fill: accent)[#name]
+  #v(-0.6em)
+  #text(size: 12pt, fill: muted)[#sub]
+  #v(-0.4em)
+  #text(size: 12pt, body)
+]
+#let pass(body) = text(size: 12pt, body)
+
+#align(center + horizon, diagram(
+  spacing: (2.4cm, 1.2cm),
+  node-stroke: 0.8pt + luma(60),
+  node-inset: 8pt,
+  node-corner-radius: 3pt,
+  edge-stroke: 0.8pt + luma(60),
+  mark-scale: 80%,
+
+  node((0, 2), name: <src>, stroke: none, text(size: 14pt)[Scheme (Rocq) · Fleche]),
+  node((0, 1), name: <ds>, ir([DS], [direct style])[named binders, lambdas, applications, `match`]),
+  node((1, 1), name: <dsi>, ir([DSI], [de Bruijn indexed])[variables are indices, capture-safe]),
+  node((2, 1), name: <cps>, ir([CPS], [continuations explicit])[every call is a tail call: `encore f(x) -> k`]),
+  node((3, 1), name: <asm>, ir([ASM], [registers])[`SELF`, `CONT`, `A1`–`A8`, `X01`…; captures, globals]),
+  node((3, 2), name: <bin>, fill: accent, stroke: none, inset: 10pt,
+    text(size: 16pt, fill: white, weight: "bold")[ENCR bytecode]),
+
+  edge(<src>, <ds>, "-|>", label: pass[parse, desugar], label-side: right),
+  edge(<ds>, <ds>, "-|>", bend: 130deg, loop-angle: 90deg, label: pass[uncurry], label-side: left),
+  edge(<ds>, <dsi>, "-|>", label: pass[resolve], label-side: left),
+  edge(<dsi>, <cps>, "-|>", label: pass[CPS \ transform], label-side: left),
+  edge(<cps>, <cps>, "-|>", bend: 130deg, loop-angle: 90deg, label: pass[optimize, to fixpoint], label-side: left),
+  edge(<cps>, <asm>, "-|>", label: pass[closure conv. \ reg. alloc.], label-side: left),
+  edge(<asm>, <asm>, "-|>", bend: 130deg, loop-angle: 90deg, label: pass[peephole], label-side: left),
+  edge(<asm>, <bin>, "-|>", label: pass[emit], label-side: left),
+))
+#v(0.4em)
+#align(center, text(size: 16pt, fill: muted)[
+  Each step makes one thing explicit: arities, binding structure, control flow, machine registers.
+])
+
+// A code panel for the IR walkthrough, in the style of the bytecode slide.
+#let ir-code(body, size: 11pt) = block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: size, body))
+#let ir-slide(code, body, size: 11pt) = grid(
+  columns: (1.2fr, 1fr),
+  column-gutter: 0.8cm,
+  align: horizon,
+  ir-code(code, size: size),
+  { set text(size: 16pt); body },
+)
+
+== DS: direct style
+
+#ir-slide(size: 13pt)[
+```
+(λ (a) (λ (b)
+  (match a
+    [()      (match b [() (True)] [(_ _) (False)])]
+    [(x a~)  (match b
+               [()     (False)]
+               [(y b~) (match ((eqb x) y)
+                         [() (False)]
+                         [() ((digits_eqb a~) b~)])])])))
+```
+#v(0.3em)
+#text(fill: muted)[after `uncurry`:]
+```
+(λ (a b)
+  ... (match (eqb x y) ...
+        [() (digits_eqb a~ b~)]) ...)
+```
+][
+  `digits_eqb` as the Scheme frontend produces it.
+  - A small λ-calculus: `Lambda`, `Apply`, `Let`, `Letrec`, `Ctor`, `Field`, `Match`, primitives
+  - Constructors are a *tag* and fields; `match` binds the fields
+  - `uncurry` turns `λa.λb` into `λ(a b)` and saturates calls: one `ENCORE`, not two
+]
+
+== DSI: de Bruijn indices
+
+#ir-slide(size: 13pt)[
+```
+(λ2
+  (match #1                            ; a
+    [0 (match #0 [0 (True)] [2 (False)])]
+    [2 (match #2                       ; b
+         [0 (False)]
+         [2 (match (eqb #3 #1)         ; x y
+              [0 (False)]
+              [0 (digits_eqb #2 #0)])])])) ; a~ b~
+```
+][
+  - Names become *indices*: `#0` is the innermost binder
+  - A case binds as many slots as it has fields: only the *arity* is left
+  - Globals sit at the bottom of the same environment
+  - No renaming or capture can go wrong in later passes
+]
+
+== CPS: explicit continuations
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 0.6cm,
+  align: top,
+  [
+    #text(size: 14pt, fill: muted)[after the transform (`Cons`/`Cons` branch)]
+    #ir-code[
+```
+let k25 = cont(r) => encore k18(r)
+let k28 = cont(r) =>
+  match r
+  | False => let c = ctor(0)
+             encore k25(c)
+  | True  => let k32 = cont(r) =>
+               encore k25(r)
+             encore digits_eqb(a~, b~) -> k32
+encore eqb(x, y) -> k28
+```
+    ]
+    #text(size: 15pt)[
+      - Every intermediate value is named
+      - `encore f(args) -> k`: jump, never return
+    ]
+  ],
+  [
+    #text(size: 14pt, fill: muted)[after the optimizer]
+    #ir-code[
+```
+letrec f(a, b) -> k =
+  match a
+  | Nil => match b
+    | Nil  => let c = ctor(1)
+              encore k(c)
+    | Cons => let c = ctor(0)
+              encore k(c)
+  | Cons x a~ => match b
+    | Nil => let c = ctor(0)
+             encore k(c)
+    | Cons y b~ =>
+      let e = int.eq(x, y)
+      match e
+      | False => let c = ctor(0)
+                 encore k(c)
+      | True  =>
+        encore digits_eqb(a~, b~) -> k
+fin f
+```
+    ]
+  ],
+)
+#text(size: 14pt, fill: muted)[
+  `eqb` inlined to `int.eq`; administrative continuations η-reduced: the recursive call reuses `k`, so it is a loop.
+]
+
+== ASM: registers
+
+#ir-slide[
+```
+let X01 = global 13
+letrec X02 = fun [] =                 ; no captures
+  let X01 = A1                        ; a
+  let X02 = A2                        ; b
+  let X03 = global 13                 ; digits_eqb
+  match X01
+  | Nil       => match X02
+    | Nil       => let A1 = ctor(1)   ; True
+                   encore CONT(A1) -> NULL
+    | Cons @X04 => let A1 = ctor(0)   ; False
+                   encore CONT(A1) -> NULL
+  | Cons @X04 => match X02            ; x a~
+    | Nil       => let A1 = ctor(0)
+                   encore CONT(A1) -> NULL
+    | Cons @X06 =>                    ; y b~
+      let X08 = int.eq(X04, X06)
+      match X08
+      | False => let A1 = ctor(0)
+                 encore CONT(A1) -> NULL
+      | True  => encore X03(X05, X07) -> CONT
+fin X02
+```
+][
+  - Names become *registers*: `SELF`, `CONT`, arguments `A1`–`A8`, locals `X01`…
+  - Free variables become *captures*, top-level names *globals*
+  - A case says where its fields land: `@X04` unpacks to `X04`, `X05`
+  - Returning is `encore CONT(A1) -> NULL`
+  - One step from bytecode: the emitter maps each node to an opcode
+]
+
 == Bytecode: `digits_eqb`
 
 #grid(
@@ -548,23 +737,6 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
     - `True` / `False` are `PACK`s with no fields: *no allocation*
     - Return: `ENCORE CONT, NULL`
     - Recursion: `ENCORE X03, CONT` passes its own continuation: *no stack growth*
-  ],
-)
-
-== Compiler pipeline
-
-#grid(
-  columns: (1fr, 1fr),
-  column-gutter: 1cm,
-  [
-    - *DS uncurry* — flattens curried lambdas
-    - *DSI resolve* — named binders to de Bruijn indices
-    - *CPS transform* — continuation-passing style
-  ],
-  [
-    - *CPS optimizer* — inlining, hoisting, CSE, contification
-    - *ASM resolve* — closure conversion, register assignment
-    - *ASM peephole* + *ASM emit* — ENCR binary output
   ],
 )
 
