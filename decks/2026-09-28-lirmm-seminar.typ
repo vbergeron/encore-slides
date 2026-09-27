@@ -32,10 +32,6 @@
   block(width: 78%, body)
 }
 
-== \
-
-#hero[Code extracted from a proof assistant needs a runtime, \ and the usual ones are too large for a microcontroller.]
-
 = Introduction
 
 == Why verify firmware logic
