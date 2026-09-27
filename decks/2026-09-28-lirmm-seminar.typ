@@ -553,43 +553,52 @@ let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
 
 == Compiler pipeline
 
-// An intermediate representation: its name, what it adds, and its shape.
-#let ir(name, sub, body) = block(width: 4.2cm)[
-  #text(size: 18pt, weight: "bold", fill: accent)[#name]
-  #v(-0.6em)
-  #text(size: 12pt, fill: muted)[#sub]
-  #v(-0.4em)
-  #text(size: 12pt, body)
-]
+// An intermediate representation: its name on the left, what it is on the right,
+// and an optional note for the pass that rewrites it in place.
+#let ir(name, sub, body, note: none) = grid(
+  columns: (1.6cm, 11.8cm),
+  column-gutter: 0.3cm,
+  align: (left + horizon, left + horizon),
+  text(size: 18pt, weight: "bold", fill: accent)[#name],
+  {
+    set par(leading: 0.45em)
+    text(size: 13pt)[#text(fill: muted)[#sub:] #body]
+    if note != none { linebreak(); text(size: 12pt, fill: muted, style: "italic", note) }
+  },
+)
 #let pass(body) = text(size: 12pt, body)
 
 #align(center + horizon, diagram(
-  spacing: (2.4cm, 1.2cm),
+  spacing: (1.6cm, 0.75cm),
   node-stroke: 0.8pt + luma(60),
-  node-inset: 8pt,
+  node-inset: 7pt,
   node-corner-radius: 3pt,
   edge-stroke: 0.8pt + luma(60),
   mark-scale: 80%,
 
-  node((0, 2), name: <src>, stroke: none, text(size: 14pt)[Scheme (Rocq) · Fleche]),
-  node((0, 1), name: <ds>, ir([DS], [direct style])[named binders, lambdas, applications, `match`]),
-  node((1, 1), name: <dsi>, ir([DSI], [de Bruijn indexed])[variables are indices, capture-safe]),
-  node((2, 1), name: <cps>, ir([CPS], [continuations explicit])[every call is a tail call: `encore f(x) -> k`]),
-  node((3, 1), name: <asm>, ir([ASM], [registers])[`SELF`, `CONT`, `A1`–`A8`, `X01`…; captures, globals]),
-  node((3, 2), name: <bin>, fill: accent, stroke: none, inset: 10pt,
-    text(size: 16pt, fill: white, weight: "bold")[ENCR bytecode]),
+  node((0, 0), name: <src>, stroke: none, inset: 2pt, text(size: 14pt)[Scheme (Rocq) · Fleche]),
+  node((0, 1), name: <ds>, ir([DS], [direct style], [named binders, lambdas, applications, `match`],
+    note: [then uncurried: multi-argument lambdas, saturated calls])),
+  node((0, 2), name: <dsi>, ir([DSI], [de Bruijn indexed])[variables are indices, capture-safe]),
+  node((0, 3), name: <cps>, ir([CPS], [continuations explicit])[only tail calls, `encore f(x) -> k`]),
+  node((1, 3), name: <opt>, inset: 6pt, align(center, text(size: 13pt)[
+    #text(weight: "bold")[CPS optimizer] \
+    #text(size: 11pt, fill: muted)[simplify, rewrite, to a fixpoint]])),
+  node((0, 4), name: <asm>, ir([ASM], [registers], [`SELF`, `CONT`, `A1`–`A8`, `X01`…; captures, globals],
+    note: [then peephole-optimized])),
+  node((0, 5), name: <bin>, fill: accent, stroke: none, inset: 8pt,
+    text(size: 15pt, fill: white, weight: "bold")[ENCR bytecode]),
 
-  edge(<src>, <ds>, "-|>", label: pass[parse, desugar], label-side: right),
-  edge(<ds>, <ds>, "-|>", bend: 130deg, loop-angle: 90deg, label: pass[uncurry], label-side: left),
+  edge(<src>, <ds>, "-|>", label: pass[parse, desugar], label-side: left),
   edge(<ds>, <dsi>, "-|>", label: pass[resolve], label-side: left),
-  edge(<dsi>, <cps>, "-|>", label: pass[CPS \ transform], label-side: left),
-  edge(<cps>, <cps>, "-|>", bend: 130deg, loop-angle: 90deg, label: pass[optimize, to fixpoint], label-side: left),
-  edge(<cps>, <asm>, "-|>", label: pass[closure conv. \ reg. alloc.], label-side: left),
-  edge(<asm>, <asm>, "-|>", bend: 130deg, loop-angle: 90deg, label: pass[peephole], label-side: left),
+  edge(<dsi>, <cps>, "-|>", label: pass[CPS transform], label-side: left),
+  edge(<cps>, <opt>, "-|>", shift: 0.12cm),
+  edge(<opt>, <cps>, "-|>", shift: 0.12cm),
+  edge(<cps>, <asm>, "-|>", label: pass[closure conversion, register allocation], label-side: left),
   edge(<asm>, <bin>, "-|>", label: pass[emit], label-side: left),
 ))
-#v(0.4em)
-#align(center, text(size: 16pt, fill: muted)[
+#v(0.2em)
+#align(center, text(size: 15pt, fill: muted)[
   Each step makes one thing explicit: arities, binding structure, control flow, machine registers.
 ])
 
