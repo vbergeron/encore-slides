@@ -1,0 +1,29 @@
+[tools]
+typst = "latest"
+
+[vars]
+deck = "decks/2026-09-28-lirmm-seminar.typ"
+
+[tasks.build]
+description = "Compile a deck to <stem>.pdf"
+usage = 'arg "[file]" default="{{vars.deck}}"'
+run = 'typst compile --root . "${usage_file}" "$(basename "${usage_file%.typ}").pdf"'
+
+[tasks.watch]
+description = "Live-recompile a deck while editing"
+usage = 'arg "[file]" default="{{vars.deck}}"'
+run = 'typst watch --root . "${usage_file}" "$(basename "${usage_file%.typ}").pdf"'
+
+[tasks.build-all]
+description = "Compile every deck into site/decks/"
+run = '''
+mkdir -p site/decks
+for f in decks/*.typ; do
+  typst compile --root . "$f" "site/decks/$(basename "${f%.typ}").pdf"
+done
+'''
+
+[tasks.bench-data]
+description = "Regenerate data/bench.json from encore-benchmarks results"
+usage = 'arg "[results]" default="../encore-benchmarks/results/benchmarks.jsonl"'
+run = 'python3 scripts/bench-data.py "${usage_results}" > data/bench.json'

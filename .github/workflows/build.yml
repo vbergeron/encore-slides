@@ -13,17 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: typst-community/setup-typst@v3
+      - uses: jdx/mise-action@v2
       - name: Compile all decks
-        run: |
-          mkdir -p out
-          for f in decks/*.typ; do
-            typst compile --root . "$f" "out/$(basename "${f%.typ}").pdf"
-          done
+        run: mise run build-all
       - uses: actions/upload-artifact@v4
         with:
           name: decks
-          path: out/*.pdf
+          path: site/decks/*.pdf
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -37,13 +33,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: typst-community/setup-typst@v3
+      - uses: jdx/mise-action@v2
       - name: Compile decks into the site
-        run: |
-          mkdir -p site/decks
-          for f in decks/*.typ; do
-            typst compile --root . "$f" "site/decks/$(basename "${f%.typ}").pdf"
-          done
+        run: mise run build-all
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
