@@ -65,14 +65,145 @@
   entry([Scala + tacit], [Scala is historically our backend language]),
   entry([CUE as an ontology], [Domain concepts described in CUE]),
   entry([Critical logic in Rocq], [Served by an OCaml + gRPC service]),
-  entry([Rocq as a spec], [Data structures modelled in Rocq]),
+  entry([Rocq as a spec], [Data structures designed in Rocq]),
 )
 
-== Boulodrome
+#let logo(file, height: 1.6cm) = place(
+  top + right, dy: -0.4cm, image("/assets/logos/" + file, height: height),
+)
 
-#text(size: 15pt, fill: luma(90))[Personal project]
+== Scala + TACIT
 
-- An MCP server that pairs the AI session with a proof session
+#logo("scala.svg")
+#block(width: 85%)[
+  #text(size: 16pt)[Scala is historically our backend language.
+  #link("https://github.com/lampepfl/tacit")[TACIT] (Odersky et al., CAIS 2026) is a safety harness
+  for AI agents: *the agent writes Scala 3 code instead of calling tools*.]
+]
+#v(0.2em)
+#grid(
+  columns: (1fr, 1.1fr),
+  column-gutter: 0.8cm,
+  text(size: 14pt)[
+    - Agent code is type-checked with *capture checking* in safe mode
+    - Capabilities (files, processes, network) are values in scope:
+      code cannot forge them or exceed its budget
+    - `Classified` data cannot leak out of pure sub-computations
+    - Exposed as an MCP server
+  ],
+  align(horizon, image("/assets/diagrams/tacit-overview.png", width: 100%)),
+)
+#place(bottom + left, text(size: 10pt, fill: luma(110))[
+  M. Odersky, Y. Zhao, Y. Xu, O. Bračevac, C. N. Pham.
+  _Securing Agents With Tracked Capabilities._ Proc. ACM Conference on AI and
+  Agentic Systems (CAIS), 2026, pp. 812–838.
+  #link("https://doi.org/10.1145/3786335.3813127")[doi:10.1145/3786335.3813127].
+  Figure from the TACIT repository.
+])
+
+== CUE as an ontology
+
+#logo("cue.svg")
+#block(width: 85%)[
+  #text(size: 16pt)[#link("https://cuelang.org")[CUE] is a constraint language
+  where *types and values are the same thing*: schemas, constraints and data
+  are merged by unification.]
+]
+#v(0.2em)
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 0.8cm,
+  text(size: 14pt)[
+    - Domain concepts and their constraints are written once, in CUE
+    - Unification is order-independent: definitions compose from several
+      files without precedence rules
+    - `cue vet` checks JSON or YAML data against the definitions
+  ],
+  text(size: 13pt)[
+```cue
+#Currency: "EUR" | "USD" | "CHF"
+
+#Account: {
+  id:       string & =~"^[A-Z]{2}[0-9]{8}$"
+  currency: #Currency
+  balance:  int & >=0
+}
+```
+  ],
+)
+
+== Rocq
+
+#logo("rocq.svg", height: 1cm)
+#block(width: 85%)[
+  #text(size: 16pt)[The logic where a mistake is costly is written in Rocq,
+  where its properties are proved.]
+]
+#v(0.4em)
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 1cm,
+  align: top,
+  [
+    #text(size: 19pt, weight: "bold")[Critical logic]
+    #v(-0.3em)
+    #text(size: 14pt)[
+      - Encoded and proved in Rocq
+      - Extracted to OCaml
+      - Served to the backend over gRPC
+    ]
+  ],
+  [
+    #text(size: 19pt, weight: "bold")[Rocq as a spec]
+    #v(-0.3em)
+    #text(size: 14pt)[
+      - Data structures designed in Rocq
+      - Published as a document that references the proofs
+    ]
+  ],
+)
+
+== Boulodrome: Rocq as an MCP server
+
+#text(size: 16pt)[Personal project. An MCP server that gives an AI assistant
+interactive access to Rocq through coq-lsp's Petanque API: *theorem proving
+becomes a tool-calling loop*.]
+#v(0.3em)
+
+#let group(title, body) = [
+  #text(size: 16pt, weight: "bold", fill: rgb("#B5303B"))[#title]
+  #v(-0.5em)
+  #text(size: 13pt)[#body]
+]
+
+#grid(
+  columns: (1fr, 1.15fr),
+  column-gutter: 0.8cm,
+  stack(
+    spacing: 0.7em,
+    group([Explore], [`rocq_file_toc`, `rocq_search`, `rocq_inspect`,
+      `rocq_premises`]),
+    group([Prove], [`rocq_start_proof`, `rocq_try_tactics` (side-effect
+      free), `rocq_run_tactics`, `rocq_goals`, `rocq_undo` to any
+      indexed proof state]),
+    group([Check], [`rocq_verify`: the file compiles, and every theorem is
+      audited with `Print Assumptions` against a list of allowed axioms;
+      `rocq_proof_script` returns the committed tactics]),
+  ),
+  text(size: 11pt)[
+#text(size: 13pt, fill: luma(110))[`rocq_verify` output]
+```
+Verification of Foo.v:
+No compile errors.
+2 theorem(s)/lemma(s) checked for axioms:
+- plus_comm: closed, no axioms
+- shady_thm: DEPENDS ON UNLISTED AXIOM(S):
+    Classical_Prop.classic : forall P : Prop, P \/ ~ P
+
+NOT VERIFIED: see flagged item(s) above.
+```
+  ],
+)
 
 == Outlook
 
