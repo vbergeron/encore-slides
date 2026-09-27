@@ -639,15 +639,23 @@ let y: i32 = vm.call_closure(&k, (x,))?;
 #grid(
   columns: (1fr, 1fr),
   column-gutter: 0.8cm,
+  row-gutter: 5pt,
   align: top,
-  [
-    #codebox(caption: [Fleche: `let extern`])[
+  codebox(caption: [Fleche: `let extern`])[
 ```
-let extern read_adc 0      # slot 0
+# bind the host function in slot 0
+let extern read_adc 0
 let sample = read_adc 3
 ```
-    ]
-    #codebox[
+    ],
+  codebox(caption: [Scheme / Rocq: `(extern (slot N) args…)`])[
+```scheme
+;; Extract Constant read_adc =>
+;;   "(extern (slot 0) ch)".
+(define read_adc (extern (slot 0) ch))
+```
+    ],
+  codebox[
 ```rust
 fn read_adc(vm: &mut Vm, ch: i32)
     -> Result<i32, ExternError> {
@@ -655,17 +663,8 @@ fn read_adc(vm: &mut Vm, ch: i32)
 }
 vm.register_extern(0, extern_fn!(read_adc));
 ```
-    ]
-  ],
-  [
-    #codebox(caption: [Scheme / Rocq: `(extern (slot N) args…)`])[
-```scheme
-;; Extract Constant read_adc =>
-;;   "(extern (slot 0) ch)".
-(define read_adc (extern (slot 0) ch))
-```
-    ]
-    #codebox[
+    ],
+  codebox[
 ```rust
 // args arrive packed in one constructor
 #[derive(ValueDecode)]
@@ -678,8 +677,7 @@ fn read_adc(vm: &mut Vm, AdcArgs(ch): AdcArgs)
 }
 vm.register_extern(0, extern_fn!(read_adc));
 ```
-    ]
-  ],
+    ],
 )
 #v(0.2em)
 #align(center, text(size: 15pt)[Up to 32 slots of `fn(Value) -> Value`: the only way the program touches the outside.])
