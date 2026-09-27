@@ -482,6 +482,71 @@ The name comes from the VM's single calling opcode: `ENCORE`.
   Byte strings pack 4 bytes per word, little-endian. Addresses and tags are illustrative.
 ])
 
+== Opcodes
+
+#let opgroup(body) = table.cell(colspan: 2, inset: (top: 7pt, bottom: 2pt, x: 0pt),
+  text(size: 12pt, weight: "bold", fill: accent, body))
+#let opc(name, args) = [#raw(name) #text(size: 10.5pt, fill: muted, raw(args))]
+
+#grid(
+  columns: (1.05fr, 1fr),
+  column-gutter: 0.8cm,
+  align: top,
+  [
+    #set text(size: 12.5pt)
+    #table(
+      columns: (auto, 1fr),
+      stroke: none,
+      inset: (x: 4pt, y: 3.5pt),
+      opgroup[Control],
+      opc("ENCORE", "rf rk"), [`SELF ← rf`, `CONT ← rk`, jump: *the only call*],
+      opc("FIN", "rs"), [halt, hand `rs` back to the host],
+      opgroup[Data movement],
+      opc("MOV", "rd rs"), [copy; stages arguments in `A1`–`A8`],
+      opc("GLOBAL · CAPTURE", ""), [read a global, or a slot of `SELF`],
+      opgroup[Allocation],
+      opc("PACK", "rd tag f…"), [build a constructor (nullary: no allocation)],
+      opc("CLOSURE", "rd @code c…"), [capture registers into a heap closure],
+      opgroup[Destructuring],
+      opc("BRANCH · MATCH", ""), [jump on a constructor tag],
+      opc("UNPACK", "rd tag rs"), [fields into consecutive registers],
+      opgroup[Primitives and host],
+      opc("ADD · EQ · LT …", ""), [24-bit integers; overflow traps],
+      opc("BYTES_*", ""), [length, get, concat, slice, equal],
+      opc("EXTERN", "rd ra slot"), [call a host function],
+    )
+  ],
+  [
+    #text(size: 12pt, fill: muted)[`digits_eqb` from W4 (PIN), as `encore disasm` prints it:]
+    #v(-0.4em)
+    #block(fill: luma(242), inset: 8pt, radius: 3pt, width: 100%, text(size: 10pt)[
+```
+01dc  MOV     X01, A1            ; a
+01df  MOV     X02, A2            ; b
+01e2  GLOBAL  X03, g13           ; digits_eqb
+01e5  BRANCH  X01, @01ec, @0203  ; Nil | Cons
+      …                          ; a = Nil
+0203  UNPACK  X04, tag=3, X01    ; x, a~
+0207  BRANCH  X02, @020e, @0214  ; Nil | Cons
+020e  PACK    A1, tag=0          ; False
+0211  ENCORE  CONT, NULL         ; return
+0214  UNPACK  X06, tag=3, X02    ; y, b~
+0218  EQ      X08, X04, X06      ; eqb, inlined
+021c  BRANCH  X08, @0223, @0229  ; False | True
+0223  PACK    A1, tag=0          ; False
+0226  ENCORE  CONT, NULL         ; return
+0229  MOV     A1, X05            ; a~
+022c  MOV     A2, X07            ; b~
+022f  ENCORE  X03, CONT          ; tail call
+```
+    ])
+    #text(size: 12.5pt)[
+      Uncurried: both arguments arrive in `A1`, `A2`. \
+      The recursive call keeps `CONT`: *no stack growth*.
+    ]
+  ],
+)
+
 == Pipeline
 
 ```
