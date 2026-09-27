@@ -460,6 +460,10 @@ The name comes from the VM's single calling opcode: `ENCORE`.
   word((6, 1), "0027", "0x0000_0104", [Int 1], fill: o2),
   word((7, 1), "0028", "0x0023_0101", [Cons `@0023`], fill: o2),
 
+  node((8, 1), stroke: none, inset: 10pt, align(left, text(size: 12pt, fill: accent)[
+    Pointers only go *down*: \ no mutation, so a field \ always holds an older object
+  ])),
+
   root(2, [bytes `"hello"`], "A3", "0x0029_0006", [Bytes · `@0029`]),
   word((2, 2), "0029", "0x0000_0403", [GC hdr · 4], fill: o1),
   word((3, 2), "002A", "0x0000_0507", [Bytes hdr · 5], fill: o1),
