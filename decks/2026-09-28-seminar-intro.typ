@@ -35,7 +35,7 @@
     on bare-metal targets with no operating system
   ]),
   item("3", [Zorya: concolic execution of Go binaries], [
-    Not a formal method, but the same constraint-solving machinery: exploring
-    the paths not taken at `CBranch` breakpoints to find bugs in real binaries
+    A concolic execution engine written in Rust, using Ghidra's P-Code as
+    intermediate representation and Z3 as solver
   ]),
 )
