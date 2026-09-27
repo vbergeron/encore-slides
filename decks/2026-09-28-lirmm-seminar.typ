@@ -548,7 +548,7 @@ The name comes from the VM's single calling opcode: `ENCORE`.
   ]),
   [
     #set text(size: 16pt)
-    The W4 (PIN) function from the Rocq-to-Scheme slide, as `encore disasm` prints it.
+    `digits_eqb a b` checks that two lists of digits are equal, element by element. As `encore disasm` prints it:
     - *Uncurried*: both arguments arrive in `A1`, `A2`
     - *`eqb` inlined* into a single `EQ`
     - Each `match` is a `BRANCH` on the tag; `UNPACK` spills the fields
