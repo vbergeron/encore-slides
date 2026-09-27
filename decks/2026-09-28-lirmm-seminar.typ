@@ -727,7 +727,7 @@ fin f
 #let step(name) = block(width: 4.4cm, align(center, text(size: 15pt, weight: "bold", name)))
 
 #align(center + horizon, diagram(
-  spacing: (1.6cm, 0.7cm),
+  spacing: (1.6cm, 0.35cm),
   node-stroke: 0.8pt + luma(60),
   node-inset: 6pt,
   node-corner-radius: 3pt,
@@ -743,9 +743,11 @@ fin f
   node((1, 3), name: <hoist>, step[Hoisting]),
   aside((2, 3), [loop-invariant values out of recursive functions]),
   node((1, 4), name: <cse>, step[CSE]),
-  aside((2, 4), [reuse a value already named]),
+  aside((2, 4), [a field, primitive or constructor computed twice: \ the second use reuses the first name],
+    note: [every value is named in CPS, so repeats are easy to spot; \ a repeated constructor saves an allocation]),
   node((1, 5), name: <contif>, step[Contification]),
-  aside((2, 5), [one continuation only: a local jump, no closure]),
+  aside((2, 5), [a non-recursive function that never escapes, \ always called with the same continuation `k`],
+    note: [one call: inlined; several: becomes a continuation, \ a plain jump with no closure and no `k` to pass]),
   node((1, 6), name: <out>, fill: accent, stroke: none, inset: 7pt,
     text(size: 15pt, fill: white, weight: "bold")[Optimized CPS]),
 
