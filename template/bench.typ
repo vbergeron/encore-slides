@@ -46,3 +46,52 @@
     }).flatten(),
   )
 }
+
+// Recap across workloads: peak RAM of each variant over the sizes it ran
+// (KiB, static RAM or heap/arena high-water + stack), and Encore's garbage
+// collector: most collections in one run, share of VM time spent collecting
+// over the sizes that collect, longest pause and most bytes live after a collection.
+#let memory-table(workloads) = {
+  let fmt(x) = str(calc.round(x, digits: if x < 10 { 1 } else { 0 }))
+  let range(xs, unit: "", strong: false) = if xs.len() == 0 { text(fill: muted)[–] } else {
+    let lo = fmt(calc.min(..xs))
+    let hi = fmt(calc.max(..xs))
+    let s = (if lo == hi { lo } else { lo + " – " + hi }) + unit
+    if strong { text(fill: accent, weight: "bold", s) } else { s }
+  }
+  let kib(cells) = cells.map(c => c.ram / 1024)
+  let ran(cell) = cell != none and "insns" in cell
+  set text(size: 15pt)
+  show table.cell.where(y: 0): set text(weight: "bold")
+  show table.cell.where(y: 1): set text(weight: "bold", fill: muted, size: 13pt)
+  table(
+    columns: (auto, 1fr, auto, auto, auto, auto, auto, auto, auto),
+    align: (col, row) => if col < 2 { left + horizon } else { center + horizon },
+    stroke: (x, y) => (
+      bottom: if y == 1 { 0.8pt + black } else if y > 1 { 0.3pt + luma(220) } else { none },
+      left: if x in (2, 5) and y > 0 { 0.3pt + luma(200) } else { none },
+    ),
+    inset: (x: 7pt, y: 5pt),
+    table.header(
+      table.cell(rowspan: 2)[], table.cell(rowspan: 2, align: left + bottom)[Workload],
+      table.cell(colspan: 3, align: center)[Peak RAM (KiB)],
+      table.cell(colspan: 4, align: center)[Encore GC],
+      [Rust], [CertiRocq], [Encore], [collections], [time], [max pause], [live KiB],
+    ),
+    ..workloads.map(((id, key, name)) => {
+      let cases = bench.at(key)
+      let has-c = cases.any(c => "C" in c)
+      let gcs = cases.filter(c => ran(c.E)).map(c => c.E.gc)
+      (
+        id, name,
+        range(kib(cases.map(c => c.R).filter(ran))),
+        if has-c { range(kib(cases.map(c => c.at("C", default: none)).filter(ran))) } else { text(fill: muted)[n/a] },
+        range(kib(cases.map(c => c.E).filter(ran)), strong: true),
+        str(calc.max(..gcs.map(g => g.count))),
+        range(gcs.filter(g => g.count > 0).map(g => g.pct), unit: " %", strong: true),
+        fmt(calc.max(..gcs.map(g => g.pause_max)) / 1000) + " k",
+        fmt(calc.max(..gcs.map(g => g.live)) / 1024),
+      )
+    }).flatten(),
+  )
+}
