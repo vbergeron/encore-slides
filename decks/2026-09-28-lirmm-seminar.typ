@@ -295,6 +295,16 @@ Rocq-extracted Scheme is *heavily curried* and already close to CPS form.
 
 = Encore: compiler and VM
 
+== The VM
+
+The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
+
+- Packed 32-bit values: closures, constructors, integers, byte strings
+- 256-register file, bump-allocation heap arena
+- Mark-compact garbage collector
+- Single calling convention: `ENCORE` opcode, set callee and continuation,
+  jump without returning
+
 == The name
 
 The name comes from the VM's single calling opcode: `ENCORE`.
@@ -580,16 +590,6 @@ extracted .scm
     - *ASM peephole* + *ASM emit* — ENCR binary output
   ],
 )
-
-== The VM
-
-The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
-
-- Packed 32-bit values: closures, constructors, integers, byte strings
-- 256-register file, bump-allocation heap arena
-- Mark-compact garbage collector
-- Single calling convention: `ENCORE` opcode, set callee and continuation,
-  jump without returning
 
 == Host–VM interface
 
