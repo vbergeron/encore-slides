@@ -721,6 +721,58 @@ fin f
   `eqb` inlined to `int.eq`; administrative continuations η-reduced: the recursive call reuses `k`, so it is a loop.
 ]
 
+== CPS optimizer
+
+// A rewrite pass of the optimizer, boxed like an IR in the pipeline diagram.
+#let step(name) = block(width: 4.4cm, align(center, text(size: 15pt, weight: "bold", name)))
+
+#align(center + horizon, diagram(
+  spacing: (1.6cm, 0.7cm),
+  node-stroke: 0.8pt + luma(60),
+  node-inset: 6pt,
+  node-corner-radius: 3pt,
+  edge-stroke: 0.8pt + luma(60),
+  mark-scale: 80%,
+
+  node((1, 0), name: <in>, stroke: none, inset: 2pt, text(size: 14pt)[CPS, from the transform]),
+  node((1, 1), name: <glob>, step[Global inlining]),
+  aside((2, 1), [small non-recursive globals, once],
+    note: [`eqb` becomes `int.eq` in `digits_eqb`]),
+  node((1, 2), name: <inl>, step[Inlining]),
+  aside((2, 2), [local functions under 8 nodes, never recursive]),
+  node((1, 3), name: <hoist>, step[Hoisting]),
+  aside((2, 3), [loop-invariant values out of recursive functions]),
+  node((1, 4), name: <cse>, step[CSE]),
+  aside((2, 4), [reuse a value already named]),
+  node((1, 5), name: <contif>, step[Contification]),
+  aside((2, 5), [one continuation only: a local jump, no closure]),
+  node((1, 6), name: <out>, fill: accent, stroke: none, inset: 7pt,
+    text(size: 15pt, fill: white, weight: "bold")[Optimized CPS]),
+
+  // Zero-size content: the box takes its height from the rows it encloses,
+  // without stretching the middle row.
+  node((0, 3), name: <simp>, enclose: ((0, 1), (0, 5)), inset: 8pt, width: 5cm,
+    box(width: 0pt, height: 0pt, place(center + horizon, block(width: 4.6cm, align(center, text(size: 13pt)[
+      #text(size: 15pt, weight: "bold")[Simplify] \
+      #text(size: 12pt)[dead code \ copy propagation \ constant folding \ β- and η-reduction]
+      #v(-0.3em)
+      #text(size: 11pt, fill: muted)[never grows the code \ runs to a fixpoint \ after every rewrite]
+    ]))))),
+
+  edge(<in>, <glob>, "-|>"),
+  edge(<glob>, <inl>, "-|>"),
+  edge(<inl>, <hoist>, "-|>"),
+  edge(<hoist>, <cse>, "-|>"),
+  edge(<cse>, <contif>, "-|>"),
+  edge(<contif>, <out>, "-|>"),
+  edge(<contif>, (1.36, 5), (1.36, 2), <inl>, "-|>"),
+  ..(1, 2, 3, 4, 5).map(y => edge((1, y), (0, y), "<|-|>", snap-to: (auto, <simp>))),
+))
+#v(0.2em)
+#align(center, text(size: 15pt, fill: muted)[
+  The rewrites loop while anything changes, within one fuel budget (100). \ Rewrites expose redexes; simplify removes them.
+])
+
 == ASM: registers
 
 #ir-slide[
