@@ -1148,10 +1148,20 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
 
 == Three ways to ship the same logic
 
+// The same five stages on every variant slide, so the three read side by side.
+#let pipe-stages = ([Source], [Compiler], [Output], [Runtime], [Memory])
 #let pipe(..steps) = {
-  set text(size: 15pt)
   let arrow = text(fill: accent, size: 12pt)[↓]
-  stack(dir: ttb, spacing: 6pt, ..steps.pos().map(s => align(center, s)).intersperse(align(center, arrow)))
+  let rows = pipe-stages.zip(steps.pos()).map(((stage, step)) => (
+    align(right + horizon, text(size: 12pt, fill: muted, stage)),
+    align(center + horizon, text(size: 15pt, step)),
+  ))
+  grid(
+    columns: (auto, 1fr),
+    column-gutter: 10pt,
+    row-gutter: 7pt,
+    ..rows.intersperse(([], align(center, arrow))).flatten(),
+  )
 }
 #let variant-card(name, role) = block(
   width: 100%, inset: 14pt, radius: 4pt, stroke: 0.5pt + luma(200),
@@ -1161,16 +1171,21 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
     #text(size: 14pt, fill: muted)[#role]
   ]
 ]
-// One slide per variant: its pipeline on the left, what matters on the right.
-#let variant-slide(role, pipeline, body) = {
-  text(size: 20pt, fill: muted, role)
-  v(0.4em)
+// One slide per variant: its pipeline on the left, then the same three points
+// (source, execution, trusted) on the right, and the shared setup underneath.
+#let variant-slide(pipeline, body, logo-file: none) = {
+  if logo-file != none { place(top + right, dy: -0.4cm, logo(logo-file, height: 1.4cm)) }
+  v(1fr)
   grid(
-    columns: (0.9fr, 1.1fr),
+    columns: (1fr, 1fr),
     column-gutter: 1cm,
     block(width: 100%, inset: 14pt, radius: 4pt, stroke: 0.5pt + luma(200), pipeline),
-    { set text(size: 17pt); body },
+    align(horizon, { set text(size: 17pt); body }),
   )
+  v(1fr)
+  align(center, text(size: 14pt, fill: muted)[
+    Linked into the same Rust driver and harness · QEMU Cortex-M3, 50 KiB RAM
+  ])
 }
 
 #v(1fr)
@@ -1189,53 +1204,51 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
 
 == Encore
 
-#variant-slide([system under study], pipe(
+#variant-slide(pipe(
   [Gallina],
-  [Rocq extraction → Scheme],
-  [`encore compile` → bytecode],
+  [Rocq extraction → Scheme, \ `encore compile`],
+  [bytecode],
   [`encore_vm`, `no_std` Rust],
-  [mark-compact GC, 32 KiB heap],
+  [32 KiB heap, mark-compact GC],
 ))[
-  - Extraction directives from `ExtrEncore.v`: `nat` becomes a 24-bit VM
-    integer, arithmetic maps to VM primitives
-  - CPS optimizer on
-  - The collector runs only when the heap is full
-  - Trusted: extraction, the compiler, the VM and the `nat` mapping
-    (none of them verified)
+  - *Source*: the proved Gallina; `ExtrEncore.v` maps `nat` to a 24-bit VM
+    integer and arithmetic to VM primitives
+  - *Execution*: CPS optimizer on; the heap is kept across runs and collected
+    only when full
+  - *Trusted*: extraction, the compiler, the VM and the `nat` mapping
 ]
 
 == CertiRocq
 
-#place(top + right, dy: -0.4cm, logo("certirocq.svg", height: 1.4cm))
-#variant-slide([closest verified competitor], pipe(
+#variant-slide(logo-file: "certirocq.svg", pipe(
   [Gallina],
-  [CertiRocq → Clight],
-  [`arm-none-eabi-gcc -Os`],
-  [CertiRocq runtime],
-  [generational GC, 20 KiB arena],
+  [CertiRocq v0.9.1 → Clight, \ `gcc -Os`],
+  [Thumb-2 code],
+  [CertiRocq runtime, C],
+  [20 KiB arena, generational GC],
 ))[
-  - *Same Gallina* as Encore, CertiRocq v0.9.1
-  - `nat` mapped to 31-bit machine integers: the same unproven assumption as Encore
-  - Real GC on a static arena, not the paper's "abort" mode
-  - Compiler largely verified down to Clight; gcc, the runtime and the
-    `nat` mapping are trusted
-  - A case that does not fit the RAM budget is reported as ✗ arena / ✗ stack
+  - *Source*: the same Gallina; `nat` mapped to 31-bit machine integers, the
+    same unproven assumption as Encore
+  - *Execution*: fresh arena per run, recursion on the C stack; a case
+    that does not fit fails: ✗~arena or ✗~stack
+  - *Trusted*: gcc, the runtime and the `nat` mapping; the compiler is largely
+    verified down to Clight
 ]
 
 == Rust no_std
 
-#place(top + right, dy: -0.4cm, logo("rust.svg", height: 1.4cm))
-#variant-slide([performance ceiling, output oracle], pipe(
-  [hand-written, not from the Gallina],
+#variant-slide(logo-file: "rust.svg", pipe(
+  [hand-written Rust],
   [`rustc`, `opt-level = "s"`, LTO],
-  [no allocator, static buffers],
-  text(fill: muted)[no proof],
+  [Thumb-2 code],
+  [none, bare metal],
+  [static buffers, no allocator],
 ))[
-  - Idiomatic firmware Rust: does not copy the functional structure
-  - *Performance ceiling*: what the logic costs without proof
-  - *Output oracle*: every Encore and CertiRocq output is hashed and compared with Rust's
-    before any number is kept
-  - Memory-safe, but nothing about it is proved
+  - *Source*: idiomatic firmware Rust, not derived from the Gallina and not a
+    copy of its functional structure
+  - *Execution*: the performance ceiling, and the output oracle: every Encore
+    and CertiRocq output is hashed and compared with Rust's
+  - *Trusted*: everything; memory-safe, but nothing is proved
 ]
 
 == Eight firmware workloads
