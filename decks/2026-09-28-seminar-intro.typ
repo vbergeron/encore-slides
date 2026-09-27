@@ -6,10 +6,6 @@
   institution: [LIRMM Seminar],
   date: datetime(year: 2026, month: 9, day: 28),
   slug: "2026-09-28-seminar-intro",
-  links: (
-    (url: "https://github.com/vbergeron/encore", label: "encore"),
-    (url: "https://github.com/Ledger-Donjon/zorya", label: "zorya"),
-  ),
 )
 
 == This afternoon
