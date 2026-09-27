@@ -394,9 +394,12 @@ The name comes from the VM's single calling opcode: `ENCORE`.
   row-gutter: 5pt,
   align: (right + horizon, center + horizon),
   [], grid(
-    columns: (16 * bit-w, 8 * bit-w, 8 * bit-w),
-    align: center,
-    ..([31 … 16], [15 … 8], [7 … 0]).map(t => text(size: 11pt, fill: muted, t)),
+    columns: (bit-w,) * 32,
+    stroke: 0.4pt + luma(190),
+    fill: luma(242),
+    inset: (x: 0pt, y: 4pt),
+    align: center + horizon,
+    ..range(31, -1, step: -1).map(i => text(size: 8pt, fill: muted, str(i))),
   ),
 
   group[Values: registers, globals, fields],
