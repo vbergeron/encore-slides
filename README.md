@@ -40,14 +40,14 @@ Avoid putting an em dash directly in front of a raw/code span (`` — `#foo` ``)
 
 ### Building
 
-With [Typst](https://typst.app) and [just](https://github.com/casey/just)
-installed:
+With [mise](https://mise.jdx.dev) installed (`mise install` fetches Typst):
 
 ```sh
-just build                          # compile the default deck
-just build decks/some-other.typ     # compile a specific deck
-just watch                          # live preview while editing
-just build-all                      # compile every deck into site/decks/
+mise run build                          # compile the default deck
+mise run build decks/some-other.typ     # compile a specific deck
+mise run watch                          # live preview while editing
+mise run build-all                      # compile every deck into site/decks/
+mise tasks                              # list all tasks
 ```
 
 Or plain Typst — decks import the template with a root-absolute path, so
@@ -65,7 +65,7 @@ The result slides read `data/bench.json`, extracted from
 CPS optimizer, C with its 20 KiB arena). To refresh it after new runs:
 
 ```sh
-just bench-data ../encore-benchmarks/results/benchmarks.jsonl
+mise run bench-data ../encore-benchmarks/results/benchmarks.jsonl
 ```
 
 ## Publishing
