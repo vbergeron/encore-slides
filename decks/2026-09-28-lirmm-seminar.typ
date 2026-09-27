@@ -553,41 +553,46 @@ let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
 
 == Compiler pipeline
 
-// An intermediate representation: its name on the left, what it is on the right.
-#let ir(name, sub, body) = grid(
-  columns: (1.6cm, 11.8cm),
+// An intermediate representation: its acronym and what it stands for.
+#let ir(name, sub) = grid(
+  columns: (1.6cm, 4.4cm),
   column-gutter: 0.3cm,
-  align: (left + horizon, left + horizon),
+  align: left + horizon,
   text(size: 18pt, weight: "bold", fill: accent)[#name],
-  {
-    text(size: 13pt)[#text(fill: muted)[#sub:] #body]
-  },
+  text(size: 13pt, fill: muted)[#sub],
 )
 #let pass(body) = text(size: 12pt, body)
-// A pass that rewrites an IR in place, noted beside its box.
-// Same width as the optimizer box, so the notes line up with its left edge.
-#let aside(pos, body) = node(pos, stroke: none, inset: 6pt, block(width: 5.4cm,
-  align(left, text(size: 12pt, fill: muted, style: "italic", body))))
+// What an IR holds, and any pass that rewrites it in place, beside its box.
+#let aside(pos, body, note: none) = node(pos, stroke: none, inset: 4pt, block(width: 9.4cm,
+  align(left, {
+    set par(leading: 0.45em)
+    text(size: 13pt, body)
+    if note != none { linebreak(); text(size: 12pt, fill: muted, style: "italic", note) }
+  })))
 
 #align(center + horizon, diagram(
-  spacing: (1.6cm, 0.75cm),
+  spacing: (1.2cm, 0.75cm),
   node-stroke: 0.8pt + luma(60),
   node-inset: 7pt,
   node-corner-radius: 3pt,
   edge-stroke: 0.8pt + luma(60),
   mark-scale: 80%,
 
-  node((0, 0), name: <src>, stroke: none, inset: 2pt, text(size: 14pt)[Scheme (Rocq) · Fleche]),
-  node((0, 1), name: <ds>, ir([DS], [direct style], [named binders, lambdas, applications, `match`])),
-  aside((1, 1), [then uncurried: multi-argument \ lambdas, saturated calls]),
-  node((0, 2), name: <dsi>, ir([DSI], [de Bruijn indexed])[variables are indices, capture-safe]),
-  node((0, 3), name: <cps>, ir([CPS], [continuations explicit])[only tail calls, `encore f(x) -> k`]),
-  node((1, 3), name: <opt>, inset: 6pt, block(width: 5.4cm, align(center, text(size: 13pt)[
+  node((1, 0), name: <src>, stroke: none, inset: 2pt, text(size: 14pt)[Scheme (Rocq) · Fleche]),
+  node((1, 1), name: <ds>, ir([DS], [direct style])),
+  aside((2, 1), [named binders, lambdas, applications, `match`],
+    note: [then uncurried: n-ary lambdas, saturated calls]),
+  node((1, 2), name: <dsi>, ir([DSI], [de Bruijn indexed])),
+  aside((2, 2), [variables are indices, capture-safe]),
+  node((1, 3), name: <cps>, ir([CPS], [continuation-passing])),
+  aside((2, 3), [only tail calls, `encore f(x) -> k`]),
+  node((0, 3), name: <opt>, inset: 6pt, align(center, text(size: 13pt)[
     #text(weight: "bold")[CPS optimizer] \
-    #text(size: 11pt, fill: muted)[simplify, rewrite, to a fixpoint]]))),
-  node((0, 4), name: <asm>, ir([ASM], [registers], [`SELF`, `CONT`, `A1`–`A8`, `X01`…; captures, globals])),
-  aside((1, 4), [then peephole-optimized]),
-  node((0, 5), name: <bin>, fill: accent, stroke: none, inset: 8pt,
+    #text(size: 11pt, fill: muted)[simplify, rewrite \ to a fixpoint]])),
+  node((1, 4), name: <asm>, ir([ASM], [registers])),
+  aside((2, 4), [`SELF`, `CONT`, `A1`–`A8`, `X01`…; captures, globals],
+    note: [then peephole-optimized]),
+  node((1, 5), name: <bin>, fill: accent, stroke: none, inset: 8pt,
     text(size: 15pt, fill: white, weight: "bold")[ENCR bytecode]),
 
   edge(<src>, <ds>, "-|>", label: pass[parse, desugar], label-side: left),
@@ -595,7 +600,7 @@ let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
   edge(<dsi>, <cps>, "-|>", label: pass[CPS transform], label-side: left),
   edge(<cps>, <opt>, "-|>", shift: 0.12cm),
   edge(<opt>, <cps>, "-|>", shift: 0.12cm),
-  edge(<cps>, <asm>, "-|>", label: pass[closure conversion, register allocation], label-side: left),
+  edge(<cps>, <asm>, "-|>", label: pass[closure conversion, \ register allocation], label-side: left),
   edge(<asm>, <bin>, "-|>", label: pass[emit], label-side: left),
 ))
 #v(0.2em)
