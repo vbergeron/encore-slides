@@ -305,10 +305,6 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
 - Single calling convention: `ENCORE` opcode, set callee and continuation,
   jump without returning
 
-== The name
-
-#hero[Named after the `ENCORE` opcode: \ in French, *encore* means *again*, *still*, *more*.]
-
 == VM architecture
 
 // A row of labelled cells, for the register file and the arena.
@@ -511,6 +507,338 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
     )
 }))
 
+== Fleche: a test language
+
+#grid(
+  columns: (1.2fr, 1fr),
+  column-gutter: 0.8cm,
+  align: horizon,
+  block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: 13pt)[
+```
+data Leaf | Node(l, v, r)
+
+let rec insert x = t ->
+  match t
+  | Leaf -> Node(Leaf, x, Leaf)
+  | Node(l, v, r) ->
+    let less = builtin lt x v in
+    match less
+    | True -> Node(insert x l, v, r)
+    | _    -> Node(l, v, insert x r)
+    end
+  end
+
+let rec sum t =
+  if Node(l, v, r) = t
+  then builtin add v (builtin add (sum l) (sum r))
+  else 0
+
+let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
+```
+  ]),
+  [
+    #set text(size: 16pt)
+    A small direct-style language, parsed straight to DS:
+    - `data` declarations: constructors and arities
+    - Curried lambdas `x -> e`, `let rec`, application
+    - Exhaustive `match`, `_` wildcard, `if` on a pattern
+    - `builtin` primitives, string literals, `let extern` host calls
+    #v(0.4em)
+    #text(fill: muted)[
+      Not a language for users: no types, no modules. It exists to
+      write compiler and VM tests by hand, without going through Rocq.
+    ]
+  ],
+)
+
+== Compiler pipeline
+
+// An intermediate representation: its acronym and what it stands for.
+#let ir(name, sub) = grid(
+  columns: (1.6cm, 4.4cm),
+  column-gutter: 0.3cm,
+  align: left + horizon,
+  text(size: 18pt, weight: "bold", fill: accent)[#name],
+  text(size: 13pt, fill: muted)[#sub],
+)
+#let pass(body) = text(size: 12pt, body)
+// What an IR holds, and any pass that rewrites it in place, beside its box.
+#let aside(pos, body, note: none) = node(pos, stroke: none, inset: 4pt, block(width: 9.4cm,
+  align(left, {
+    set par(leading: 0.45em)
+    text(size: 13pt, body)
+    if note != none { linebreak(); text(size: 12pt, fill: muted, style: "italic", note) }
+  })))
+
+#align(center + horizon, diagram(
+  spacing: (1.2cm, 0.75cm),
+  node-stroke: 0.8pt + luma(60),
+  node-inset: 7pt,
+  node-corner-radius: 3pt,
+  edge-stroke: 0.8pt + luma(60),
+  mark-scale: 80%,
+
+  node((1, 0), name: <src>, stroke: none, inset: 2pt, text(size: 14pt)[Scheme (Rocq) · Fleche]),
+  node((1, 1), name: <ds>, ir([DS], [direct style])),
+  aside((2, 1), [named binders, lambdas, applications, `match`],
+    note: [then uncurried: n-ary lambdas, saturated calls]),
+  node((1, 2), name: <dsi>, ir([DSI], [de Bruijn indexed])),
+  aside((2, 2), [variables are indices, capture-safe]),
+  node((1, 3), name: <cps>, ir([CPS], [continuation-passing])),
+  aside((2, 3), [only tail calls, `encore f(x) -> k`]),
+  node((0, 3), name: <opt>, inset: 6pt, align(center, text(size: 13pt)[
+    #text(weight: "bold")[CPS optimizer] \
+    #text(size: 11pt, fill: muted)[simplify, rewrite \ to a fixpoint]])),
+  node((1, 4), name: <asm>, ir([ASM], [registers])),
+  aside((2, 4), [`SELF`, `CONT`, `A1`–`A8`, `X01`…; captures, globals],
+    note: [then peephole-optimized]),
+  node((1, 5), name: <bin>, fill: accent, stroke: none, inset: 8pt,
+    text(size: 15pt, fill: white, weight: "bold")[ENCR bytecode]),
+
+  edge(<src>, <ds>, "-|>", label: pass[parse, desugar], label-side: left),
+  edge(<ds>, <dsi>, "-|>", label: pass[resolve], label-side: left),
+  edge(<dsi>, <cps>, "-|>", label: pass[CPS transform], label-side: left),
+  edge(<cps>, <opt>, "-|>", shift: 0.12cm),
+  edge(<opt>, <cps>, "-|>", shift: 0.12cm),
+  edge(<cps>, <asm>, "-|>", label: pass[closure conversion, \ register allocation], label-side: left),
+  edge(<asm>, <bin>, "-|>", label: pass[emit], label-side: left),
+))
+#v(0.2em)
+#align(center, text(size: 15pt, fill: muted)[
+  Each step makes one thing explicit: arities, binding structure, control flow, machine registers.
+])
+
+// A code panel for the IR walkthrough, in the style of the bytecode slide.
+#let ir-code(body, size: 11pt) = block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: size, body))
+#let ir-slide(code, body, size: 11pt) = grid(
+  columns: (1.2fr, 1fr),
+  column-gutter: 0.8cm,
+  align: horizon,
+  ir-code(code, size: size),
+  { set text(size: 16pt); body },
+)
+
+== DS: direct style
+
+#ir-slide(size: 13pt)[
+```
+(λ (a) (λ (b)
+  (match a
+    [()      (match b [() (True)] [(_ _) (False)])]
+    [(x a~)  (match b
+               [()     (False)]
+               [(y b~) (match ((eqb x) y)
+                         [() (False)]
+                         [() ((digits_eqb a~) b~)])])])))
+```
+#v(0.3em)
+#text(fill: muted)[after `uncurry`:]
+```
+(λ (a b)
+  ... (match (eqb x y) ...
+        [() (digits_eqb a~ b~)]) ...)
+```
+][
+  `digits_eqb` as the Scheme frontend produces it.
+  - A small λ-calculus: `Lambda`, `Apply`, `Let`, `Letrec`, `Ctor`, `Field`, `Match`, primitives
+  - Constructors are a *tag* and fields; `match` binds the fields
+  - `uncurry` turns `λa.λb` into `λ(a b)` and saturates calls: one `ENCORE`, not two
+]
+
+== DSI: de Bruijn indices
+
+#ir-slide(size: 13pt)[
+```
+(λ2
+  (match #1                            ; a
+    [0 (match #0 [0 (True)] [2 (False)])]
+    [2 (match #2                       ; b
+         [0 (False)]
+         [2 (match (eqb #3 #1)         ; x y
+              [0 (False)]
+              [0 (digits_eqb #2 #0)])])])) ; a~ b~
+```
+][
+  - Names become *indices*: `#0` is the innermost binder
+  - A case binds as many slots as it has fields: only the *arity* is left
+  - Globals sit at the bottom of the same environment
+  - No renaming or capture can go wrong in later passes
+]
+
+== CPS: explicit continuations
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 0.6cm,
+  align: top,
+  [
+    #text(size: 14pt, fill: muted)[after the transform (`Cons`/`Cons` branch)]
+    #ir-code[
+```
+let k25 = cont(r) => encore k18(r)
+let k28 = cont(r) =>
+  match r
+  | False => let c = ctor(0)
+             encore k25(c)
+  | True  => let k32 = cont(r) =>
+               encore k25(r)
+             encore digits_eqb(a~, b~) -> k32
+encore eqb(x, y) -> k28
+```
+    ]
+    #text(size: 15pt)[
+      - Every intermediate value is named
+      - `encore f(args) -> k`: jump, never return
+    ]
+  ],
+  [
+    #text(size: 14pt, fill: muted)[after the optimizer]
+    #ir-code[
+```
+letrec f(a, b) -> k =
+  match a
+  | Nil => match b
+    | Nil  => let c = ctor(1)
+              encore k(c)
+    | Cons => let c = ctor(0)
+              encore k(c)
+  | Cons x a~ => match b
+    | Nil => let c = ctor(0)
+             encore k(c)
+    | Cons y b~ =>
+      let e = int.eq(x, y)
+      match e
+      | False => let c = ctor(0)
+                 encore k(c)
+      | True  =>
+        encore digits_eqb(a~, b~) -> k
+fin f
+```
+    ]
+  ],
+)
+#text(size: 14pt, fill: muted)[
+  `eqb` inlined to `int.eq`; administrative continuations η-reduced: the recursive call reuses `k`, so it is a loop.
+]
+
+== CPS optimizer
+
+// A rewrite pass of the optimizer, boxed like an IR in the pipeline diagram.
+#let step(name) = block(width: 4.4cm, align(center, text(size: 15pt, weight: "bold", name)))
+
+#align(center + horizon, diagram(
+  spacing: (1.6cm, 0.6cm),
+  node-stroke: 0.8pt + luma(60),
+  node-inset: 6pt,
+  node-corner-radius: 3pt,
+  edge-stroke: 0.8pt + luma(60),
+  mark-scale: 80%,
+
+  node((1, 0), name: <in>, stroke: none, inset: 2pt, text(size: 14pt)[CPS, from the transform]),
+  node((1, 1), name: <glob>, step[Global inlining]),
+  aside((2, 1), [small non-recursive globals, once: `eqb` → `int.eq`]),
+  node((1, 2), name: <inl>, step[Inlining]),
+  aside((2, 2), [local functions under 8 nodes, never recursive]),
+  node((1, 3), name: <hoist>, step[Hoisting]),
+  aside((2, 3), [loop-invariant values out of recursive functions]),
+  node((1, 4), name: <cse>, step[CSE]),
+  aside((2, 4), [a value computed twice reuses the first name]),
+  node((1, 5), name: <contif>, step[Contification]),
+  aside((2, 5), [a function with one continuation becomes a jump]),
+  node((1, 6), name: <out>, fill: accent, stroke: none, inset: 7pt,
+    text(size: 15pt, fill: white, weight: "bold")[Optimized CPS]),
+
+  // Zero-size content: the box takes its height from the rows it encloses,
+  // without stretching the middle row.
+  node((0, 3), name: <simp>, enclose: ((0, 1), (0, 5)), inset: 8pt, width: 3cm,
+    box(width: 0pt, height: 0pt, place(center + horizon,
+      text(size: 15pt, weight: "bold")[Simplify]))),
+
+  edge(<in>, <glob>, "-|>"),
+  edge(<glob>, <inl>, "-|>"),
+  edge(<inl>, <hoist>, "-|>"),
+  edge(<hoist>, <cse>, "-|>"),
+  edge(<cse>, <contif>, "-|>"),
+  edge(<contif>, <out>, "-|>"),
+  edge(<contif>, (1.36, 5), (1.36, 2), <inl>, "-|>"),
+  ..(1, 2, 3, 4, 5).map(y => edge((1, y), (0, y), "<|-|>", snap-to: (auto, <simp>))),
+))
+#v(0.2em)
+#align(center, text(size: 15pt, fill: muted)[
+  The rewrites loop while anything changes, within one fuel budget (100). \ Rewrites expose redexes; simplify removes them.
+])
+
+== Simplify
+
+#align(center + horizon, diagram(
+  spacing: (1.6cm, 0.6cm),
+  node-stroke: 0.8pt + luma(60),
+  node-inset: 6pt,
+  node-corner-radius: 3pt,
+  edge-stroke: 0.8pt + luma(60),
+  mark-scale: 80%,
+
+  node((1, 0), name: <in>, stroke: none, inset: 2pt, text(size: 14pt)[CPS, after a rewrite]),
+  node((1, 1), name: <dce>, step[Dead code]),
+  aside((2, 1), [drop a binding its body never uses]),
+  node((1, 2), name: <copy>, step[Copy propagation]),
+  aside((2, 2), [`let y = x`: every `y` becomes `x`]),
+  node((1, 3), name: <fold>, step[Constant folding]),
+  aside((2, 3), [arithmetic, fields and matches on known values]),
+  node((1, 4), name: <beta>, step[β-contraction]),
+  aside((2, 4), [a continuation called once is inlined at its call]),
+  node((1, 5), name: <eta>, step[η-reduction]),
+  aside((2, 5), [`cont(x) => encore k(x)` becomes `k`]),
+  node((1, 6), name: <out>, fill: accent, stroke: none, inset: 7pt,
+    text(size: 15pt, fill: white, weight: "bold")[Simplified CPS]),
+
+  edge(<in>, <dce>, "-|>"),
+  edge(<dce>, <copy>, "-|>"),
+  edge(<copy>, <fold>, "-|>"),
+  edge(<fold>, <beta>, "-|>"),
+  edge(<beta>, <eta>, "-|>"),
+  edge(<eta>, <out>, "-|>"),
+  edge(<eta>, (1.36, 5), (1.36, 1), <dce>, "-|>"),
+))
+#v(0.2em)
+#align(center, text(size: 15pt, fill: muted)[
+  The steps loop while anything changes. None of them grows the code.
+])
+
+== ASM: registers
+
+#ir-slide[
+```
+let X01 = global 13
+letrec X02 = fun [] =                 ; no captures
+  let X01 = A1                        ; a
+  let X02 = A2                        ; b
+  let X03 = global 13                 ; digits_eqb
+  match X01
+  | Nil       => match X02
+    | Nil       => let A1 = ctor(1)   ; True
+                   encore CONT(A1) -> NULL
+    | Cons @X04 => let A1 = ctor(0)   ; False
+                   encore CONT(A1) -> NULL
+  | Cons @X04 => match X02            ; x a~
+    | Nil       => let A1 = ctor(0)
+                   encore CONT(A1) -> NULL
+    | Cons @X06 =>                    ; y b~
+      let X08 = int.eq(X04, X06)
+      match X08
+      | False => let A1 = ctor(0)
+                 encore CONT(A1) -> NULL
+      | True  => encore X03(X05, X07) -> CONT
+fin X02
+```
+][
+  - Names become *registers*: `SELF`, `CONT`, arguments `A1`–`A8`, locals `X01`…
+  - Free variables become *captures*, top-level names *globals*
+  - A case says where its fields land: `@X04` unpacks to `X04`, `X05`
+  - Returning is `encore CONT(A1) -> NULL`
+  - One step from bytecode: the emitter maps each node to an opcode
+]
+
 == Bytecode: `digits_eqb`
 
 #grid(
@@ -552,38 +880,6 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
     - `True` / `False` are `PACK`s with no fields: *no allocation*
     - Return: `ENCORE CONT, NULL`
     - Recursion: `ENCORE X03, CONT` passes its own continuation: *no stack growth*
-  ],
-)
-
-== Pipeline
-
-```
-Rocq proof / program
-    │  Extraction (Scheme)
-    ▼
-extracted .scm
-    │  encore compile scheme
-    ▼
-  .encr bytecode
-    │  encore_vm  (#![no_std])
-    ▼
-  Value
-```
-
-== Compiler pipeline
-
-#grid(
-  columns: (1fr, 1fr),
-  column-gutter: 1cm,
-  [
-    - *DS uncurry* — flattens curried lambdas
-    - *DSI resolve* — named binders to de Bruijn indices
-    - *CPS transform* — continuation-passing style
-  ],
-  [
-    - *CPS optimizer* — inlining, hoisting, CSE, contification
-    - *ASM resolve* — closure conversion, register assignment
-    - *ASM peephole* + *ASM emit* — ENCR binary output
   ],
 )
 
