@@ -1340,9 +1340,9 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
 
 == Takeaways
 
-- *Proved logic runs on bare metal*: extracted to Scheme, compiled by Encore,
-  deployed on a Ledger Flex, and within 50 KiB on all eight workloads, where
-  CertiRocq runs out of memory on 10 cases
+- *Proved logic fits a secure-element budget*: extracted to Scheme, compiled
+  by Encore, and run bare-metal on an emulated Cortex-M3 within 50 KiB on all
+  eight workloads, where CertiRocq runs out of memory on 10 cases
 - *The price is instructions*: 2–10× CertiRocq, 10–2,000× hand-written Rust,
   the worst on arithmetic
 - *The architecture scales*: the proved `step` grows with the application,
