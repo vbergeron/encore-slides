@@ -68,6 +68,94 @@
   entry([Rocq as a spec], [Data structures modelled in Rocq]),
 )
 
+#let logo(file, height: 1.6cm) = place(
+  top + right, dy: -0.4cm, image("/assets/logos/" + file, height: height),
+)
+
+== Scala + TACIT
+
+#logo("scala.svg")
+#block(width: 85%)[
+  #text(size: 16pt)[Scala is historically our backend language.
+  #link("https://github.com/lampepfl/tacit")[TACIT] (EPFL) is a safety harness
+  for AI agents: *the agent writes Scala 3 code instead of calling tools*.]
+]
+#v(0.2em)
+#grid(
+  columns: (1fr, 1.1fr),
+  column-gutter: 0.8cm,
+  text(size: 14pt)[
+    - Agent code is type-checked with *capture checking* in safe mode
+    - Capabilities (files, processes, network) are values in scope:
+      code cannot forge them or exceed its budget
+    - `Classified` data cannot leak out of pure sub-computations
+    - Exposed as an MCP server
+  ],
+  align(horizon, image("/assets/diagrams/tacit-overview.png", width: 100%)),
+)
+
+== CUE as an ontology
+
+#logo("cue.svg")
+#block(width: 85%)[
+  #text(size: 16pt)[#link("https://cuelang.org")[CUE] is a constraint language
+  where *types and values are the same thing*: schemas, constraints and data
+  are merged by unification.]
+]
+#v(0.2em)
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 0.8cm,
+  text(size: 14pt)[
+    - Domain concepts and their constraints are written once, in CUE
+    - Unification is order-independent: definitions compose from several
+      files without precedence rules
+    - `cue vet` checks JSON or YAML data against the definitions
+  ],
+  text(size: 13pt)[
+```cue
+#Currency: "EUR" | "USD" | "CHF"
+
+#Account: {
+  id:       string & =~"^[A-Z]{2}[0-9]{8}$"
+  currency: #Currency
+  balance:  int & >=0
+}
+```
+  ],
+)
+
+== Rocq
+
+#logo("rocq.svg", height: 1cm)
+#block(width: 85%)[
+  #text(size: 16pt)[The logic where a mistake is costly is written in Rocq,
+  where its properties are proved.]
+]
+#v(0.4em)
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 1cm,
+  [
+    #text(size: 19pt, weight: "bold")[Critical logic]
+    #v(-0.3em)
+    #text(size: 14pt)[
+      - Encoded and proved in Rocq
+      - Extracted to OCaml
+      - Served to the backend over gRPC
+    ]
+  ],
+  [
+    #text(size: 19pt, weight: "bold")[Rocq as a spec]
+    #v(-0.3em)
+    #text(size: 14pt)[
+      - Data structures modelled in Rocq
+      - Invariants stated and proved on the model
+      - The model is the reference the implementation follows
+    ]
+  ],
+)
+
 == Boulodrome: Rocq as an MCP server
 
 #text(size: 16pt)[Personal project. An MCP server that gives an AI assistant
