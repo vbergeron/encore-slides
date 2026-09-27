@@ -551,21 +551,6 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   ],
 )
 
-== Pipeline
-
-```
-Rocq proof / program
-    │  Extraction (Scheme)
-    ▼
-extracted .scm
-    │  encore compile scheme
-    ▼
-  .encr bytecode
-    │  encore_vm  (#![no_std])
-    ▼
-  Value
-```
-
 == Compiler pipeline
 
 #grid(
