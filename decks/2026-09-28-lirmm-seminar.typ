@@ -507,6 +507,50 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
     )
 }))
 
+== Fleche: a test language
+
+#grid(
+  columns: (1.2fr, 1fr),
+  column-gutter: 0.8cm,
+  align: horizon,
+  block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: 13pt)[
+```
+data Leaf | Node(l, v, r)
+
+let rec insert x = t ->
+  match t
+  | Leaf -> Node(Leaf, x, Leaf)
+  | Node(l, v, r) ->
+    let less = builtin lt x v in
+    match less
+    | True -> Node(insert x l, v, r)
+    | _    -> Node(l, v, insert x r)
+    end
+  end
+
+let rec sum t =
+  if Node(l, v, r) = t
+  then builtin add v (builtin add (sum l) (sum r))
+  else 0
+
+let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
+```
+  ]),
+  [
+    #set text(size: 16pt)
+    A small direct-style language, parsed straight to DS:
+    - `data` declarations: constructors and arities
+    - Curried lambdas `x -> e`, `let rec`, application
+    - Exhaustive `match`, `_` wildcard, `if` on a pattern
+    - `builtin` primitives, string literals, `let extern` host calls
+    #v(0.4em)
+    #text(fill: muted)[
+      Not a language for users: no types, no modules. It exists to
+      write compiler and VM tests by hand, without going through Rocq.
+    ]
+  ],
+)
+
 == Compiler pipeline
 
 // An intermediate representation: its name, what it adds, and its shape.
