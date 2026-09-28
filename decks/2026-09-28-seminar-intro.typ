@@ -265,10 +265,16 @@ transfers.1.amount: invalid value 500 (out of bound <=300)
       columns: (auto, 1fr),
       column-gutter: 0.5cm,
       align: horizon,
-      tiaoma.qrcode(base-url + "play/", width: 2.4cm),
-      text(size: 12pt)[
-        *Try it live:* this example, evaluated in the browser by CUE
-        compiled to WebAssembly \
+      link(base-url + "play/", tiaoma.qrcode(base-url + "play/", width: 2.4cm)),
+      [
+        #link(base-url + "play/", box(
+          fill: rgb("#B5303B"), inset: (x: 0.4cm, y: 0.25cm), radius: 4pt,
+          text(size: 14pt, weight: "bold", fill: white)[Open the live playground #sym.arrow.r],
+        ))
+        #v(-0.2em)
+        #text(size: 11pt)[This example, evaluated in the browser by CUE
+        compiled to WebAssembly]
+        #v(-0.5em)
         #text(size: 10pt, fill: luma(110))[#link(base-url + "play/")]
       ],
     )
