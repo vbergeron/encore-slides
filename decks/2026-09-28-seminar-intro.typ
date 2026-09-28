@@ -260,26 +260,24 @@ transfers.1.amount: invalid value 500 (out of bound <=300)
     #v(-0.2em)
     #text(size: 11pt)[The first transfer passes, and `cue export` gives it
     `fee: 15`: the policy computed it.]
-    #v(0.1em)
-    #grid(
-      columns: (auto, 1fr),
-      column-gutter: 0.5cm,
-      align: horizon,
-      link(base-url + "play/", tiaoma.qrcode(base-url + "play/", width: 2.4cm)),
-      [
-        #link(base-url + "play/", box(
-          fill: rgb("#B5303B"), inset: (x: 0.4cm, y: 0.25cm), radius: 4pt,
-          text(size: 14pt, weight: "bold", fill: white)[Open the live playground #sym.arrow.r],
-        ))
-        #v(-0.2em)
-        #text(size: 11pt)[This example, evaluated in the browser by CUE
-        compiled to WebAssembly]
-        #v(-0.5em)
-        #text(size: 10pt, fill: luma(110))[#link(base-url + "play/")]
-      ],
-    )
   ],
 )
+
+== CUE: try it live
+
+#align(center + horizon)[
+  #link(base-url + "play/", tiaoma.qrcode(base-url + "play/", width: 6cm))
+  #v(0.6em)
+  #link(base-url + "play/", box(
+    fill: rgb("#B5303B"), inset: (x: 0.5cm, y: 0.3cm), radius: 4pt,
+    text(size: 18pt, weight: "bold", fill: white)[Open the live playground #sym.arrow.r],
+  ))
+  #v(0.4em)
+  #text(size: 15pt)[The example, evaluated in your browser by CUE compiled to
+  WebAssembly. Edit it: every change is re-unified.]
+  #v(-0.3em)
+  #text(size: 12pt, fill: luma(110))[#link(base-url + "play/")]
+]
 
 == Rocq
 
