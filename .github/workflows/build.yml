@@ -27,6 +27,11 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: compile
     runs-on: ubuntu-latest
+    # Pages rejects a deployment while another is in progress, so serialize
+    # deploys; a newer pending run supersedes an older pending one.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write
