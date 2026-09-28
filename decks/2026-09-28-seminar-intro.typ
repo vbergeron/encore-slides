@@ -84,12 +84,24 @@
 #grid(
   columns: (1fr, 1.1fr),
   column-gutter: 0.8cm,
-  text(size: 14pt)[
-    - Agent code is type-checked with *capture checking* in safe mode
-    - Capabilities (files, processes, network) are values in scope:
-      code cannot forge them or exceed its budget
-    - `Classified` data cannot leak out of pure sub-computations
-    - Exposed as an MCP server
+  text(size: 12pt)[
+```scala
+import language.experimental.captureChecking
+
+class Net extends caps.SharedCapability:
+  def post(url: String, body: String): Unit
+
+def audit(msg: String)(using net: Net) =
+  net.post("/audit", msg)
+
+// f must be pure: it captures no capability
+def validate(f: String -> Boolean) = ...
+
+validate(s => s.nonEmpty)         // ok
+validate(s => { audit(s); true }) // error
+// String ->{net} Boolean is not
+// String -> Boolean
+```
   ],
   align(horizon, image("/assets/diagrams/tacit-overview.png", width: 100%)),
 )
