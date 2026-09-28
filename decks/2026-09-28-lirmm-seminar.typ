@@ -558,7 +558,7 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   column-gutter: 0.8cm,
   align: horizon,
   block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: 13pt)[
-```
+```fleche
 data Leaf | Node(l, v, r)
 
 let rec insert x = t ->
@@ -665,7 +665,7 @@ let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
 == DS: direct style
 
 #ir-slide(size: 13pt)[
-```
+```ir
 (λ (a) (λ (b)
   (match a
     [()      (match b [() (True)] [(_ _) (False)])]
@@ -677,7 +677,7 @@ let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
 ```
 #v(0.3em)
 #text(fill: muted)[after `uncurry`:]
-```
+```ir
 (λ (a b)
   ... (match (eqb x y) ...
         [() (digits_eqb a~ b~)]) ...)
@@ -692,7 +692,7 @@ let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
 == DSI: de Bruijn indices
 
 #ir-slide(size: 13pt)[
-```
+```ir
 (λ2
   (match #1                            ; a
     [0 (match #0 [0 (True)] [2 (False)])]
@@ -718,7 +718,7 @@ let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
   [
     #text(size: 14pt, fill: muted)[after the transform (`Cons`/`Cons` branch)]
     #ir-code[
-```
+```ir
 let k25 = cont(r) => encore k18(r)
 let k28 = cont(r) =>
   match r
@@ -738,7 +738,7 @@ encore eqb(x, y) -> k28
   [
     #text(size: 14pt, fill: muted)[after the optimizer]
     #ir-code[
-```
+```ir
 letrec f(a, b) -> k =
   match a
   | Nil => match b
@@ -852,7 +852,7 @@ fin f
 == ASM: registers
 
 #ir-slide[
-```
+```ir
 let X01 = global 13
 letrec X02 = fun [] =                 ; no captures
   let X01 = A1                        ; a
@@ -890,7 +890,7 @@ fin X02
   column-gutter: 0.8cm,
   align: horizon,
   block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: 11pt)[
-```
+```ir
 01dc  MOV     X01, A1            ; a
 01df  MOV     X02, A2            ; b
 01e2  GLOBAL  X03, g13           ; digits_eqb
@@ -943,7 +943,7 @@ The VM is a library inside a Rust application that keeps control of memory and I
   align: top,
   [
     #codebox(caption: [Fleche])[
-```
+```fleche
 data Inc | Dec | Reset
 data Print(val) | Beep
 data Nil | Cons(head, tail)
@@ -982,7 +982,7 @@ let y: i32 = vm.call_closure(&k, (x,))?;
   row-gutter: 5pt,
   align: top,
   codebox(caption: [Fleche: `let extern`])[
-```
+```fleche
 # bind the host function in slot 0
 let extern read_adc 0
 let sample = read_adc 3
@@ -1082,7 +1082,7 @@ pub mod ctors {
   align: top,
   [
     #codebox(caption: [Fleche], size: 12pt)[
-```
+```fleche
 data Inc | Dec | Reset
 data Print(val) | Beep
 data Nil | Cons(head, tail)

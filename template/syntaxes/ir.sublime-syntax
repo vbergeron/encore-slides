@@ -1,0 +1,45 @@
+%YAML 1.2
+---
+# Encore's intermediate forms as the compiler dumps them: DS and DSI
+# (s-expressions), CPS and ASM (let / encore), and `encore disasm` bytecode.
+name: Encore IR
+file_extensions: [ir]
+scope: source.encore-ir
+contexts:
+  main:
+    - match: ';.*$'
+      scope: comment.line.semicolon.encore-ir
+    # bytecode: address, then opcode
+    - match: '^([0-9a-f]{4})\s+([A-Z]+)\b'
+      captures:
+        1: comment.line.address.encore-ir
+        2: keyword.control.opcode.encore-ir
+    - match: '@[0-9a-f]{4}\b'
+      scope: entity.name.label.encore-ir
+    - match: '\b(letrec)\s+([A-Za-z_][A-Za-z0-9_~]*)'
+      captures:
+        1: keyword.control.encore-ir
+        2: entity.name.function.encore-ir
+    - match: 'λ[0-9]*'
+      scope: keyword.control.encore-ir
+    - match: '\b(match|let|letrec|cont|encore|fin|fun|global|ctor)\b'
+      scope: keyword.control.encore-ir
+    - match: '\bint\.[a-z]+\b'
+      scope: support.function.encore-ir
+    - match: '\b(SELF|CONT|NULL|A[1-8]|X[0-9]{2})\b'
+      scope: entity.other.attribute-name.register.encore-ir
+    - match: '@X[0-9]{2}\b|\bg[0-9]+\b'
+      scope: entity.other.attribute-name.register.encore-ir
+    - match: '#[0-9]+'
+      scope: entity.other.attribute-name.index.encore-ir
+    - match: '\b[A-Z][a-z][A-Za-z0-9_]*\b'
+      scope: entity.name.type.constructor.encore-ir
+    - match: '\b(tag)(=)([0-9]+)'
+      captures:
+        1: variable.other.encore-ir
+        2: keyword.operator.encore-ir
+        3: constant.numeric.encore-ir
+    - match: '\b[0-9]+\b'
+      scope: constant.numeric.encore-ir
+    - match: '=>|->|\|'
+      scope: keyword.operator.encore-ir
