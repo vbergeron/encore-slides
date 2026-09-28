@@ -1,5 +1,6 @@
 [tools]
 typst = "latest"
+go = "1.25"
 
 [vars]
 deck = "decks/2026-09-28-lirmm-seminar.typ"
@@ -21,6 +22,15 @@ mkdir -p site/decks
 for f in decks/*.typ; do
   typst compile --root . "$f" "site/decks/$(basename "${f%.typ}").pdf"
 done
+'''
+
+[tasks.playground]
+description = "Build the CUE WebAssembly playground into site/play/"
+dir = "playground"
+run = '''
+GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -o ../site/play/cue.wasm .
+gzip -9f ../site/play/cue.wasm
+install -m 644 "$(go env GOROOT)/lib/wasm/wasm_exec.js" ../site/play/
 '''
 
 [tasks.bench-data]

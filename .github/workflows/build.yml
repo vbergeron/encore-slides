@@ -16,6 +16,8 @@ jobs:
       - uses: jdx/mise-action@v2
       - name: Compile all decks
         run: mise run build-all
+      - name: Build the CUE playground
+        run: mise run playground
       - uses: actions/upload-artifact@v4
         with:
           name: decks
@@ -36,6 +38,8 @@ jobs:
       - uses: jdx/mise-action@v2
       - name: Compile decks into the site
         run: mise run build-all
+      - name: Build the CUE playground
+        run: mise run playground
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

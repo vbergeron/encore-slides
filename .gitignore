@@ -2,3 +2,5 @@
 *.png
 .typst-cache/
 !assets/**/*.png
+site/play/cue.wasm*
+site/play/wasm_exec.js

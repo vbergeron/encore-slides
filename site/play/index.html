@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUE Playground — Encore</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            coral: { DEFAULT: '#B5303B', light: '#d4777e' },
+            anthracite: '#2d2d2d',
+            paper: '#faf8f5',
+          },
+          fontFamily: {
+            serif: ['"New Computer Modern"', '"Computer Modern Serif"', 'Georgia', 'serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts.css');
+    textarea, pre { tab-size: 4; }
+  </style>
+</head>
+<body class="bg-paper text-anthracite font-serif antialiased">
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+
+    <header class="mb-6">
+      <a href="../" class="text-sm text-gray-500 hover:text-coral transition-colors">&larr; Encore slides</a>
+      <h1 class="text-3xl font-bold tracking-tight mt-2">CUE Playground</h1>
+      <p class="text-gray-500 mt-1">
+        The example from the seminar, evaluated in your browser by
+        <a href="https://cuelang.org" class="underline hover:text-coral">CUE</a>
+        compiled to WebAssembly. Edit it: every change is re-unified.
+      </p>
+    </header>
+
+    <div class="flex flex-wrap items-center gap-4 mb-3 text-sm">
+      <label class="flex items-center gap-1"><input type="radio" name="mode" value="export" checked> export (YAML)</label>
+      <label class="flex items-center gap-1"><input type="radio" name="mode" value="eval"> eval (CUE)</label>
+      <button id="reset" class="px-3 py-1 border border-gray-300 rounded hover:border-coral hover:text-coral">Reset example</button>
+      <button id="share" class="px-3 py-1 border border-gray-300 rounded hover:border-coral hover:text-coral">Copy link</button>
+      <span id="status" class="text-gray-400 ml-auto">Loading CUE&hellip;</span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off"
+        class="font-mono text-[13px] leading-snug w-full h-[70vh] p-3 bg-white border border-gray-300 rounded resize-none focus:outline-none focus:border-coral"></textarea>
+      <pre id="out" class="font-mono text-[13px] leading-snug w-full h-[70vh] p-3 bg-white border border-gray-300 rounded overflow-auto whitespace-pre-wrap"></pre>
+    </div>
+
+  </div>
+
+  <script src="wasm_exec.js"></script>
+  <script>
+    const src = document.getElementById('src');
+    const out = document.getElementById('out');
+    const status = document.getElementById('status');
+    let example = '';
+    let ready = false;
+
+    const mode = () => document.querySelector('input[name=mode]:checked').value;
+
+    // The source travels in the URL fragment, base64url-encoded UTF-8.
+    const encode = s => btoa(String.fromCharCode(...new TextEncoder().encode(s)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const decode = s => new TextDecoder().decode(
+      Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)));
+
+    function run() {
+      if (!ready) return;
+      const r = cueEval(src.value, mode());
+      if (r.error) {
+        out.textContent = r.error;
+        out.classList.add('text-coral');
+        status.textContent = 'Error: the meet is ⊥';
+      } else {
+        out.textContent = r.output;
+        out.classList.remove('text-coral');
+        status.textContent = 'OK';
+      }
+    }
+
+    let timer;
+    src.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 250); });
+    document.querySelectorAll('input[name=mode]').forEach(e => e.addEventListener('change', run));
+
+    // Tab inserts a tab instead of leaving the editor.
+    src.addEventListener('keydown', e => {
+      if (e.key !== 'Tab') return;
+      e.preventDefault();
+      const { selectionStart: a, selectionEnd: b } = src;
+      src.value = src.value.slice(0, a) + '\t' + src.value.slice(b);
+      src.selectionStart = src.selectionEnd = a + 1;
+      src.dispatchEvent(new Event('input'));
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      src.value = example;
+      history.replaceState(null, '', location.pathname);
+      run();
+    });
+
+    document.getElementById('share').addEventListener('click', async () => {
+      history.replaceState(null, '', '#' + encode(src.value));
+      try { await navigator.clipboard.writeText(location.href); status.textContent = 'Link copied'; }
+      catch { status.textContent = 'Link is in the address bar'; }
+    });
+
+    async function loadWasm() {
+      // cue.wasm.gz is ~7 MB against ~32 MB uncompressed: inflate it here.
+      const res = await fetch('cue.wasm.gz');
+      if (!res.ok) throw new Error('cue.wasm.gz: HTTP ' + res.status);
+      const bytes = await new Response(res.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+      const go = new Go();
+      const { instance } = await WebAssembly.instantiate(bytes, go.importObject);
+      go.run(instance);
+    }
+
+    (async () => {
+      example = await (await fetch('example.cue')).text();
+      src.value = location.hash.length > 1 ? decode(location.hash.slice(1)) : example;
+      try {
+        await loadWasm();
+        ready = true;
+        run();
+      } catch (e) {
+        status.textContent = 'Could not load CUE: ' + e.message;
+      }
+    })();
+  </script>
+
+</body>
+</html>

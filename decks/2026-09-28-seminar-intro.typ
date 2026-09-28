@@ -106,29 +106,160 @@
 #logo("cue.svg")
 #block(width: 85%)[
   #text(size: 16pt)[#link("https://cuelang.org")[CUE] is a constraint language
-  where *types and values are the same thing*: schemas, constraints and data
-  are merged by unification.]
+  where *types and values are the same thing*: from `string` to `"EUR"`, every
+  value is an element of one lattice, ordered by instance-of (#sym.subset.eq.sq).]
 ]
-#v(0.2em)
+#v(0.1em)
+
+// Hasse diagram of a fragment of the value lattice: top, types, constraints,
+// concrete values, bottom. Coordinates are node centers.
+#let hasse = {
+  let nodes = (
+    top: ((5.2, 0.0), [`_` #sym.top]),
+    str: ((2.6, 1.3), `string`),
+    int: ((7.8, 1.3), `int`),
+    cur: ((2.6, 2.6), `#Currency`),
+    nat: ((7.8, 2.6), `int & >=0`),
+    eur: ((1.0, 3.9), `"EUR"`),
+    usd: ((2.6, 3.9), `"USD"`),
+    chf: ((4.2, 3.9), `"CHF"`),
+    n300: ((6.9, 3.9), `300`),
+    n500: ((8.7, 3.9), `500`),
+    bot: ((5.2, 5.2), [`_|_` #sym.bot]),
+  )
+  let edges = (
+    ("top", "str"), ("top", "int"), ("str", "cur"), ("int", "nat"),
+    ("cur", "eur"), ("cur", "usd"), ("cur", "chf"),
+    ("nat", "n300"), ("nat", "n500"),
+    ("eur", "bot"), ("usd", "bot"), ("chf", "bot"),
+    ("n300", "bot"), ("n500", "bot"),
+  )
+  let pt(k, dy) = {
+    let (x, y) = nodes.at(k).at(0)
+    (x * 1.15cm, y * 1.15cm + dy)
+  }
+  box(width: 12cm, height: 6.4cm, {
+    for (hi, lo) in edges {
+      place(line(start: pt(hi, 0.32cm), end: pt(lo, -0.32cm),
+        stroke: 0.8pt + luma(150)))
+    }
+    for (k, v) in nodes {
+      let (x, y) = v.at(0)
+      place(dx: x * 1.15cm - 1.4cm, dy: y * 1.15cm - 0.3cm,
+        box(width: 2.8cm, height: 0.6cm,
+          align(center + horizon, text(size: 13pt, v.at(1)))))
+    }
+  })
+}
+
 #grid(
-  columns: (1fr, 1fr),
+  columns: (1fr, 12cm),
   column-gutter: 0.8cm,
-  text(size: 14pt)[
-    - Domain concepts and their constraints are written once, in CUE
-    - Unification is order-independent: definitions compose from several
-      files without precedence rules
-    - `cue vet` checks JSON or YAML data against the definitions
+  text(size: 13.5pt)[
+    - *Unification `&` is the meet* #sym.inter.sq: commutative, associative,
+      idempotent. Definitions compose from any number of files, in any
+      order, with no precedence rules
+    - `_` is the top #sym.top, `_|_` the bottom #sym.bot: an error is a meet
+      that reaches #sym.bot, as `"EUR" & "CHF"` does
+    - Disjunction `|` is the join; `*` marks a default
+    - `cue vet` checks that data #sym.subset.eq.sq schema
+    #v(0.2em)
+    #text(size: 15pt, weight: "bold", fill: rgb("#B5303B"))[Speed]
+    #v(-0.4em)
+    - Not Turing-complete: evaluation always terminates
+    - Meets never backtrack; only disjunctions branch
+    - cue v0.17.1, 4 vCPU: one file in 13 ms, startup included;
+      100 000 transfers streamed in 16 s
   ],
-  text(size: 13pt)[
+  align(center + horizon, hasse),
+)
+#place(bottom + left, text(size: 10pt, fill: luma(110))[
+  CUE's value model descends from typed feature structures:
+  B. Carpenter. _The Logic of Typed Feature Structures._ Cambridge University
+  Press, 1992. See also
+  #link("https://cuelang.org/docs/concept/the-logic-of-cue/")[_The Logic of CUE_].
+])
+
+== CUE: a complete example
+
+#text(size: 15pt)[A schema, a policy written by another team, and data: three
+sources, one meet.]
+
+#let file(name) = text(size: 11pt, fill: luma(110))[#name]
+
+#grid(
+  columns: (1fr, 1.2fr),
+  column-gutter: 0.8cm,
+  [
+    #file(`schema.cue`)
+    #v(-0.5em)
+    #text(size: 11pt)[
 ```cue
 #Currency: "EUR" | "USD" | "CHF"
-
 #Account: {
-  id:       string & =~"^[A-Z]{2}[0-9]{8}$"
+  iban:     =~"^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$"
   currency: #Currency
   balance:  int & >=0
 }
+#Transfer: {
+  from:   #Account
+  to:     #Account & {currency: from.currency}
+  amount: int & >0 & <=from.balance
+  fee:    *0 | int & >=0
+}
+transfers: [...#Transfer]
 ```
+    ]
+    #v(-0.2em)
+    #file([`policy.cue`: refines, never overrides])
+    #v(-0.5em)
+    #text(size: 11pt)[
+```cue
+#Transfer: {
+  amount: <=10_000
+  if amount > 5_000 {fee: 15}
+}
+```
+    ]
+  ],
+  [
+    #file(`transfers.yaml`)
+    #v(-0.5em)
+    #text(size: 11pt)[
+```yaml
+transfers:
+- from: {iban: FR7630006000011, currency: EUR, balance: 8000}
+  to:   {iban: DE8937040044053, currency: EUR, balance: 0}
+  amount: 6000
+- from: {iban: FR7630006000011, currency: EUR, balance: 300}
+  to:   {iban: CH9300762011623, currency: CHF, balance: 0}
+  amount: 500
+```
+    ]
+    #v(-0.2em)
+    #file([`cue vet -c schema.cue policy.cue transfers.yaml` (abridged)])
+    #v(-0.5em)
+    #text(size: 11pt, fill: rgb("#B5303B"))[
+```
+transfers.1.to.currency: conflicting values "EUR" and "CHF"
+transfers.1.amount: invalid value 500 (out of bound <=300)
+```
+    ]
+    #v(-0.2em)
+    #text(size: 11pt)[The first transfer passes, and `cue export` gives it
+    `fee: 15`: the policy computed it.]
+    #v(0.1em)
+    #grid(
+      columns: (auto, 1fr),
+      column-gutter: 0.5cm,
+      align: horizon,
+      tiaoma.qrcode(base-url + "play/", width: 2.4cm),
+      text(size: 12pt)[
+        *Try it live:* this example, evaluated in the browser by CUE
+        compiled to WebAssembly \
+        #text(size: 10pt, fill: luma(110))[#link(base-url + "play/")]
+      ],
+    )
   ],
 )
 

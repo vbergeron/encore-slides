@@ -18,6 +18,8 @@ data/bench.json     numbers extracted from encore-benchmarks' results
 scripts/            bench-data.py, which writes data/bench.json
 decks/               one dated .typ file per talk
 site/index.html      the GitHub Pages site listing every deck
+site/play/           CUE playground page, and the example it opens with
+playground/          Go source of its evaluator: CUE compiled to WebAssembly
 ```
 
 ## Adding a talk
@@ -47,6 +49,7 @@ mise run build                          # compile the default deck
 mise run build decks/some-other.typ     # compile a specific deck
 mise run watch                          # live preview while editing
 mise run build-all                      # compile every deck into site/decks/
+mise run playground                     # build the CUE playground's WebAssembly
 mise tasks                              # list all tasks
 ```
 
