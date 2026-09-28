@@ -14,6 +14,7 @@ published to GitHub Pages.
 ```
 template/lib.typ    the template: theme, page setup, slide + QR functions
 template/bench.typ  benchmark result tables, read from data/bench.json
+template/syntaxes/  highlighting grammars Typst lacks: coq, cue, scheme, fleche
 data/bench.json     numbers extracted from encore-benchmarks' results
 scripts/            bench-data.py, which writes data/bench.json
 decks/               one dated .typ file per talk

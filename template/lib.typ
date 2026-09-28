@@ -28,6 +28,14 @@
   links: (),
   body,
 ) = {
+  // Typst bundles no grammar for these; each file lists the tags it answers
+  // to (`coq`/`rocq`, `cue`, `scheme`, `fleche`).
+  set raw(syntaxes: (
+    "syntaxes/rocq.sublime-syntax",
+    "syntaxes/cue.sublime-syntax",
+    "syntaxes/scheme.sublime-syntax",
+    "syntaxes/fleche.sublime-syntax",
+  ))
   show: metropolis-theme.with(
     aspect-ratio: "16-9",
     footer: self => self.info.institution,

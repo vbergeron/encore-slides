@@ -1,0 +1,39 @@
+%YAML 1.2
+---
+# Minimal Rocq (Coq) grammar: vernacular, Gallina keywords, comments, strings.
+name: Rocq
+file_extensions: [coq, rocq, v]
+scope: source.rocq
+contexts:
+  main:
+    - match: '\(\*'
+      push: comment
+    - match: '"'
+      push: string
+    - match: '\b(Definition|Fixpoint|CoFixpoint|Inductive|CoInductive|Record|Structure|Lemma|Theorem|Corollary|Proposition|Example|Remark|Fact|Parameter|Axiom|Variable|Hypothesis|Let|Instance|Class)\b\s*([A-Za-z_][A-Za-z0-9_'']*)?'
+      captures:
+        1: keyword.other.rocq
+        2: entity.name.function.rocq
+    - match: '\b(Extract|Constant|Inductive|Extraction|Require|Import|Export|From|Module|Section|End|Open|Scope|Proof|Qed|Defined|Admitted|Print|Assumptions|Check|Compute|Eval|Set|Unset|Arguments|Notation|Hint)\b'
+      scope: keyword.other.rocq
+    - match: '\b(match|with|end|fun|forall|exists|let|in|if|then|else|return|as|fix|cofix|struct)\b'
+      scope: keyword.control.rocq
+    - match: '\b(Prop|Set|Type|SProp)\b'
+      scope: storage.type.rocq
+    - match: '\b(true|false|tt|nil)\b'
+      scope: constant.language.rocq
+    - match: '\b[0-9]+\b'
+      scope: constant.numeric.rocq
+    - match: ':=|=>|->|<-|<->|::|\|'
+      scope: keyword.operator.rocq
+  comment:
+    - meta_scope: comment.block.rocq
+    - match: '\(\*'
+      push: comment
+    - match: '\*\)'
+      pop: true
+  string:
+    - meta_scope: string.quoted.double.rocq
+    - match: '""'
+    - match: '"'
+      pop: true

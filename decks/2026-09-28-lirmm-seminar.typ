@@ -558,7 +558,7 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
   column-gutter: 0.8cm,
   align: horizon,
   block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: 13pt)[
-```
+```fleche
 data Leaf | Node(l, v, r)
 
 let rec insert x = t ->
@@ -943,7 +943,7 @@ The VM is a library inside a Rust application that keeps control of memory and I
   align: top,
   [
     #codebox(caption: [Fleche])[
-```
+```fleche
 data Inc | Dec | Reset
 data Print(val) | Beep
 data Nil | Cons(head, tail)
@@ -982,7 +982,7 @@ let y: i32 = vm.call_closure(&k, (x,))?;
   row-gutter: 5pt,
   align: top,
   codebox(caption: [Fleche: `let extern`])[
-```
+```fleche
 # bind the host function in slot 0
 let extern read_adc 0
 let sample = read_adc 3
@@ -1082,7 +1082,7 @@ pub mod ctors {
   align: top,
   [
     #codebox(caption: [Fleche], size: 12pt)[
-```
+```fleche
 data Inc | Dec | Reset
 data Print(val) | Beep
 data Nil | Cons(head, tail)

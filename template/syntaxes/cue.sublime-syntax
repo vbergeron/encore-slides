@@ -1,0 +1,32 @@
+%YAML 1.2
+---
+# Minimal CUE grammar: definitions, fields, keywords, literals, comments.
+name: CUE
+file_extensions: [cue]
+scope: source.cue
+contexts:
+  main:
+    - match: '//.*$'
+      scope: comment.line.cue
+    - match: '"'
+      push: string
+    - match: '#[A-Za-z_][A-Za-z0-9_]*'
+      scope: entity.name.type.cue
+    - match: '\b(if|for|in|let|import|package)\b'
+      scope: keyword.control.cue
+    - match: '\b(true|false|null|_\|_)\b'
+      scope: constant.language.cue
+    - match: '\b(int|float|number|string|bytes|bool|uint|top|bottom)\b'
+      scope: support.type.cue
+    - match: '\b[0-9][0-9_]*(\.[0-9]+)?\b'
+      scope: constant.numeric.cue
+    - match: '[A-Za-z_][A-Za-z0-9_]*[?!]?(?=\s*:)'
+      scope: variable.other.member.cue
+    - match: '=~|!~|<=|>=|==|!=|[<>&|*]|\.\.\.'
+      scope: keyword.operator.cue
+  string:
+    - meta_scope: string.quoted.double.cue
+    - match: '\\.'
+      scope: constant.character.escape.cue
+    - match: '"'
+      pop: true

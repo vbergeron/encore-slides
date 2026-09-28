@@ -1,0 +1,31 @@
+%YAML 1.2
+---
+# Fleche, Encore's small direct-style language.
+name: Fleche
+file_extensions: [fleche, fl]
+scope: source.fleche
+contexts:
+  main:
+    - match: '#.*$'
+      scope: comment.line.number-sign.fleche
+    - match: '"'
+      push: string
+    - match: '\b(let)\s+(rec\s+|extern\s+)?([a-z_][A-Za-z0-9_'']*)'
+      captures:
+        1: keyword.control.fleche
+        2: keyword.control.fleche
+        3: entity.name.function.fleche
+    - match: '\b(data|let|rec|extern|in|match|end|if|then|else|builtin)\b'
+      scope: keyword.control.fleche
+    - match: '\b[A-Z][A-Za-z0-9_]*\b'
+      scope: entity.name.type.constructor.fleche
+    - match: '\b[0-9]+\b'
+      scope: constant.numeric.fleche
+    - match: '->|=|\|'
+      scope: keyword.operator.fleche
+  string:
+    - meta_scope: string.quoted.double.fleche
+    - match: '\\.'
+      scope: constant.character.escape.fleche
+    - match: '"'
+      pop: true

@@ -1,0 +1,35 @@
+%YAML 1.2
+---
+# Minimal Scheme grammar, including the macros Rocq's extraction emits
+# (lambdas, @, match) and Encore's extern form.
+name: Scheme
+file_extensions: [scheme, scm, ss]
+scope: source.scheme
+contexts:
+  main:
+    - match: ';.*$'
+      scope: comment.line.semicolon.scheme
+    - match: '"'
+      push: string
+    - match: '(?<=\()(define)\s+([^\s()]+)'
+      captures:
+        1: keyword.control.scheme
+        2: entity.name.function.scheme
+    - match: '(?<=\()\s*(define|define-syntax|syntax-rules|lambda|lambdas|let|let\*|letrec|if|cond|case|else|match|begin|quote|quasiquote|unquote|load|extern|slot)(?=[\s()])'
+      scope: keyword.control.scheme
+    - match: '(?<=\()\s*@(?=[\s()])'
+      scope: keyword.control.scheme
+    - match: '[`'',]'
+      scope: keyword.operator.quote.scheme
+    - match: '#[tf]\b|#true\b|#false\b'
+      scope: constant.language.scheme
+    - match: '(?<=[\s(`])-?[0-9]+(?=[\s()])'
+      scope: constant.numeric.scheme
+    - match: '(?<=\()[A-Z][A-Za-z0-9_]*'
+      scope: entity.name.type.constructor.scheme
+  string:
+    - meta_scope: string.quoted.double.scheme
+    - match: '\\.'
+      scope: constant.character.escape.scheme
+    - match: '"'
+      pop: true
