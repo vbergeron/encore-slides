@@ -33,8 +33,9 @@ playground/          Go source of its evaluator: CUE compiled to WebAssembly
 3. Add a matching entry to the Slides list in `site/index.html`, in
    `DATE — NAME` format, linking to `decks/YYYY-MM-DD-name.pdf`.
 
-`encore-theme` opens with a title slide and (if `slug` is set) a QR code
-back to this site, and closes with a QR-code slide for each entry in
+`encore-theme` opens with a title slide and (if `slug` is set) a
+"Follow along" slide with two QR codes side by side: the deck's PDF and this
+site, and closes with a QR-code slide for each entry in
 `links`. See `decks/2026-09-28-lirmm-seminar.typ` for a full example.
 
 Avoid putting an em dash directly in front of a raw/code span (`` — `#foo` ``)

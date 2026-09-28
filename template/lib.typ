@@ -47,7 +47,15 @@
   if slug != "" {
     slide[
       #align(center + horizon)[
-        #qr-card(base-url, label: "Follow along", width: 5cm)
+        #text(size: 24pt, weight: "bold")[Follow along]
+        #v(1em)
+        #grid(
+          columns: (1fr, 1fr),
+          column-gutter: 2cm,
+          align: center,
+          qr-card(base-url + "decks/" + slug + ".pdf", label: "Slides", width: 5cm),
+          qr-card(base-url, label: "Site", width: 5cm),
+        )
       ]
     ]
   }
