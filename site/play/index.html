@@ -25,6 +25,29 @@
   <style>
     @import url('https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts.css');
     textarea, pre { tab-size: 4; }
+    /* The editor is a transparent textarea over a highlighted <pre>: both
+       share font, padding and scroll position so the text lines up. */
+    .editor { position: relative; }
+    .editor > * {
+      position: absolute; inset: 0; margin: 0; padding: 0.75rem;
+      font: 13px/1.375 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre; overflow: auto; border: 1px solid transparent;
+    }
+    .editor > pre { pointer-events: none; overflow: hidden; }
+    .editor > textarea {
+      color: transparent; background: transparent; caret-color: #2d2d2d;
+      resize: none; outline: none; border-color: #d1d5db; border-radius: 0.25rem;
+    }
+    .editor > textarea:focus { border-color: #B5303B; }
+    .editor > textarea::selection { background: rgba(181, 48, 59, 0.2); }
+    .t-comment { color: #8a8a8a; font-style: italic; }
+    .t-string  { color: #2f7d32; }
+    .t-number  { color: #b45309; }
+    .t-keyword { color: #B5303B; font-weight: 600; }
+    .t-op      { color: #B5303B; }
+    .t-type    { color: #1d4ed8; }
+    .t-def     { color: #7c3aed; }
+    .t-label   { color: #0e7490; }
   </style>
 </head>
 <body class="bg-paper text-anthracite font-serif antialiased">
@@ -50,8 +73,11 @@
     </div>
 
     <div class="grid md:grid-cols-2 gap-4">
-      <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off"
-        class="font-mono text-[13px] leading-snug w-full h-[70vh] p-3 bg-white border border-gray-300 rounded resize-none focus:outline-none focus:border-coral"></textarea>
+      <div class="editor h-[70vh] bg-white rounded">
+        <pre id="hl" aria-hidden="true"></pre>
+        <textarea id="src" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off"
+          aria-label="CUE source"></textarea>
+      </div>
       <pre id="out" class="font-mono text-[13px] leading-snug w-full h-[70vh] p-3 bg-white border border-gray-300 rounded overflow-auto whitespace-pre-wrap"></pre>
     </div>
 
@@ -60,6 +86,7 @@
   <script src="wasm_exec.js"></script>
   <script>
     const src = document.getElementById('src');
+    const hl = document.getElementById('hl');
     const out = document.getElementById('out');
     const status = document.getElementById('status');
     let example = '';
@@ -73,6 +100,58 @@
     const decode = s => new TextDecoder().decode(
       Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)));
 
+    const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const span = (cls, t) => cls ? `<span class="t-${cls}">${esc(t)}</span>` : esc(t);
+
+    // CUE tokens, tried in order at each position; the first match wins.
+    const CUE_TOKENS = [
+      ['comment', /\/\/[^\n]*/y],
+      ['string', /#*"""[\s\S]*?"""#*|#+"(?:[^"\\\n]|\\.)*"#+|"(?:[^"\\\n]|\\.)*"?|'(?:[^'\\\n]|\\.)*'?/y],
+      ['label', /[A-Za-z_$][\w$]*[?!]?(?=\s*:(?!=))/y],
+      ['keyword', /_\|_|\b(?:package|import|let|if|for|in|true|false|null)\b|\b_\b/y],
+      ['type', /\b(?:string|bytes|bool|number|int|uint|float|u?int(?:8|16|32|64|128)|float(?:32|64)|rune)\b/y],
+      ['def', /_?#[A-Za-z_$][\w$]*/y],
+      ['number', /\b(?:0x[\da-fA-F_]+|0o[0-7_]+|0b[01_]+|\d[\d_]*(?:\.\d+)?(?:[eE][+-]?\d+)?(?:[KMGTP]i?)?)\b/y],
+      ['op', /=~|!~|<=|>=|==|!=|&&|\|\||[&|*<>!=+\-/]|\.\.\./y],
+      [null, /[A-Za-z_$][\w$]*|\s+|./y],
+    ];
+
+    function highlightCue(text) {
+      let html = '';
+      for (let i = 0; i < text.length;) {
+        for (const [cls, re] of CUE_TOKENS) {
+          re.lastIndex = i;
+          const m = re.exec(text);
+          if (m && m[0]) { html += span(cls, m[0]); i += m[0].length; break; }
+        }
+      }
+      return html;
+    }
+
+    // YAML output: keys, list dashes and scalar values, line by line.
+    function highlightYaml(text) {
+      return text.split('\n').map(line => {
+        const m = /^(\s*(?:- )*)([^:#]+?:)(?=\s|$)(.*)$/.exec(line) || /^(\s*(?:- )*)()(.*)$/.exec(line);
+        const [, lead, key, rest] = m;
+        const v = rest.trim();
+        const cls = !v ? null : /^-?\d[\d_.eE+-]*$/.test(v) ? 'number'
+          : /^(true|false|null)$/.test(v) ? 'keyword' : 'string';
+        return span('op', lead) + span('label', key) + span(cls, rest);
+      }).join('\n');
+    }
+
+    function paint() {
+      // A trailing newline needs a character after it to take up a line.
+      hl.innerHTML = highlightCue(src.value) + '\n ';
+      hl.scrollTop = src.scrollTop;
+      hl.scrollLeft = src.scrollLeft;
+    }
+
+    src.addEventListener('scroll', () => {
+      hl.scrollTop = src.scrollTop;
+      hl.scrollLeft = src.scrollLeft;
+    });
+
     function run() {
       if (!ready) return;
       const r = cueEval(src.value, mode());
@@ -81,14 +160,14 @@
         out.classList.add('text-coral');
         status.textContent = 'Error: the meet is ⊥';
       } else {
-        out.textContent = r.output;
+        out.innerHTML = mode() === 'eval' ? highlightCue(r.output) : highlightYaml(r.output);
         out.classList.remove('text-coral');
         status.textContent = 'OK';
       }
     }
 
     let timer;
-    src.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 250); });
+    src.addEventListener('input', () => { paint(); clearTimeout(timer); timer = setTimeout(run, 250); });
     document.querySelectorAll('input[name=mode]').forEach(e => e.addEventListener('change', run));
 
     // Tab inserts a tab instead of leaving the editor.
@@ -104,6 +183,7 @@
     document.getElementById('reset').addEventListener('click', () => {
       src.value = example;
       history.replaceState(null, '', location.pathname);
+      paint();
       run();
     });
 
@@ -126,6 +206,7 @@
     (async () => {
       example = await (await fetch('example.cue')).text();
       src.value = location.hash.length > 1 ? decode(location.hash.slice(1)) : example;
+      paint();
       try {
         await loadWasm();
         ready = true;
