@@ -10,7 +10,9 @@ instructions per run (median) and peak RAM: R static RAM + stack,
 C arena high-water + stack, E heap high-water + stack, and for E the
 garbage collector's activity on the memory run: collections, share of VM
 time spent collecting, longest pause since boot (instructions) and bytes
-live after the latest collection. A C case left out
+live after the latest collection, with the time per collector phase. E
+also gets the instructions per run with the CPS optimizer off, for the
+optimizer's share of the speed. A C case left out
 of the run (it does not fit the RAM budget) is reported with its reason.
 """
 
@@ -37,7 +39,7 @@ def keep(r):
     if r["board"] != BOARD:
         return False
     if r["variant"] == "E":
-        return r["build"].get("cps_optimize") is True
+        return r["build"].get("cps_optimize") is not None
     if r["variant"] == "C":
         return r["build"]["heap_bytes"] == 20480
     return True
@@ -48,7 +50,10 @@ def main(path):
     for line in open(path):
         r = json.loads(line)
         if keep(r):
-            latest[(r["workload"], r["variant"], r["profile"], r["n"])] = r
+            profile = r["profile"]
+            if r["variant"] == "E" and not r["build"]["cps_optimize"]:
+                profile += "-noopt"
+            latest[(r["workload"], r["variant"], profile, r["n"])] = r
 
     out = {}
     for (w, v, profile, n), r in sorted(latest.items(), key=lambda kv: kv[0][3]):
@@ -72,7 +77,11 @@ def main(path):
             cell["ram"] = mem["heap_peak_bytes"] + r["stack_peak_bytes"]
             gc = mem["gc"]
             cell["gc"] = {"count": gc["count"], "pct": gc["pct"],
-                          "pause_max": gc["pause_max_since_boot"], "live": gc["live_bytes"]}
+                          "pause_max": gc["pause_max_since_boot"], "live": gc["live_bytes"],
+                          "phases": {k: gc[k] for k in ("mark", "forward", "update", "compact")}}
+            noopt = latest.get((w, "E", "timing-noopt", n))
+            if noopt and noopt["ok"] and noopt["build"]["heap_bytes"] == r["build"]["heap_bytes"]:
+                cell["insns_noopt"] = noopt["insns"]["median"]
         case[v] = cell
 
     for (w, n), why in C_SKIPPED.items():
