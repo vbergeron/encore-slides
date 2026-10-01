@@ -25,19 +25,13 @@
   )
 }
 
-#let logo(file, height: 2cm) = image("/assets/logos/" + file, height: height)
-// An alternative's slide: its logo in the top-right corner, then the points.
-#let logo-slide(file, body, height: 1.6cm) = {
-  place(top + right, dy: -0.4cm, logo(file, height: height))
-  block(width: 78%, body)
-}
 
 = Introduction
 
 == Why verify firmware logic
 
 - Generated code is getting cheap: *more code to review*, same assurance level
-- seL4 showed machine-checked correctness at the systems level; firmware
+- seL4, a proved OS kernel, showed machine-checked correctness at the systems level; firmware
   wants the same rigour
 - Formal specifications scale: a generated implementation is checked against
   theorem statements
@@ -88,7 +82,7 @@ Extract Constant sha256 => "(extern (slot 3) b)".
     set text(size: 19pt)
     [*In Rocq: the SDK*]
     [
-      - `Event`: APDU, button, timer
+      - `Event`: card command (APDU), button, timer
       - `Effect`: send, write flash
       - Axioms for admitted functions
       - Extraction directives
@@ -152,67 +146,44 @@ Extract Constant sha256 => "(extern (slot 3) b)".
   ],
 )
 
-== Extraction paths
+== Running Rocq on the target: the options
 
-#simple-table((auto, 1fr, auto, auto, auto),
-  [Path], [Runtime needs], [`no_std`], [Cortex-M], [Verified compilation],
-  [*Lean 4*], [C++ library, ref-counting + cycle GC, tasks, hosted IO], [no], [no], [no],
-  [*Rocq → OCaml*], [generational GC, libc/libm], [no], [no], [no],
-  [*CertiRocq*], [GC-aware heap; Peano `nat`, no machine arithmetic], [partial], [partial], [Gallina → Clight, largely],
-  [*Rocq → Scheme*], [a small runtime, to find or to build], [yes], [yes], [no],
-)
-#v(0.3em)
-#text(size: 15pt, fill: muted)[
-  Every path but CertiRocq trusts its extraction and compiler: the proof
-  covers the Gallina, not the code that runs. Verified compilers (CompCert,
-  CakeML) show the stronger story is possible.
-]
-
-== Lean 4
-
-#logo-slide("lean.png", height: 2.2cm)[
-  - Mature native code generation, active proof ecosystem
-  - Its runtime assumes a *C++ library*, *reference counting with cycle
-    collection*, tasks and hosted IO
-  - Targets smaller than a Raspberry Pi need substantial runtime work; the
-    ESP32-C3 port needed a patched libc++/picolibc, on *384 KB of RAM*
-  - Bare metal is not on the Lean FRO roadmap
-]
-
-== Rocq extraction to OCaml
-
-#logo-slide("ocaml.svg")[
-  - Rocq's most mature extraction target
-  - The OCaml runtime needs a *generational GC*, *libc and libm*, and
-    native-code conventions that do not match Cortex-M object formats
-  - A native OCaml port to a microcontroller needed assembly patching, a
-    custom linker script and standard-library stubs, on a larger target
-  - *OMicroB*, an OCaml VM for microcontrollers, supports AVR and PIC32; its
-    Cortex-M0 port is unmerged, and the ST33 needs full Thumb-2
-]
-
-== CertiRocq
-
-#logo-slide("certirocq.svg")[
-  - The most principled path: Gallina to Clight through a *largely verified*
-    compiler chain, then C
-  - Generated code allocates, and correctness is stated against a GC-aware
-    heap: a new runtime means *proving a new collector*, or bounded allocation
-  - No standard `nat` to machine integer mapping: arithmetic stays in *Peano*
-  - To run on the target at all, the paper patches its runtime: static
-    nursery, and a collection *aborts the program*
-]
-
-== Rocq extraction to Scheme
-
-#logo-slide("scheme.png", height: 2cm)[
-  - Less mature than OCaml extraction, but Scheme has *compact semantics* and
-    *no mandatory hosted runtime*
-  - Small Scheme systems fit microcontrollers: PICOBIT, Ribbit (a VM,
-    compiler and REPL in 4 KB)
-  - The extracted code is a narrow subset: curried definitions and
-    applications, constructor matching, from Rocq's `macros_extr.scm`
-  - Candidates on the target: *Chibi*, *Ribbit*, then our own
+#{
+  set text(size: 13pt)
+  show table.cell.where(y: 0): set text(weight: "bold")
+  let no = text(fill: accent, weight: "bold")[✗]
+  let yes = text(fill: rgb("#2e7d32"), weight: "bold")[✓]
+  let part = text(fill: rgb("#b26a00"), weight: "bold")[◐]
+  let name(file, body, height: 0.75cm) = grid(columns: (0.9cm, auto), column-gutter: 6pt, align: horizon,
+    image("/assets/logos/" + file, height: height), text(weight: "bold", body))
+  table(
+    columns: (auto, 1fr, 1fr, auto),
+    align: (col, row) => if col == 3 { center + horizon } else { left + horizon },
+    stroke: (x, y) => (bottom: if y == 0 { 0.8pt + black } else { 0.3pt + luma(220) }),
+    inset: (x: 7pt, y: 6pt),
+    table.header([Path], [What its runtime needs], [Status on a small Arm chip], [Compiler \ proved]),
+    name("lean.png")[Lean 4],
+    [a C++ library, reference counting with cycle collection, threads, an OS for I/O],
+    [#no not on the roadmap; the one microcontroller port (ESP32-C3) needed a patched C++ library and *384 KB of RAM*],
+    no,
+    name("ocaml.svg")[Rocq → OCaml],
+    [a generational garbage collector, the C and maths libraries],
+    [#no ports need assembly patches and stubs; the OCaml VM for microcontrollers (OMicroB) has no merged Arm port],
+    no,
+    name("certirocq.svg")[CertiRocq],
+    [a heap whose collector is part of the proof; numbers stay unary (`S (S O)`)],
+    [#part runs only with a patched runtime: fixed-size heap, and *the program aborts* when it is full],
+    [#part \ largely, \ down to C],
+    name("scheme.png")[Rocq → Scheme],
+    [a small Scheme runtime: to find, or to build],
+    [#yes small Scheme systems already fit microcontrollers (Ribbit: 4 KB)],
+    no,
+  )
+}
+#v(0.2em)
+#text(size: 15pt)[
+  Only Scheme has a runtime small enough; only CertiRocq proves its compiler,
+  and it does not fit in practice. *We take the Scheme path, and build the runtime.*
 ]
 
 == From Rocq to Scheme
@@ -222,7 +193,7 @@ Extract Constant sha256 => "(extern (slot 3) b)".
   column-gutter: 0.8cm,
   align: top,
   [
-    #text(size: 14pt, fill: muted)[Gallina]
+    #text(size: 14pt, fill: muted)[Gallina (the language of Rocq)]
     #v(-0.3em)
     #text(size: 14pt)[
 ```coq
@@ -238,7 +209,7 @@ Fixpoint digits_eqb (a b : list nat) : bool :=
     ]
   ],
   [
-    #text(size: 14pt, fill: muted)[Extracted Scheme]
+    #text(size: 14pt, fill: muted)[Scheme, as Rocq extracts it]
     #v(-0.3em)
     #text(size: 14pt)[
 ```scheme
@@ -260,84 +231,92 @@ Fixpoint digits_eqb (a b : list nat) : bool :=
 )
 #v(0.2em)
 #text(size: 15pt)[
-  Curried functions (`lambdas`, `@`), constructors as tagged lists (#raw("`(Cons ,x ,l)")),
-  `match` on the tag. Even `bool` is a constructor: #raw("`(True)").
+  Functions take one argument at a time (`lambdas`, `@`); data is a tag and its
+  fields (#raw("`(Cons ,x ,l)")), and `match` looks at the tag. Rocq defines these
+  three as macros; Encore makes them *built-in*.
 ]
 
-== macros_extr.scm
+== Scheme runtimes on the target
 
-Extracted code starts with `(load "macros_extr.scm")`: three macros, shipped with Rocq's Scheme extraction.
+#{
+  set text(size: 14pt)
+  show table.cell.where(y: 0): set text(weight: "bold")
+  let no(body) = [#text(fill: accent, weight: "bold")[✗] #body]
+  let yes(body) = [#text(fill: rgb("#2e7d32"), weight: "bold")[✓] #body]
+  let head(file, body, height: 0.9cm) = stack(spacing: 4pt, image("/assets/logos/" + file, height: height), body)
+  table(
+    columns: (auto, 1fr, 1fr, 1fr),
+    align: (col, row) => if row == 0 { center + bottom } else if col == 0 { left + horizon } else { center + horizon },
+    stroke: (x, y) => (bottom: if y == 0 { 0.8pt + black } else { 0.3pt + luma(220) }),
+    inset: (x: 7pt, y: 6pt),
+    table.header([], head("chibi.png")[Chibi], head("ribbit.png", height: 0.7cm)[Ribbit], text(fill: accent, size: 20pt)[Encore]),
+    [How it runs], [interpreter, in C], [small bytecode VM, in C], [bytecode VM, in Rust],
+    [What ships on the chip], [the Scheme *source*, evaluated at every boot], [bytecode + a generated VM], [bytecode + the VM library],
+    [Porting work], [≈ 50 C files, OS stubs], [static heap, debug-output shim], [none: built for bare metal],
+    [Fits 256 KB of flash], no[too big], yes[], yes[],
+    [Runs the code Rocq extracts], yes[], no[lacks a construct it uses \ (quasiquote)], yes[],
+    [Ran the proved logic on the chip], no[], no[hand-written Scheme only], yes[],
+  )
+}
 
-#grid(
-  columns: (1.1fr, 1fr),
-  column-gutter: 0.8cm,
-  align: top,
-  text(size: 13pt)[
-    #text(size: 13pt, fill: muted, font: "Libertinus Serif")[In essence (simplified):]
-```scheme
-(define-syntax lambdas
-  (syntax-rules ()
-    ((lambdas () e) e)
-    ((lambdas (x) e) (lambda (x) e))
-    ((lambdas (x y ...) e)
-     (lambda (x) (lambdas (y ...) e)))))
+== The key idea: continuation-passing style (CPS)
 
-(define-syntax @
-  (syntax-rules ()
-    ((@ e) e)
-    ((@ f e) (f e))
-    ((@ f e1 e2 ...) (@ (f e1) e2 ...))))
-
-;; match: compare the tag (car) of a
-;; tagged list, bind its fields
-```
-  ],
-  [
-    #set text(size: 16pt)
-    - `lambdas`: a curried multi-argument function
-    - `@`: curried application, one argument at a time
-    - `match`: dispatch on a constructor's tag
-    - Constructors are plain quasiquoted lists
-    #v(0.3em)
-    *Encore makes them core primitives* instead of supporting `define-syntax`:
-    `@` becomes a saturated call after uncurrying, `match` the `MATCH` opcode,
-    a constructor the `PACK` opcode. Its only addition: `extern`, for host functions.
-  ],
-)
-
-== Chibi Scheme
-
-#logo-slide("chibi.png", height: 2.2cm)[
-  - A small, embeddable *interpreter* written in C
-  - On the target: the C runtime, about 50 files, cross-compiled with custom
-    POSIX stubs
-  - The extracted Scheme is embedded as a C string literal, *loaded and
-    evaluated on every boot*
-  - #text(fill: accent, weight: "bold")[✗ The binary exceeds the 256 KB flash budget]
-]
-
-== Ribbit
-
-#logo-slide("ribbit.png", height: 1.4cm)[
-  - A compact Scheme *VM*: the compiler `rsc.scm` emits bytecode and a minimal VM in C
-  - On the target: generated from `build.rs`, patched for a static heap and a
-    semihosting shim, cross-compiled for Cortex-M35P
-  - #text(fill: rgb("#2e7d32"), weight: "bold")[✓ The binary fits]
-  - #text(fill: accent, weight: "bold")[✗ No `quasiquote`: it cannot compile the extracted code.]
-    The test ran hand-written Scheme: the verified logic never ran on the device
-]
-
-== The key insight: CPS
-
-Rocq-extracted Scheme is *heavily curried* and already close to CPS form.
-
-- The CPS rewrite removes the call stack *semantically*; a register VM
-  removes it *physically*: no hidden control flow, no frames
-- Every intermediate value is named: register allocation is natural
-- GC roots are trivial: every live register is a root, and CPS keeps them
-  contiguous, so no stack scanning
+#text(size: 18pt)[In CPS, *no function ever returns*: each call also receives *what to do next* (its continuation), and jumps.]
+#v(0.3em)
+- Code extracted from Rocq is already close to this form: functions take one
+  argument at a time
+- No return means *no call stack*: a VM built on it needs only registers and a heap,
+  no hidden control flow
+- Every intermediate value gets a name: it maps directly onto a register
+- The garbage collector finds every live value in the registers: no stack to scan
 
 = Encore: compiler and VM
+
+== Encore at a glance
+
+// Colours of the overview: compilation stages, the VM, the host, the OS.
+#let green = (fill: rgb("#d5e8d4"), stroke: 0.9pt + rgb("#82b366"))
+#let blue = (fill: rgb("#dae8fc"), stroke: 0.9pt + rgb("#6c8ebf"))
+#let red = (fill: rgb("#f8cecc"), stroke: 0.9pt + rgb("#b85450"))
+#let grey = (fill: rgb("#f5f5f5"), stroke: 0.9pt + rgb("#666666"))
+#let stage(pos, name, body) = node(pos, name: name, width: 5.4cm, ..green, text(size: 14pt, body))
+
+#align(center + horizon, scale(118%, reflow: true, diagram(
+  spacing: (0.9cm, 0.5cm),
+  node-inset: 7pt,
+  node-corner-radius: 4pt,
+  edge-stroke: 0.9pt + black,
+  mark-scale: 80%,
+
+  stage((0, 0), <rocq>)[Rocq (Gallina code)],
+  stage((0, 1), <scm>)[Scheme code],
+  stage((0, 2), <cps>)[Continuation-passing style (CPS)],
+  node((1, 2), name: <opt>, stroke: 0.9pt + black, text(size: 14pt)[CPS optimizer]),
+
+  stage((0, 3.3), <bc>)[Bytecode],
+  node((0, 4.05), name: <vml>, stroke: none, text(size: 13pt)[#text(weight: "bold")[_Encore_ VM] (a library \ of the Rust application)]),
+  node(enclose: (<bc>, <vml>), name: <vm>, ..blue, inset: 9pt),
+
+  node((1, 3.3), name: <main>, ..red, width: 6.4cm, align(center, stack(spacing: 5pt,
+    block(fill: luma(246), inset: 5pt, text(size: 11pt)[```rust
+encore_heap!(HEAP, 32_768);
+let mut vm = boot(HEAP())?;
+```]),
+    text(size: 13pt)[`main.rs`]))),
+  node((1, 4.4), name: <build>, ..red, width: 6.4cm, text(size: 13pt)[runs the _Encore_ compiler \ `build.rs`]),
+  node((0.5, 5.25), name: <hostl>, stroke: none, text(size: 14pt)[*Host* (Rust application)]),
+  node(enclose: (<vm>, <main>, <build>, <hostl>), name: <host>, ..red, inset: 9pt),
+
+  node((2.05, 4), name: <other>, ..grey, text(size: 13pt)[Other \ application]),
+  node((1, 6.05), name: <osl>, stroke: none, text(size: 14pt, weight: "bold")[Microcontroller OS]),
+  node(enclose: (<host>, <other>, <osl>), ..grey, inset: 9pt, corner-radius: 6pt),
+
+  edge(<rocq>, <scm>, "-|>"),
+  edge(<scm>, <cps>, "-|>"),
+  edge(<cps>, <opt>, "-|>", shift: 0.12cm),
+  edge(<opt>, <cps>, "-|>", shift: 0.12cm),
+  edge(<cps>, <bc>, "-|>"),
+)))
 
 == The VM
 
@@ -551,163 +530,50 @@ The VM requires only a fixed arena: `#![no_std]`, brings its own GC.
     )
 }))
 
-== Fleche: a test language
-
-#grid(
-  columns: (1.2fr, 1fr),
-  column-gutter: 0.8cm,
-  align: horizon,
-  block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: 13pt)[
-```fleche
-data Leaf | Node(l, v, r)
-
-let rec insert x = t ->
-  match t
-  | Leaf -> Node(Leaf, x, Leaf)
-  | Node(l, v, r) ->
-    let less = builtin lt x v in
-    match less
-    | True -> Node(insert x l, v, r)
-    | _    -> Node(l, v, insert x r)
-    end
-  end
-
-let rec sum t =
-  if Node(l, v, r) = t
-  then builtin add v (builtin add (sum l) (sum r))
-  else 0
-
-let main = sum (insert 8 (insert 2 (insert 5 Leaf)))
-```
-  ]),
-  [
-    #set text(size: 16pt)
-    A small direct-style language, parsed straight to DS:
-    - `data` declarations: constructors and arities
-    - Curried lambdas `x -> e`, `let rec`, application
-    - Exhaustive `match`, `_` wildcard, `if` on a pattern
-    - `builtin` primitives, string literals, `let extern` host calls
-    #v(0.4em)
-    #text(fill: muted)[
-      Not a language for users: no types, no modules. It exists to
-      write compiler and VM tests by hand, without going through Rocq.
-    ]
-  ],
-)
-
 == Compiler pipeline
 
-// An intermediate representation: its acronym and what it stands for.
+// A stage of the compiler: its name and, in plain words, what it makes explicit.
 #let ir(name, sub) = grid(
-  columns: (1.6cm, 4.4cm),
+  columns: (3.3cm, 4.6cm),
   column-gutter: 0.3cm,
   align: left + horizon,
-  text(size: 18pt, weight: "bold", fill: accent)[#name],
+  text(size: 17pt, weight: "bold", fill: accent)[#name],
   text(size: 13pt, fill: muted)[#sub],
 )
 #let pass(body) = text(size: 12pt, body)
-// What an IR holds, and any pass that rewrites it in place, beside its box.
-#let aside(pos, body, note: none) = node(pos, stroke: none, inset: 4pt, block(width: 9.4cm,
-  align(left, {
-    set par(leading: 0.45em)
-    text(size: 13pt, body)
-    if note != none { linebreak(); text(size: 12pt, fill: muted, style: "italic", note) }
-  })))
 
 #align(center + horizon, diagram(
-  spacing: (1.2cm, 0.75cm),
+  spacing: (1.2cm, 0.8cm),
   node-stroke: 0.8pt + luma(60),
   node-inset: 7pt,
   node-corner-radius: 3pt,
   edge-stroke: 0.8pt + luma(60),
   mark-scale: 80%,
 
-  node((1, 0), name: <src>, stroke: none, inset: 2pt, text(size: 14pt)[Scheme (Rocq) · Fleche]),
-  node((1, 1), name: <ds>, ir([DS], [direct style])),
-  aside((2, 1), [named binders, lambdas, applications, `match`],
-    note: [then uncurried: n-ary lambdas, saturated calls]),
-  node((1, 2), name: <dsi>, ir([DSI], [de Bruijn indexed])),
-  aside((2, 2), [variables are indices, capture-safe]),
-  node((1, 3), name: <cps>, ir([CPS], [continuation-passing])),
-  aside((2, 3), [only tail calls, `encore f(x) -> k`]),
-  node((0, 3), name: <opt>, inset: 6pt, align(center, text(size: 13pt)[
+  node((1, 0), name: <src>, stroke: none, inset: 2pt, text(size: 14pt)[Scheme extracted from Rocq]),
+  node((1, 1), name: <ds>, ir([Direct style], [ordinary nested calls, \ functions take all their arguments])),
+  node((1, 2), name: <cps>, ir([CPS], [every call is a jump, \ with its continuation])),
+  node((0, 2), name: <opt>, inset: 6pt, align(center, text(size: 13pt)[
     #text(weight: "bold")[CPS optimizer] \
-    #text(size: 11pt, fill: muted)[simplify, rewrite \ to a fixpoint]])),
-  node((1, 4), name: <asm>, ir([ASM], [registers])),
-  aside((2, 4), [`SELF`, `CONT`, `A1`–`A8`, `X01`…; captures, globals],
-    note: [then peephole-optimized]),
-  node((1, 5), name: <bin>, fill: accent, stroke: none, inset: 8pt,
-    text(size: 15pt, fill: white, weight: "bold")[ENCR bytecode]),
+    #text(size: 11pt, fill: muted)[repeats until \ nothing changes]])),
+  node((1, 3), name: <asm>, ir([Registers], [variables placed in \ the VM's registers])),
+  node((1, 4), name: <bin>, fill: accent, stroke: none, inset: 8pt,
+    text(size: 15pt, fill: white, weight: "bold")[Bytecode]),
 
-  edge(<src>, <ds>, "-|>", label: pass[parse, desugar], label-side: left),
-  edge(<ds>, <dsi>, "-|>", label: pass[resolve], label-side: left),
-  edge(<dsi>, <cps>, "-|>", label: pass[CPS transform], label-side: left),
+  edge(<src>, <ds>, "-|>", label: pass[parse, merge curried functions], label-side: left),
+  edge(<ds>, <cps>, "-|>", label: pass[CPS transform], label-side: left),
   edge(<cps>, <opt>, "-|>", shift: 0.12cm),
   edge(<opt>, <cps>, "-|>", shift: 0.12cm),
-  edge(<cps>, <asm>, "-|>", label: pass[closure conversion, \ register allocation], label-side: left),
+  edge(<cps>, <asm>, "-|>", label: pass[register allocation], label-side: left),
   edge(<asm>, <bin>, "-|>", label: pass[emit], label-side: left),
 ))
 #v(0.2em)
 #align(center, text(size: 15pt, fill: muted)[
-  Each step makes one thing explicit: arities, binding structure, control flow, machine registers.
+  Each stage makes one thing explicit: how many arguments, where control goes next, which register holds what.
 ])
 
 // A code panel for the IR walkthrough, in the style of the bytecode slide.
 #let ir-code(body, size: 11pt) = block(fill: luma(242), inset: 10pt, radius: 3pt, width: 100%, text(size: size, body))
-#let ir-slide(code, body, size: 11pt) = grid(
-  columns: (1.2fr, 1fr),
-  column-gutter: 0.8cm,
-  align: horizon,
-  ir-code(code, size: size),
-  { set text(size: 16pt); body },
-)
-
-== DS: direct style
-
-#ir-slide(size: 13pt)[
-```ir
-(λ (a) (λ (b)
-  (match a
-    [()      (match b [() (True)] [(_ _) (False)])]
-    [(x a~)  (match b
-               [()     (False)]
-               [(y b~) (match ((eqb x) y)
-                         [() (False)]
-                         [() ((digits_eqb a~) b~)])])])))
-```
-#v(0.3em)
-#text(fill: muted)[after `uncurry`:]
-```ir
-(λ (a b)
-  ... (match (eqb x y) ...
-        [() (digits_eqb a~ b~)]) ...)
-```
-][
-  `digits_eqb` as the Scheme frontend produces it.
-  - A small λ-calculus: `Lambda`, `Apply`, `Let`, `Letrec`, `Ctor`, `Field`, `Match`, primitives
-  - Constructors are a *tag* and fields; `match` binds the fields
-  - `uncurry` turns `λa.λb` into `λ(a b)` and saturates calls: one `ENCORE`, not two
-]
-
-== DSI: de Bruijn indices
-
-#ir-slide(size: 13pt)[
-```ir
-(λ2
-  (match #1                            ; a
-    [0 (match #0 [0 (True)] [2 (False)])]
-    [2 (match #2                       ; b
-         [0 (False)]
-         [2 (match (eqb #3 #1)         ; x y
-              [0 (False)]
-              [0 (digits_eqb #2 #0)])])])) ; a~ b~
-```
-][
-  - Names become *indices*: `#0` is the innermost binder
-  - A case binds as many slots as it has fields: only the *arity* is left
-  - Globals sit at the bottom of the same environment
-  - No renaming or capture can go wrong in later passes
-]
 
 == CPS: explicit continuations
 
@@ -762,126 +628,38 @@ fin f
   ],
 )
 #text(size: 14pt, fill: muted)[
-  `eqb` inlined to `int.eq`; administrative continuations η-reduced: the recursive call reuses `k`, so it is a loop.
+  `eqb` is inlined into `int.eq`, and continuations that only pass their result on are removed: the recursive call reuses `k`, so it runs as a loop.
 ]
 
 == CPS optimizer
 
-// A rewrite pass of the optimizer, boxed like an IR in the pipeline diagram.
-#let step(name) = block(width: 4.4cm, align(center, text(size: 15pt, weight: "bold", name)))
-
-#align(center + horizon, diagram(
-  spacing: (1.6cm, 0.6cm),
-  node-stroke: 0.8pt + luma(60),
-  node-inset: 6pt,
-  node-corner-radius: 3pt,
-  edge-stroke: 0.8pt + luma(60),
-  mark-scale: 80%,
-
-  node((1, 0), name: <in>, stroke: none, inset: 2pt, text(size: 14pt)[CPS, from the transform]),
-  node((1, 1), name: <glob>, step[Global inlining]),
-  aside((2, 1), [small non-recursive globals, once: `eqb` → `int.eq`]),
-  node((1, 2), name: <inl>, step[Inlining]),
-  aside((2, 2), [local functions under 8 nodes, never recursive]),
-  node((1, 3), name: <hoist>, step[Hoisting]),
-  aside((2, 3), [loop-invariant values out of recursive functions]),
-  node((1, 4), name: <cse>, step[CSE]),
-  aside((2, 4), [a value computed twice reuses the first name]),
-  node((1, 5), name: <contif>, step[Contification]),
-  aside((2, 5), [a function with one continuation becomes a jump]),
-  node((1, 6), name: <out>, fill: accent, stroke: none, inset: 7pt,
-    text(size: 15pt, fill: white, weight: "bold")[Optimized CPS]),
-
-  // Zero-size content: the box takes its height from the rows it encloses,
-  // without stretching the middle row.
-  node((0, 3), name: <simp>, enclose: ((0, 1), (0, 5)), inset: 8pt, width: 3cm,
-    box(width: 0pt, height: 0pt, place(center + horizon,
-      text(size: 15pt, weight: "bold")[Simplify]))),
-
-  edge(<in>, <glob>, "-|>"),
-  edge(<glob>, <inl>, "-|>"),
-  edge(<inl>, <hoist>, "-|>"),
-  edge(<hoist>, <cse>, "-|>"),
-  edge(<cse>, <contif>, "-|>"),
-  edge(<contif>, <out>, "-|>"),
-  edge(<contif>, (1.36, 5), (1.36, 2), <inl>, "-|>"),
-  ..(1, 2, 3, 4, 5).map(y => edge((1, y), (0, y), "<|-|>", snap-to: (auto, <simp>))),
-))
+#{
+  set text(size: 14pt)
+  show table.cell.where(y: 0): set text(weight: "bold")
+  let group(body) = table.cell(colspan: 2, inset: (top: 8pt, bottom: 3pt, x: 7pt), text(fill: accent, weight: "bold", body))
+  table(
+    columns: (auto, 1fr),
+    stroke: (x, y) => (bottom: if y == 0 { 0.8pt + black } else { 0.3pt + luma(225) }),
+    inset: (x: 7pt, y: 5pt),
+    table.header([Step], [What it does]),
+    group[Rewrites: make the code smaller or faster],
+    [Global inlining], [replace a call to a small global function by its body, e.g. `eqb` → `int.eq`],
+    [Local inlining], [the same for small local functions, never recursive ones],
+    [Hoisting], [move a value that does not change out of a loop],
+    [Common subexpressions], [a value computed twice reuses the first result],
+    [Contification], [a function always returning to the same place becomes a plain jump],
+    group[Clean-up after every rewrite: never grows the code],
+    [Dead code], [drop a value that is never used],
+    [Copy propagation], [after `let y = x`, use `x` directly],
+    [Constant folding], [compute arithmetic and `match` on known values at compile time],
+    [Continuation inlining], [a continuation used once is pasted where it is called],
+  )
+}
 #v(0.2em)
 #align(center, text(size: 15pt, fill: muted)[
-  The rewrites loop while anything changes, within one fuel budget (100). \ Rewrites expose redexes; simplify removes them.
+  Rewrites and clean-up repeat until nothing changes (at most 100 rounds). \
+  On our workloads it cuts the instructions executed by a factor of 2 to 4.
 ])
-
-== Simplify
-
-#align(center + horizon, diagram(
-  spacing: (1.6cm, 0.6cm),
-  node-stroke: 0.8pt + luma(60),
-  node-inset: 6pt,
-  node-corner-radius: 3pt,
-  edge-stroke: 0.8pt + luma(60),
-  mark-scale: 80%,
-
-  node((1, 0), name: <in>, stroke: none, inset: 2pt, text(size: 14pt)[CPS, after a rewrite]),
-  node((1, 1), name: <dce>, step[Dead code]),
-  aside((2, 1), [drop a binding its body never uses]),
-  node((1, 2), name: <copy>, step[Copy propagation]),
-  aside((2, 2), [`let y = x`: every `y` becomes `x`]),
-  node((1, 3), name: <fold>, step[Constant folding]),
-  aside((2, 3), [arithmetic, fields and matches on known values]),
-  node((1, 4), name: <beta>, step[β-contraction]),
-  aside((2, 4), [a continuation called once is inlined at its call]),
-  node((1, 5), name: <eta>, step[η-reduction]),
-  aside((2, 5), [`cont(x) => encore k(x)` becomes `k`]),
-  node((1, 6), name: <out>, fill: accent, stroke: none, inset: 7pt,
-    text(size: 15pt, fill: white, weight: "bold")[Simplified CPS]),
-
-  edge(<in>, <dce>, "-|>"),
-  edge(<dce>, <copy>, "-|>"),
-  edge(<copy>, <fold>, "-|>"),
-  edge(<fold>, <beta>, "-|>"),
-  edge(<beta>, <eta>, "-|>"),
-  edge(<eta>, <out>, "-|>"),
-  edge(<eta>, (1.36, 5), (1.36, 1), <dce>, "-|>"),
-))
-#v(0.2em)
-#align(center, text(size: 15pt, fill: muted)[
-  The steps loop while anything changes. None of them grows the code.
-])
-
-== ASM: registers
-
-#ir-slide[
-```ir
-let X01 = global 13
-letrec X02 = fun [] =                 ; no captures
-  let X01 = A1                        ; a
-  let X02 = A2                        ; b
-  let X03 = global 13                 ; digits_eqb
-  match X01
-  | Nil       => match X02
-    | Nil       => let A1 = ctor(1)   ; True
-                   encore CONT(A1) -> NULL
-    | Cons @X04 => let A1 = ctor(0)   ; False
-                   encore CONT(A1) -> NULL
-  | Cons @X04 => match X02            ; x a~
-    | Nil       => let A1 = ctor(0)
-                   encore CONT(A1) -> NULL
-    | Cons @X06 =>                    ; y b~
-      let X08 = int.eq(X04, X06)
-      match X08
-      | False => let A1 = ctor(0)
-                 encore CONT(A1) -> NULL
-      | True  => encore X03(X05, X07) -> CONT
-fin X02
-```
-][
-  - Names become *registers*: `SELF`, `CONT`, arguments `A1`–`A8`, locals `X01`…
-  - Free variables become *captures*, top-level names *globals*
-  - A case says where its fields land: `@X04` unpacks to `X04`, `X05`
-  - Returning is `encore CONT(A1) -> NULL`
-  - One step from bytecode: the emitter maps each node to an opcode
-]
 
 == Bytecode: `digits_eqb`
 
@@ -942,23 +720,20 @@ The VM is a library inside a Rust application that keeps control of memory and I
   column-gutter: 0.8cm,
   align: top,
   [
-    #codebox(caption: [Fleche])[
-```fleche
-data Inc | Dec | Reset
-data Print(val) | Beep
-data Nil | Cons(head, tail)
-data Pair(fst, snd)
+    #codebox(caption: [Rocq])[
+```coq
+Inductive event := Inc | Dec | Reset.
+Inductive effect := Print (v : nat) | Beep.
 
-# step : State -> Event
-#        -> Pair(State, List Effect)
-let step = state -> event -> ...
+Definition step (s : nat) (e : event)
+  : nat * list effect := ...
 ```
     ]
   ],
   [
     #codebox(caption: [Rust host])[
 ```rust
-encore_heap!(HEAP, 40_000);  // static arena
+encore_heap!(HEAP, 32_768);  // static arena
 let mut vm = boot(HEAP())?;
 
 // funcs::STEP : (i32, Event) -> StepResult
@@ -981,17 +756,16 @@ let y: i32 = vm.call_closure(&k, (x,))?;
   column-gutter: 0.8cm,
   row-gutter: 5pt,
   align: top,
-  codebox(caption: [Fleche: `let extern`])[
-```fleche
-# bind the host function in slot 0
-let extern read_adc 0
-let sample = read_adc 3
+  codebox(caption: [Rocq: an axiom, extracted to an extern])[
+```coq
+Parameter read_adc : nat -> nat.
+Extract Constant read_adc =>
+  "(extern (slot 0) ch)".
 ```
     ],
-  codebox(caption: [Scheme / Rocq: `(extern (slot N) args…)`])[
+  codebox(caption: [Extracted Scheme: `(extern (slot N) args…)`])[
 ```scheme
-;; Extract Constant read_adc =>
-;;   "(extern (slot 0) ch)".
+;; a curried wrapper that calls slot 0
 (define read_adc (extern (slot 0) ch))
 ```
     ],
@@ -1031,9 +805,9 @@ vm.register_extern(0, extern_fn!(read_adc));
   [
     #codebox(caption: [`build.rs` runs the compiler at `cargo build`])[
 ```rust
-let src = fs::read_to_string("fsm.fleche")?;
+let src = fs::read_to_string("fsm.scm")?;
 let (module, ctors) =
-    encore_fleche::parse_with_metadata(&src);
+    encore_scheme::parse_with_metadata(&src);
 pipeline::compile_to_dir_with_ctors(
     &module, Some(OptimizeConfig::default()),
     true,       // also emit bindings.rs
@@ -1068,7 +842,7 @@ pub mod ctors {
     #v(4pt)
     #text(size: 15pt)[
       Globals and tags are numbered by the compiler. The host only uses names:
-      rename `Inc` in `fsm.fleche` and `ctors::INC` *stops compiling*.
+      rename `Inc` in the Rocq source and `ctors::INC` *stops compiling*.
       Host and bytecode cannot drift apart.
     ]
   ],
@@ -1081,14 +855,13 @@ pub mod ctors {
   column-gutter: 0.8cm,
   align: top,
   [
-    #codebox(caption: [Fleche], size: 12pt)[
-```fleche
-data Inc | Dec | Reset
-data Print(val) | Beep
-data Nil | Cons(head, tail)
-data Pair(fst, snd)
-
-let step = state -> event -> ...
+    #codebox(caption: [Rocq], size: 12pt)[
+```coq
+Inductive event :=
+  Inc | Dec | Reset.
+Inductive effect :=
+  Print (v : nat) | Beep.
+(* step returns a pair *)
 ```
     ]
     #v(4pt)
@@ -1172,213 +945,157 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
   ],
 )
 
-== Scheme runtimes on the target
+== Encore and its two baselines
 
-#simple-table((1fr, auto, auto, auto),
-  [], [Chibi], [Ribbit], [Encore],
-  [Runtime model], [interpreter], [VM], [VM],
-  [Runs Rocq-extracted Scheme], [✓], [✗ no quasiquote], [✓],
-  [Fits 256 KB flash], [✗], [✓], [✓],
-  [Pipeline complexity], [high], [medium], [low],
-  [Working bare-metal], [✗], [✓], [✓],
-)
-#v(0.3em)
-#text(size: 16pt)[
-  Chibi evaluates the source on every boot and is too big; Ribbit fits but runs
-  hand-written Scheme, not the extracted code. *Encore is the only one that does all four.*
-]
-
-= Experiment plan
-
-== Three ways to ship the same logic
-
-// The same five stages on every variant slide, so the three read side by side.
-#let pipe-stages = ([Source], [Compiler], [Output], [Runtime], [Memory])
-#let pipe(..steps) = {
-  let rows = pipe-stages.zip(steps.pos()).map(((stage, step)) => (
-    align(right + horizon, text(size: 12pt, fill: muted, stage)),
-    align(center + horizon, text(size: 15pt, step)),
-  ))
-  grid(
-    columns: (auto, 1fr),
-    column-gutter: 10pt,
-    row-gutter: 12pt,
-    ..rows.flatten(),
+#{
+  set text(size: 14pt)
+  show table.cell.where(y: 0): set text(weight: "bold", size: 18pt)
+  let head(body, logo-file: none) = stack(dir: ltr, spacing: 6pt,
+    if logo-file != none { box(baseline: 20%, image("/assets/logos/" + logo-file, height: 0.6cm)) },
+    body)
+  table(
+    columns: (auto, 1fr, 1fr, 1fr),
+    align: (col, row) => if col == 0 { left + horizon } else { center + horizon },
+    stroke: (x, y) => (bottom: if y == 0 { 0.8pt + black } else { 0.3pt + luma(220) }),
+    inset: (x: 7pt, y: 6pt),
+    table.header([], text(fill: accent)[Encore], head(logo-file: "certirocq.svg")[CertiRocq], head(logo-file: "rust.svg")[Rust]),
+    [*Role*], [the system under study], [the closest verified competitor], [the speed ceiling, and the reference output],
+    [*Source*], [the proved Rocq code], [the same Rocq code], [hand-written, idiomatic firmware Rust],
+    [*Compiled by*], [Rocq extraction → Scheme → `encore compile`], [CertiRocq → C, then `gcc -Os`], [`rustc`, optimised for size],
+    [*Runs as*], [bytecode, in the Encore VM], [native Arm code + a C runtime], [native Arm code, no runtime],
+    [*Memory*], [32 KiB heap, compacting garbage collector], [20 KiB heap, generational garbage collector], [fixed buffers, no heap],
+    [*Numbers* (`nat`)], [24-bit integers (assumed, not proved)], [31-bit integers (same assumption)], [machine integers],
+    [*Trusted*], [extraction, compiler, VM], [`gcc` and the runtime; the compiler is largely proved], [everything: memory-safe, nothing proved],
   )
 }
-#let variant-card(name, role) = block(
-  width: 100%, inset: 14pt, radius: 4pt, stroke: 0.5pt + luma(200),
-)[
-  #align(center)[
-    #text(size: 26pt, weight: "bold", fill: accent)[#name] \
-    #text(size: 14pt, fill: muted)[#role]
-  ]
-]
-// One slide per variant: its pipeline on the left, then the same three points
-// (source, execution, trusted) on the right, and the shared setup underneath.
-#let variant-slide(pipeline, body, logo-file: none) = {
-  if logo-file != none { place(top + right, dy: -0.4cm, logo(logo-file, height: 1.4cm)) }
-  v(1fr)
-  grid(
-    columns: (1fr, 1fr),
-    column-gutter: 1cm,
-    block(width: 100%, inset: 14pt, radius: 4pt, stroke: 0.5pt + luma(200), pipeline),
-    align(horizon, { set text(size: 17pt); body }),
-  )
-  v(1fr)
-  align(center, text(size: 14pt, fill: muted)[
-    Linked into the same Rust driver and harness · QEMU Cortex-M3, 50 KiB RAM
-  ])
-}
 
-#v(1fr)
+= Evaluation
+
+== Research questions
+
 #grid(
-  columns: (1fr, 1fr, 1fr),
-  column-gutter: 0.8cm,
-  variant-card([Encore], [system under study]),
-  variant-card([CertiRocq], [closest verified competitor]),
-  variant-card([Rust no_std], [performance ceiling, output oracle]),
+  columns: (auto, 1fr),
+  column-gutter: 0.6cm,
+  row-gutter: 0.75em,
+  align: (right + top, left + top),
+  ..(
+    ([RQ1], [*Does it fit?* Does the proved logic run within a secure element's 50 KiB of RAM, as the input grows?]),
+    ([RQ2], [*What does it cost?* How much slower is Encore than CertiRocq and than hand-written Rust?]),
+    ([RQ3], [*Where does the time go?* How much is interpretation, how much garbage collection, what does the optimizer save?]),
+    ([RQ4], [*How does memory behave?* Peak RAM, and the garbage collector's collections, pauses and live data.]),
+  ).map(((q, body)) => (text(size: 22pt, weight: "bold", fill: accent, q), text(size: 19pt, body))).flatten(),
 )
 #v(1fr)
-#align(center, text(size: 14pt, fill: muted)[
-  Same inputs, same Rust driver and harness, every output checked against Rust ·
-  QEMU Cortex-M3, 50 KiB RAM budget · instructions counted per run
+#block(width: 100%, inset: 12pt, radius: 4pt, stroke: 0.5pt + luma(200), text(size: 15pt)[
+  *Setup* · the three variants, linked into the same Rust driver · an emulated Arm
+  Cortex-M3 (QEMU), 50 KiB of RAM · cost = Arm instructions executed per run
+  (not cycles) · every output checked against Rust's
 ])
 
-== Encore
+== Custom dataset: eight representative firmware workloads
 
-#variant-slide(pipe(
-  [Gallina],
-  [Rocq extraction → Scheme, \ `encore compile`],
-  [bytecode],
-  [`encore_vm`, `no_std` Rust],
-  [32 KiB heap, mark-compact GC],
-))[
-  - *Source*: the proved Gallina; `ExtrEncore.v` maps `nat` to a 24-bit VM
-    integer and arithmetic to VM primitives
-  - *Execution*: CPS optimizer on; the heap is kept across runs and collected
-    only when full
-  - *Trusted*: extraction, the compiler, the VM and the `nat` mapping
-]
-
-== CertiRocq
-
-#variant-slide(logo-file: "certirocq.svg", pipe(
-  [Gallina],
-  [CertiRocq v0.9.1 → Clight, \ `gcc -Os`],
-  [Thumb-2 code],
-  [CertiRocq runtime, C],
-  [20 KiB arena, generational GC],
-))[
-  - *Source*: the same Gallina; `nat` mapped to 31-bit machine integers, the
-    same unproven assumption as Encore
-  - *Execution*: fresh arena per run, recursion on the C stack; a case
-    that does not fit fails: ✗~arena or ✗~stack
-  - *Trusted*: gcc, the runtime and the `nat` mapping; the compiler is largely
-    verified down to Clight
-]
-
-== Rust no_std
-
-#variant-slide(logo-file: "rust.svg", pipe(
-  [hand-written Rust],
-  [`rustc`, `opt-level = "s"`, LTO],
-  [Thumb-2 code],
-  [none, bare metal],
-  [static buffers, no allocator],
-))[
-  - *Source*: idiomatic firmware Rust, not derived from the Gallina and not a
-    copy of its functional structure
-  - *Execution*: the performance ceiling, and the output oracle: every Encore
-    and CertiRocq output is hashed and compared with Rust's
-  - *Trusted*: everything; memory-safe, but nothing is proved
-]
-
-== Eight firmware workloads
-
-#text(size: 16pt)[Each is a `step` function whose bug would be a security hole or a field failure, with one property proved in Rocq and a size N to scale it.]
-#v(0.3em)
+#text(size: 15pt)[Each is a function whose bug would be a security hole or a field failure, with one property proved in Rocq, and an input size *N* that we grow.]
+#v(0.1em)
 #{
-  set text(size: 15pt)
+  set text(size: 13pt)
   show table.cell.where(y: 0): set text(weight: "bold")
   table(
-    columns: (auto, auto, 1fr, auto),
+    columns: (auto, auto, 1fr, auto, auto),
     stroke: (x, y) => (bottom: if y == 0 { 0.8pt + black } else { 0.3pt + luma(220) }),
-    inset: (x: 8pt, y: 5pt),
-    table.header([], [Workload], [Where it runs], [N]),
-    [W1], [APDU + BER-TLV parser], [secure element, first thing done with a command], [APDU 5 → 261 B],
-    [W2], [Ethereum RLP decoder], [hardware wallet, what the screen shows before signing], [calldata 0 → 260 B],
-    [W3], [BIP32 path policy], [hardware wallet, sign or refuse a request], [1 → 64 rules],
-    [W4], [PIN state machine], [secure element, ISO 7816 VERIFY and PUK], [1 → 1000 APDUs],
-    [W5], [A/B firmware update], [bootloader, anti-rollback under power cuts], [10 → 1000 events],
-    [W6], [COBS framing], [serial link, encode then decode a frame], [16 → 1024 B],
-    [W7], [FIDO credential store], [authenticator, persistent red-black tree], [10 → 500 entries],
-    [W8], [CRC-16 and CRC-32], [every frame and image; worst case for a VM], [16 → 1024 B],
+    inset: (x: 6pt, y: 4.5pt),
+    align: horizon,
+    table.header([], [Workload], [What it does, in plain words], [Found in], [N grows]),
+    [W1], [Command parser], [split a smart-card command into its header and data, then read the nested fields of the data], [bank / SIM card], [5 → 261 bytes],
+    [W2], [Transaction decoder], [decode an Ethereum transaction, to show the user what they are about to sign], [crypto wallet], [0 → 260 bytes],
+    [W3], [Signing policy], [check a signing request (which key, how much, to whom) against a list of rules], [crypto wallet], [1 → 64 rules],
+    [W4], [PIN check], [verify PIN codes, count wrong tries, block the card, unblock it with a second code], [bank / SIM card], [1 → 1000 commands],
+    [W5], [Firmware update], [install an update in a spare slot, go back if it fails, never downgrade, survive power cuts], [bootloader], [10 → 1000 events],
+    [W6], [Message framing], [rewrite a message so it contains no zero byte (zero marks message boundaries), then decode it], [serial link], [16 → 1024 bytes],
+    [W7], [Credential store], [keep login keys and their use counters in a balanced search tree], [security key], [10 → 500 keys],
+    [W8], [Checksums], [compute two checksums (CRC) that detect corrupted data: pure arithmetic, *the worst case for an interpreter*], [everywhere], [16 → 1024 bytes],
   )
 }
+
+// The rows of every result table.
+#let workloads = (
+  ([W1], "w1_apdu", [Command parser]),
+  ([W2], "w2_rlp", [Transaction decoder]),
+  ([W3], "w3_policy", [Signing policy]),
+  ([W4], "w4_pin", [PIN check]),
+  ([W5], "w5_update", [Firmware update]),
+  ([W6], "w6_cobs", [Message framing]),
+  ([W7], "w7_store", [Credential store]),
+  ([W8], "w8_crc", [Checksums]),
+)
+
+== RQ1: does it fit in 50 KiB?
+
+#fit-table(workloads)
+#v(0.2em)
+#text(size: 15pt)[
+  *Encore runs every size of every workload.* CertiRocq fails on 10 of the 27 sizes it was built for:
+  ✗ arena, its heap is full; ✗ stack, its C call stack overflows. Rust always fits but proves nothing.
+  CertiRocq has no build of W8 yet.
+]
+
+== RQ2: what does it cost?
+
+#slowdown-table(workloads)
+#v(0.2em)
+#text(size: 15pt)[
+  Ratio of Arm instructions executed per run, over the sizes where both variants run.
+  Encore is *2 to 10 times slower than CertiRocq*, and 10 to 2,000 times slower than
+  hand-written Rust; the worst case is pure arithmetic (W8).
+]
+
+== RQ3: where does Encore's time go?
+
+#time-chart(workloads.filter(w => w.at(1) != "w8_crc"))
+#v(0.1em)
+#text(size: 14pt)[
+  At the largest size CertiRocq also runs. *The gap is interpretation, not garbage collection*:
+  each bytecode instruction costs 27–31 Arm instructions, whatever the workload. The optimizer
+  already divides the work by 3 to 4 (– : not measured). A collection splits into mark 22 %,
+  forward 17 %, update pointers 36 %, compact 26 %.
+]
+
+== RQ4: how does memory behave?
+
+#memory-table(workloads)
+#v(0.2em)
+#text(size: 14pt)[
+  RAM ranges go from the smallest to the largest input size. Encore collects only when its heap
+  is full, so it peaks at its 32 KiB heap (40 KiB for W6) plus 5 KiB of stack; at most 28 KiB is
+  live. A *pause* is one collection, during which the program is stopped: up to 309 k instructions
+  (a few ms at 70 MHz), to weigh against the time limit a smart-card command must answer within.
+]
 
 = Conclusion
 
-== Across workloads
-
-#recap-table((
-  ([W1], "w1_apdu", [APDU + BER-TLV parser]),
-  ([W2], "w2_rlp", [Ethereum RLP decoder]),
-  ([W3], "w3_policy", [BIP32 path policy]),
-  ([W4], "w4_pin", [PIN state machine]),
-  ([W5], "w5_update", [A/B firmware update]),
-  ([W6], "w6_cobs", [COBS framing]),
-  ([W7], "w7_store", [FIDO credential store]),
-  ([W8], "w8_crc", [CRC-16 and CRC-32]),
-))
-#v(0.3em)
-#text(size: 16pt)[
-  Encore runs every size of every workload within the 50 KiB budget, including
-  the 10 where CertiRocq runs out of arena or stack. The price is instructions:
-  2–10× CertiRocq and 10–2,000× hand-written Rust, the worst on pure arithmetic (W8).
-]
-
-== Memory and GC across workloads
-
-#memory-table((
-  ([W1], "w1_apdu", [APDU + BER-TLV parser]),
-  ([W2], "w2_rlp", [Ethereum RLP decoder]),
-  ([W3], "w3_policy", [BIP32 path policy]),
-  ([W4], "w4_pin", [PIN state machine]),
-  ([W5], "w5_update", [A/B firmware update]),
-  ([W6], "w6_cobs", [COBS framing]),
-  ([W7], "w7_store", [FIDO credential store]),
-  ([W8], "w8_crc", [CRC-16 and CRC-32]),
-))
-#v(0.3em)
-#text(size: 16pt)[
-  Encore collects only when the heap is full, so it peaks at its 32 KiB heap
-  (40 KiB for W6) plus 5 KiB of stack; what is live after a collection is at most
-  28 KiB. Collection costs 3–22% of VM time, with pauses up to 309 k instructions.
-]
-
 == Takeaways
 
-- *Proved logic fits a secure-element budget*: extracted to Scheme, compiled
-  by Encore, and run bare-metal on an emulated Cortex-M3 within 50 KiB on all
-  eight workloads, where CertiRocq runs out of memory on 10 cases
-- *The price is instructions*: 2–10× CertiRocq, 10–2,000× hand-written Rust,
-  the worst on arithmetic
-- *Memory is fixed, not minimal*: a 32–40 KiB heap plus 5 KiB of stack whatever
-  the size, at most 28 KiB of it live; collection takes 3–22% of VM time
+- *RQ1, it fits*: proved logic, extracted to Scheme and compiled by Encore, runs
+  bare-metal within 50 KiB on every size of all eight workloads, where CertiRocq
+  runs out of memory on 10 sizes
+- *RQ2, the price is speed*: 2–10× slower than CertiRocq, 10–2,000× slower than
+  hand-written Rust, the worst on pure arithmetic
+- *RQ3, the price is interpretation*: about 30 Arm instructions per bytecode
+  instruction; garbage collection is a minor share
+- *RQ4, memory is fixed, not minimal*: a 32–40 KiB heap plus 5 KiB of stack whatever
+  the size, at most 28 KiB of it live; collection takes up to 22 % of the time
 - *The architecture scales*: the proved `step` grows with the application,
-  the trusted boundary does not
+  the trusted part does not
 
 == Next steps
 
-- *Prove the optimizer*: port the nine CPS passes and prove them
-  semantics-preserving, CompCert style
-- *Ahead-of-time Thumb-2 backend*: no interpreter dispatch; separates the cost
-  of interpretation from the CPS and GC model
-- *Verify the VM* with `rocq-of-rust`: a simulation between the CPS semantics
-  and the Rust interpreter, GC and `ENCORE` dispatch first
-- *Measure the rest*: cycles and GC pauses in time on real boards, a heap
-  sized to the live data, proof effort
+- *Prove the optimizer*: prove each CPS rewrite preserves the program's meaning,
+  as CompCert does for C
+- *Compile the bytecode to Arm code ahead of time*: removes the interpretation
+  cost that RQ3 points at
+- *Verify the VM* with `rocq-of-rust`: show the Rust interpreter and its garbage
+  collector follow the CPS semantics
+- *Measure the rest*: cycles and pauses in time on real boards, a heap sized to
+  the live data, proof effort
 
 == Quick start
 
@@ -1388,4 +1105,3 @@ encore run program.encr
 ```
 
 - `encore disasm` for an interactive bytecode inspector
-- `encore compile fleche` for Fleche sources
