@@ -1,87 +1,129 @@
 #!/usr/bin/env python3
 """Extract the numbers the decks show from encore-benchmarks' results.
 
-    scripts/bench-data.py ../encore-benchmarks/results/benchmarks.jsonl > data/bench.json
+    scripts/bench-data.py ../encore-benchmarks/results > data/bench.json
 
-Keeps the latest row for each (workload, variant, N) on the QEMU Cortex-M3
-board, with the default configurations of the study: E with the CPS
-optimizer on, C with its 20 KiB arena. For every case it gives
-instructions per run (median) and peak RAM: R static RAM + stack,
-C arena high-water + stack, E heap high-water + stack, and for E the
-garbage collector's activity on the memory run: collections, share of VM
-time spent collecting, longest pause since boot (instructions) and bytes
-live after the latest collection. A C case left out
-of the run (it does not fit the RAM budget) is reported with its reason.
+Reads `benchmarks.jsonl` and `minheap.jsonl` in that directory, on the QEMU
+Cortex-M3 board. For every (workload, N) it gives, per variant:
+
+- `insns`: instructions per run (median, latest timing row). E with the
+  CPS optimizer on. C with its default 2^10-word nursery (arena = E's
+  heap, or 36 KiB where that is a few hundred bytes short), and in
+  `insns_min_ram` at the nursery that minimises its RAM (rows labelled
+  `c-best-nursery`).
+- `ram`: the RAM the case needs in all, in bytes. R: static RAM + peak
+  stack. E and C: `minheap`'s `ram_total_bytes`, statics with the smallest
+  heap or arena that passes plus the peak stack; for C the best nursery
+  of 2^6 to 2^10 words (`nursery`, its log2), for E also `heap`, the
+  smallest heap.
+- for E, `gc`: the collector on the memory run (collections, share of VM
+  time spent collecting, longest pause since boot in instructions, bytes
+  live after the latest collection).
+- a case that passes at no heap or arena size within the RAM budget is
+  `{"fail": "stack" | "arena" | "heap"}`.
 """
 
 import json
 import sys
+from pathlib import Path
 
 BOARD = "qemu-lm3s6965"
-
-# C cases left out of CASES in certirocq/src/main.rs, from the workload
-# READMEs: they abort before producing a row.
-C_SKIPPED = {
-    ("w0_smoke", 1000): "stack",
-    ("w1_apdu", 128): "arena",
-    ("w1_apdu", 261): "stack",
-    ("w2_rlp", 260): "arena",
-    ("w3_policy", 64): "arena",
-    ("w5_update", 1000): "stack",
-    ("w7_store", 100): "arena",
-    ("w7_store", 500): "arena",
-}
+C_DEFAULT_LABELS = ("aligned-budget-all-n", "c-arena-36k")
 
 
-def keep(r):
-    if r["board"] != BOARD:
-        return False
-    if r["variant"] == "E":
-        return r["build"].get("cps_optimize") is True
-    if r["variant"] == "C":
-        return r["build"]["heap_bytes"] == 20480
-    return True
+def rows(path):
+    with open(path) as f:
+        for line in f:
+            if line.strip():
+                r = json.loads(line)
+                if r["board"] == BOARD:
+                    yield r
 
 
-def main(path):
-    latest = {}
-    for line in open(path):
-        r = json.loads(line)
-        if keep(r):
-            latest[(r["workload"], r["variant"], r["profile"], r["n"])] = r
+def why(reason):
+    reason = reason or ""
+    return "stack" if "stack" in reason else "arena" if "arena" in reason else "heap"
+
+
+def main(results):
+    results = Path(results)
+
+    # minheap: E (optimizer on) by case; C by case and nursery.
+    e_ram, c_ram = {}, {}
+    for r in rows(results / "minheap.jsonl"):
+        key = (r["workload"], r["n"])
+        if r["variant"] == "E" and r["build"]["cps_optimize"] == "on":
+            e_ram[key] = r
+        elif r["variant"] == "C":
+            c_ram.setdefault(key, {})[r["build"]["c_log_nursery"]] = r
+    c_best = {}
+    for key, by_nursery in c_ram.items():
+        ok = [(r["ram_total_bytes"], k) for k, r in by_nursery.items() if r["ok"]]
+        c_best[key] = min(ok) if ok else None
+
+    timing, memory, c_default, c_min_ram = {}, {}, {}, {}
+    for r in rows(results / "benchmarks.jsonl"):
+        key = (r["workload"], r["n"])
+        v, b = r["variant"], r["build"]
+        if v == "E" and b.get("cps_optimize") is not True:
+            continue
+        if v == "C":
+            if not r["ok"]:
+                continue
+            if r.get("label") in C_DEFAULT_LABELS and b.get("c_log_nursery") == 10:
+                c_default[key] = r
+            best = c_best.get(key)
+            if r.get("label") == "c-best-nursery" and best and b.get("c_log_nursery") == best[1]:
+                c_min_ram[key] = r
+            continue
+        if r["profile"] == "timing":
+            timing[(v, key)] = r
+        elif r["profile"] == "memory":
+            memory[(v, key)] = r
 
     out = {}
-    for (w, v, profile, n), r in sorted(latest.items(), key=lambda kv: kv[0][3]):
-        if profile != "timing":
-            continue
-        case = out.setdefault(w, {}).setdefault(str(n), {"n": n})
-        if not r["ok"]:
-            reason = r.get("reason", "")
-            case[v] = {"fail": "stack" if "stack" in reason else "arena" if "arena" in reason else "heap"}
-            continue
-        cell = {"insns": r["insns"]["median"], "stack": r["stack_peak_bytes"]}
-        if v == "R":
-            cell["ram"] = r["size"]["ram_static_bytes"] + r["stack_peak_bytes"]
-        elif v == "C":
-            cell["ram"] = r["heap_peak_bytes"] + r["stack_peak_bytes"]
-        else:
-            mem = latest.get((w, "E", "memory", n))
-            cell["heap"] = mem["heap_peak_bytes"]
-            cell["heap_budget"] = r["build"]["heap_bytes"]
-            cell["vm_ops"] = mem["vm_ops"]
-            cell["ram"] = mem["heap_peak_bytes"] + r["stack_peak_bytes"]
-            gc = mem["gc"]
-            cell["gc"] = {"count": gc["count"], "pct": gc["pct"],
-                          "pause_max": gc["pause_max_since_boot"], "live": gc["live_bytes"]}
-        case[v] = cell
+    cases = sorted({k for _, k in timing} | set(e_ram) | set(c_ram), key=lambda k: (k[0], k[1]))
+    for key in cases:
+        w, n = key
+        case = out.setdefault(w, [])
+        case.append(entry := {"n": n})
 
-    for (w, n), why in C_SKIPPED.items():
-        out[w][str(n)].setdefault("C", {"fail": why})
+        rt = timing.get(("R", key))
+        if rt:
+            entry["R"] = {"insns": rt["insns"]["median"], "stack": rt["stack_peak_bytes"],
+                          "ram": rt["size"]["ram_static_bytes"] + rt["stack_peak_bytes"]}
 
-    json.dump({w: list(cases.values()) for w, cases in sorted(out.items())},
-              sys.stdout, indent=1)
+        et, em, eh = timing.get(("E", key)), memory.get(("E", key)), e_ram.get(key)
+        if eh and not eh["ok"]:
+            entry["E"] = {"fail": why(eh.get("reason"))}
+        elif et and et["ok"] and eh:
+            cell = {"insns": et["insns"]["median"], "stack": eh["stack_peak_bytes"],
+                    "heap": eh["min_heap_bytes"], "ram": eh["ram_total_bytes"]}
+            if em and em["ok"]:
+                gc = em["gc"]
+                cell["vm_ops"] = em["vm_ops"]
+                cell["gc"] = {"count": gc["count"], "pct": gc["pct"],
+                              "pause_max": gc["pause_max_since_boot"], "live": gc["live_bytes"]}
+            entry["E"] = cell
+
+        if key in c_ram:
+            best = c_best[key]
+            if best is None:
+                reasons = [r.get("reason") for r in c_ram[key].values()]
+                entry["C"] = {"fail": "stack" if any("stack" in (x or "") for x in reasons) else why(reasons[0])}
+            else:
+                ram, nursery = best
+                cell = {"ram": ram, "nursery": nursery,
+                        "stack": c_ram[key][nursery]["stack_peak_bytes"]}
+                if key in c_default:
+                    cell["insns"] = c_default[key]["insns"]["median"]
+                if key in c_min_ram:
+                    cell["insns_min_ram"] = c_min_ram[key]["insns"]["median"]
+                entry["C"] = cell
+
+    json.dump(out, sys.stdout, indent=1)
     print()
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1] if len(sys.argv) > 1 else "../encore-benchmarks/results")

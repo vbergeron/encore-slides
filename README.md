@@ -66,11 +66,15 @@ typst compile --root . decks/2026-09-28-lirmm-seminar.typ out.pdf
 
 The result slides read `data/bench.json`, extracted from
 [encore-benchmarks](https://github.com/vbergeron/encore-benchmarks)'
-`results/benchmarks.jsonl` (latest row per case, QEMU Cortex-M3, E with the
-CPS optimizer, C with its 20 KiB arena). To refresh it after new runs:
+`results/benchmarks.jsonl` and `results/minheap.jsonl` (latest row per case,
+QEMU Cortex-M3, E with the CPS optimizer; C with its arena as large as E's
+heap for instructions, and at its best nursery for RAM, also with the
+instructions at that nursery). RAM is what a case needs in all: statics with
+the smallest heap or arena that passes, plus the peak stack. To refresh it
+after new runs:
 
 ```sh
-mise run bench-data ../encore-benchmarks/results/benchmarks.jsonl
+mise run bench-data ../encore-benchmarks/results
 ```
 
 ## Publishing

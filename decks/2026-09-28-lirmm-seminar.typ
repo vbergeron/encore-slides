@@ -1268,12 +1268,12 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
   [CertiRocq v0.9.1 → Clight, \ `gcc -Os`],
   [Thumb-2 code],
   [CertiRocq runtime, C],
-  [20 KiB arena, generational GC],
+  [arena as large as Encore's heap, \ generational GC],
 ))[
   - *Source*: the same Gallina; `nat` mapped to 31-bit machine integers, the
     same unproven assumption as Encore
   - *Execution*: fresh arena per run, recursion on the C stack; a case
-    that does not fit fails: ✗~arena or ✗~stack
+    that does not fit fails (✗); RAM measured at the best nursery size
   - *Trusted*: gcc, the runtime and the `nat` mapping; the compiler is largely
     verified down to Clight
 ]
@@ -1334,8 +1334,9 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
 #v(0.3em)
 #text(size: 16pt)[
   Encore runs every size of every workload within the 50 KiB budget, including
-  the 10 where CertiRocq runs out of arena or stack. The price is instructions:
-  2–10× CertiRocq and 10–2,000× hand-written Rust, the worst on pure arithmetic (W8).
+  the 7 where CertiRocq runs out of C stack at any arena size. The price is
+  instructions: 2–10× CertiRocq (2–7× once CertiRocq is tuned for its smallest
+  RAM) and 10–2,000× hand-written Rust, the worst on pure arithmetic (W8).
 ]
 
 == Memory and GC across workloads
@@ -1352,20 +1353,22 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
 ))
 #v(0.3em)
 #text(size: 16pt)[
-  Encore collects only when the heap is full, so it peaks at its 32 KiB heap
-  (40 KiB for W6) plus 5 KiB of stack; what is live after a collection is at most
-  28 KiB. Collection costs 3–22% of VM time, with pauses up to 309 k instructions.
+  RAM needed in all, at the smallest heap or arena that passes: Encore 5–37 KiB,
+  its stack the same at every size; CertiRocq, even at its best nursery, up to
+  3.4× more, its recursion on the C stack. At most 28 KiB is live after a
+  collection; collection costs 3–22% of VM time, pauses up to 309 k instructions.
 ]
 
 == Takeaways
 
 - *Proved logic fits a secure-element budget*: extracted to Scheme, compiled
   by Encore, and run bare-metal on an emulated Cortex-M3 within 50 KiB on all
-  eight workloads, where CertiRocq runs out of memory on 10 cases
-- *The price is instructions*: 2–10× CertiRocq, 10–2,000× hand-written Rust,
-  the worst on arithmetic
-- *Memory is fixed, not minimal*: a 32–40 KiB heap plus 5 KiB of stack whatever
-  the size, at most 28 KiB of it live; collection takes 3–22% of VM time
+  eight workloads, where CertiRocq runs out of C stack on 7 cases
+- *The price is instructions*: 2–10× CertiRocq (2–7× at its smallest RAM),
+  10–2,000× hand-written Rust, the worst on arithmetic
+- *Memory is small and bounded*: 5–37 KiB in all, stack independent of the
+  size; CertiRocq needs up to 3.4× more where it fits; collection takes 3–22%
+  of VM time
 - *The architecture scales*: the proved `step` grows with the application,
   the trusted boundary does not
 
@@ -1377,8 +1380,8 @@ let out: &[u8] = msg.materialize(&vm, &mut buf)?;
   of interpretation from the CPS and GC model
 - *Verify the VM* with `rocq-of-rust`: a simulation between the CPS semantics
   and the Rust interpreter, GC and `ENCORE` dispatch first
-- *Measure the rest*: cycles and GC pauses in time on real boards, a heap
-  sized to the live data, proof effort
+- *Measure the rest*: cycles and GC pauses in time on real boards, proof
+  effort
 
 == Quick start
 

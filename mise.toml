@@ -35,5 +35,5 @@ install -m 644 "$(go env GOROOT)/lib/wasm/wasm_exec.js" ../site/play/
 
 [tasks.bench-data]
 description = "Regenerate data/bench.json from encore-benchmarks results"
-usage = 'arg "[results]" default="../encore-benchmarks/results/benchmarks.jsonl"'
+usage = 'arg "[results]" default="../encore-benchmarks/results"'
 run = 'python3 scripts/bench-data.py "${usage_results}" > data/bench.json'

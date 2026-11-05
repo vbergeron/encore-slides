@@ -7,7 +7,9 @@
 #let muted = luma(120)
 
 // Recap across workloads: Encore's slowdown range against Rust and CertiRocq
-// over the sizes where both ran, and how many sizes each variant fits in the RAM budget.
+// over the sizes where both ran (CertiRocq with its default 2^10-word nursery,
+// and with the nursery that minimises its RAM), and how many sizes each
+// variant fits in the RAM budget.
 #let recap-table(workloads) = {
   let range(xs) = if xs.len() == 0 { text(fill: muted)[–] } else {
     let lo = calc.min(..xs)
@@ -20,18 +22,18 @@
   show table.cell.where(y: 0): set text(weight: "bold")
   show table.cell.where(y: 1): set text(weight: "bold", fill: muted, size: 13pt)
   table(
-    columns: (auto, 1fr, auto, auto, auto, auto),
+    columns: (auto, 1fr, auto, auto, auto, auto, auto),
     align: (col, row) => if col < 2 { left + horizon } else { center + horizon },
     stroke: (x, y) => (
       bottom: if y == 1 { 0.8pt + black } else if y > 1 { 0.3pt + luma(220) } else { none },
-      left: if x in (2, 4) and y > 0 { 0.3pt + luma(200) } else { none },
+      left: if x in (2, 5) and y > 0 { 0.3pt + luma(200) } else { none },
     ),
     inset: (x: 8pt, y: 5pt),
     table.header(
       table.cell(rowspan: 2)[], table.cell(rowspan: 2, align: left + bottom)[Workload],
-      table.cell(colspan: 2, align: center)[Encore slowdown],
+      table.cell(colspan: 3, align: center)[Encore slowdown],
       table.cell(colspan: 2, align: center)[Sizes that fit],
-      [vs Rust], [vs CertiRocq], [Encore], [CertiRocq],
+      [vs Rust], [vs CertiRocq], [vs CertiRocq#super[min RAM]], [Encore], [CertiRocq],
     ),
     ..workloads.map(((id, key, name)) => {
       let cases = bench.at(key)
@@ -40,6 +42,7 @@
         id, name,
         range(cases.filter(c => ran(c.at("R", default: none))).map(c => c.E.insns / c.R.insns)),
         range(cases.filter(c => ran(c.at("C", default: none))).map(c => c.E.insns / c.C.insns)),
+        range(cases.filter(c => "insns_min_ram" in c.at("C", default: (:))).map(c => c.E.insns / c.C.insns_min_ram)),
         [#cases.filter(c => ran(c.E)).len() / #cases.len()],
         if has-c [#cases.filter(c => ran(c.at("C", default: none))).len() / #cases.len()] else { text(fill: muted)[n/a] },
       )
@@ -47,8 +50,10 @@
   )
 }
 
-// Recap across workloads: peak RAM of each variant over the sizes it ran
-// (KiB, static RAM or heap/arena high-water + stack), and Encore's garbage
+// Recap across workloads: the RAM each variant needs over the sizes it ran
+// (KiB: Rust, static RAM + stack; Encore and CertiRocq, statics with the
+// smallest heap or arena that passes + stack, CertiRocq at its best nursery,
+// from encore-benchmarks' minheap), and Encore's garbage
 // collector: most collections in one run, share of VM time spent collecting
 // over the sizes that collect, longest pause and most bytes live after a collection.
 #let memory-table(workloads) = {
@@ -74,7 +79,7 @@
     inset: (x: 7pt, y: 5pt),
     table.header(
       table.cell(rowspan: 2)[], table.cell(rowspan: 2, align: left + bottom)[Workload],
-      table.cell(colspan: 3, align: center)[Peak RAM (KiB)],
+      table.cell(colspan: 3, align: center)[RAM needed (KiB)],
       table.cell(colspan: 4, align: center)[Encore GC],
       [Rust], [CertiRocq], [Encore], [collections], [time], [max pause], [live KiB],
     ),

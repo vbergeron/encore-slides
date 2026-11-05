@@ -10,10 +10,9 @@
    "E": {
     "insns": 3639,
     "stack": 4964,
-    "heap": 104,
-    "heap_budget": 32768,
+    "heap": 256,
+    "ram": 5228,
     "vm_ops": 66,
-    "ram": 5068,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -22,9 +21,11 @@
     }
    },
    "C": {
-    "insns": 497,
+    "ram": 5296,
+    "nursery": 6,
     "stack": 392,
-    "ram": 8896
+    "insns": 502,
+    "insns_min_ram": 522
    }
   },
   {
@@ -36,11 +37,10 @@
    },
    "E": {
     "insns": 12162,
-    "stack": 4964,
-    "heap": 612,
-    "heap_budget": 32768,
+    "stack": 4984,
+    "heap": 512,
+    "ram": 5504,
     "vm_ops": 381,
-    "ram": 5576,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -49,9 +49,11 @@
     }
    },
    "C": {
-    "insns": 1631,
+    "ram": 6128,
+    "nursery": 7,
     "stack": 968,
-    "ram": 9472
+    "insns": 1636,
+    "insns_min_ram": 1651
    }
   },
   {
@@ -63,11 +65,10 @@
    },
    "E": {
     "insns": 97392,
-    "stack": 4964,
-    "heap": 5476,
-    "heap_budget": 32768,
+    "stack": 4984,
+    "heap": 3328,
+    "ram": 8320,
     "vm_ops": 3531,
-    "ram": 10440,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -76,9 +77,11 @@
     }
    },
    "C": {
-    "insns": 20887,
+    "ram": 14448,
+    "nursery": 8,
     "stack": 6728,
-    "ram": 23424
+    "insns": 20893,
+    "insns_min_ram": 27022
    }
   },
   {
@@ -91,10 +94,9 @@
    "E": {
     "insns": 2737430,
     "stack": 4984,
-    "heap": 32752,
-    "heap_budget": 32768,
+    "heap": 32256,
+    "ram": 37248,
     "vm_ops": 35031,
-    "ram": 37736,
     "gc": {
      "count": 7,
      "pct": 56.93,
@@ -117,11 +119,10 @@
    },
    "E": {
     "insns": 11257,
-    "stack": 4964,
-    "heap": 780,
-    "heap_budget": 32768,
+    "stack": 4984,
+    "heap": 768,
+    "ram": 5764,
     "vm_ops": 333,
-    "ram": 5744,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -130,9 +131,11 @@
     }
    },
    "C": {
-    "insns": 4817,
+    "ram": 5888,
+    "nursery": 7,
     "stack": 720,
-    "ram": 9224
+    "insns": 4822,
+    "insns_min_ram": 4837
    }
   },
   {
@@ -144,11 +147,10 @@
    },
    "E": {
     "insns": 148404,
-    "stack": 4964,
-    "heap": 10052,
-    "heap_budget": 32768,
+    "stack": 4984,
+    "heap": 1792,
+    "ram": 6788,
     "vm_ops": 4961,
-    "ram": 15016,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -157,9 +159,11 @@
     }
    },
    "C": {
-    "insns": 22338,
-    "stack": 2664,
-    "ram": 19360
+    "ram": 10444,
+    "nursery": 8,
+    "stack": 2716,
+    "insns": 22344,
+    "insns_min_ram": 31287
    }
   },
   {
@@ -172,10 +176,9 @@
    "E": {
     "insns": 846795,
     "stack": 4984,
-    "heap": 32632,
-    "heap_budget": 32768,
+    "heap": 5632,
+    "ram": 10628,
     "vm_ops": 24814,
-    "ram": 37616,
     "gc": {
      "count": 2,
      "pct": 13.2,
@@ -184,7 +187,11 @@
     }
    },
    "C": {
-    "fail": "arena"
+    "ram": 28568,
+    "nursery": 9,
+    "stack": 9576,
+    "insns": 174944,
+    "insns_min_ram": 196381
    }
   },
   {
@@ -197,10 +204,9 @@
    "E": {
     "insns": 1825357,
     "stack": 4984,
-    "heap": 32632,
-    "heap_budget": 32768,
+    "heap": 10752,
+    "ram": 15748,
     "vm_ops": 49572,
-    "ram": 37616,
     "gc": {
      "count": 4,
      "pct": 15.84,
@@ -224,10 +230,9 @@
    "E": {
     "insns": 499041,
     "stack": 4984,
-    "heap": 23368,
-    "heap_budget": 32768,
+    "heap": 2816,
+    "ram": 7812,
     "vm_ops": 14756,
-    "ram": 28352,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -236,9 +241,11 @@
     }
    },
    "C": {
-    "insns": 75445,
+    "ram": 15432,
+    "nursery": 8,
     "stack": 3608,
-    "ram": 20304
+    "insns": 75451,
+    "insns_min_ram": 113065
    }
   },
   {
@@ -251,10 +258,9 @@
    "E": {
     "insns": 350742,
     "stack": 4984,
-    "heap": 32588,
-    "heap_budget": 32768,
+    "heap": 2560,
+    "ram": 7556,
     "vm_ops": 9979,
-    "ram": 37572,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -263,9 +269,11 @@
     }
    },
    "C": {
-    "insns": 54475,
+    "ram": 15072,
+    "nursery": 8,
     "stack": 3248,
-    "ram": 19944
+    "insns": 54481,
+    "insns_min_ram": 78796
    }
   },
   {
@@ -278,10 +286,9 @@
    "E": {
     "insns": 698104,
     "stack": 4984,
-    "heap": 32588,
-    "heap_budget": 32768,
+    "heap": 5888,
+    "ram": 10884,
     "vm_ops": 21095,
-    "ram": 37572,
     "gc": {
      "count": 1,
      "pct": 7.45,
@@ -290,9 +297,11 @@
     }
    },
    "C": {
-    "insns": 115490,
+    "ram": 24944,
+    "nursery": 10,
     "stack": 8000,
-    "ram": 24696
+    "insns": 115496,
+    "insns_min_ram": 115496
    }
   },
   {
@@ -305,10 +314,9 @@
    "E": {
     "insns": 2275170,
     "stack": 4984,
-    "heap": 32592,
-    "heap_budget": 32768,
+    "heap": 17152,
+    "ram": 22148,
     "vm_ops": 63436,
-    "ram": 37576,
     "gc": {
      "count": 4,
      "pct": 13.24,
@@ -317,7 +325,7 @@
     }
    },
    "C": {
-    "fail": "arena"
+    "fail": "stack"
    }
   }
  ],
@@ -332,10 +340,9 @@
    "E": {
     "insns": 758683,
     "stack": 4984,
-    "heap": 31056,
-    "heap_budget": 32768,
+    "heap": 1024,
+    "ram": 6016,
     "vm_ops": 26542,
-    "ram": 36040,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -344,9 +351,11 @@
     }
    },
    "C": {
-    "insns": 76365,
+    "ram": 9200,
+    "nursery": 6,
     "stack": 2752,
-    "ram": 19448
+    "insns": 76371,
+    "insns_min_ram": 137524
    }
   },
   {
@@ -359,10 +368,9 @@
    "E": {
     "insns": 2661323,
     "stack": 4984,
-    "heap": 32660,
-    "heap_budget": 32768,
+    "heap": 1024,
+    "ram": 6016,
     "vm_ops": 93914,
-    "ram": 37644,
     "gc": {
      "count": 4,
      "pct": 4.41,
@@ -371,9 +379,11 @@
     }
    },
    "C": {
-    "insns": 267450,
+    "ram": 11256,
+    "nursery": 7,
     "stack": 3016,
-    "ram": 19712
+    "insns": 267456,
+    "insns_min_ram": 371359
    }
   },
   {
@@ -386,10 +396,9 @@
    "E": {
     "insns": 9028858,
     "stack": 4984,
-    "heap": 32664,
-    "heap_budget": 32768,
+    "heap": 1024,
+    "ram": 6016,
     "vm_ops": 317452,
-    "ram": 37648,
     "gc": {
      "count": 12,
      "pct": 3.93,
@@ -398,9 +407,11 @@
     }
    },
    "C": {
-    "insns": 897012,
+    "ram": 12568,
+    "nursery": 6,
     "stack": 4072,
-    "ram": 20768
+    "insns": 897018,
+    "insns_min_ram": 1695637
    }
   },
   {
@@ -413,10 +424,9 @@
    "E": {
     "insns": 28071611,
     "stack": 4984,
-    "heap": 32664,
-    "heap_budget": 32768,
+    "heap": 1024,
+    "ram": 6016,
     "vm_ops": 986811,
-    "ram": 37648,
     "gc": {
      "count": 36,
      "pct": 3.79,
@@ -425,7 +435,11 @@
     }
    },
    "C": {
-    "fail": "arena"
+    "ram": 17456,
+    "nursery": 6,
+    "stack": 8960,
+    "insns": 2770188,
+    "insns_min_ram": 5403725
    }
   }
  ],
@@ -439,11 +453,10 @@
    },
    "E": {
     "insns": 14530,
-    "stack": 4964,
-    "heap": 960,
-    "heap_budget": 32768,
+    "stack": 4984,
+    "heap": 768,
+    "ram": 5760,
     "vm_ops": 455,
-    "ram": 5924,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -452,9 +465,11 @@
     }
    },
    "C": {
-    "insns": 3328,
+    "ram": 6144,
+    "nursery": 6,
     "stack": 720,
-    "ram": 9224
+    "insns": 3333,
+    "insns_min_ram": 5830
    }
   },
   {
@@ -466,11 +481,10 @@
    },
    "E": {
     "insns": 117829,
-    "stack": 4964,
-    "heap": 7952,
-    "heap_budget": 32768,
+    "stack": 4984,
+    "heap": 1024,
+    "ram": 6016,
     "vm_ops": 4176,
-    "ram": 12916,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -479,9 +493,11 @@
     }
    },
    "C": {
-    "insns": 12406,
+    "ram": 7960,
+    "nursery": 6,
     "stack": 1512,
-    "ram": 10016
+    "insns": 12411,
+    "insns_min_ram": 28595
    }
   },
   {
@@ -494,10 +510,9 @@
    "E": {
     "insns": 1455298,
     "stack": 4984,
-    "heap": 32684,
-    "heap_budget": 32768,
+    "heap": 2560,
+    "ram": 7552,
     "vm_ops": 48954,
-    "ram": 37668,
     "gc": {
      "count": 2,
      "pct": 4.74,
@@ -506,9 +521,11 @@
     }
    },
    "C": {
-    "insns": 172367,
-    "stack": 9444,
-    "ram": 26140
+    "ram": 21220,
+    "nursery": 8,
+    "stack": 9396,
+    "insns": 172373,
+    "insns_min_ram": 267293
    }
   },
   {
@@ -521,10 +538,9 @@
    "E": {
     "insns": 17289413,
     "stack": 4984,
-    "heap": 32688,
-    "heap_budget": 32768,
+    "heap": 28672,
+    "ram": 33664,
     "vm_ops": 492804,
-    "ram": 37672,
     "gc": {
      "count": 31,
      "pct": 14.56,
@@ -533,7 +549,7 @@
     }
    },
    "C": {
-    "fail": "arena"
+    "fail": "stack"
    }
   }
  ],
@@ -547,11 +563,10 @@
    },
    "E": {
     "insns": 264628,
-    "stack": 4964,
-    "heap": 12216,
-    "heap_budget": 32768,
+    "stack": 4984,
+    "heap": 1024,
+    "ram": 6016,
     "vm_ops": 9679,
-    "ram": 17180,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -560,9 +575,11 @@
     }
    },
    "C": {
-    "insns": 27405,
+    "ram": 8976,
+    "nursery": 6,
     "stack": 2528,
-    "ram": 19224
+    "insns": 27411,
+    "insns_min_ram": 49723
    }
   },
   {
@@ -575,10 +592,9 @@
    "E": {
     "insns": 2655750,
     "stack": 4984,
-    "heap": 32560,
-    "heap_budget": 32768,
+    "heap": 2560,
+    "ram": 7552,
     "vm_ops": 91252,
-    "ram": 37544,
     "gc": {
      "count": 4,
      "pct": 5.39,
@@ -587,9 +603,11 @@
     }
    },
    "C": {
-    "insns": 266593,
-    "stack": 11784,
-    "ram": 28480
+    "ram": 20340,
+    "nursery": 6,
+    "stack": 11844,
+    "insns": 266599,
+    "insns_min_ram": 921312
    }
   },
   {
@@ -602,10 +620,9 @@
    "E": {
     "insns": 30097071,
     "stack": 4984,
-    "heap": 32564,
-    "heap_budget": 32768,
+    "heap": 28672,
+    "ram": 33664,
     "vm_ops": 887925,
-    "ram": 37548,
     "gc": {
      "count": 48,
      "pct": 13.17,
@@ -628,11 +645,10 @@
    },
    "E": {
     "insns": 75741,
-    "stack": 4996,
-    "heap": 3760,
-    "heap_budget": 40960,
+    "stack": 5016,
+    "heap": 1024,
+    "ram": 6048,
     "vm_ops": 2596,
-    "ram": 8756,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -641,9 +657,11 @@
     }
    },
    "C": {
-    "insns": 14066,
+    "ram": 9432,
+    "nursery": 7,
     "stack": 3240,
-    "ram": 19936
+    "insns": 14072,
+    "insns_min_ram": 19686
    }
   },
   {
@@ -655,11 +673,10 @@
    },
    "E": {
     "insns": 278712,
-    "stack": 4996,
-    "heap": 21532,
-    "heap_budget": 40960,
+    "stack": 5016,
+    "heap": 2816,
+    "ram": 7840,
     "vm_ops": 9904,
-    "ram": 26528,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -668,9 +685,11 @@
     }
    },
    "C": {
-    "insns": 57661,
+    "ram": 22056,
+    "nursery": 9,
     "stack": 11256,
-    "ram": 27952
+    "insns": 57667,
+    "insns_min_ram": 62563
    }
   },
   {
@@ -683,10 +702,9 @@
    "E": {
     "insns": 1191117,
     "stack": 5016,
-    "heap": 40888,
-    "heap_budget": 40960,
+    "heap": 8448,
+    "ram": 13472,
     "vm_ops": 39217,
-    "ram": 45904,
     "gc": {
      "count": 2,
      "pct": 10.1,
@@ -695,7 +713,7 @@
     }
    },
    "C": {
-    "fail": "arena"
+    "fail": "stack"
    }
   },
   {
@@ -708,10 +726,9 @@
    "E": {
     "insns": 6541353,
     "stack": 5016,
-    "heap": 40892,
-    "heap_budget": 40960,
+    "heap": 33024,
+    "ram": 38048,
     "vm_ops": 162136,
-    "ram": 45908,
     "gc": {
      "count": 10,
      "pct": 21.97,
@@ -734,11 +751,10 @@
    },
    "E": {
     "insns": 213850,
-    "stack": 4964,
-    "heap": 9256,
-    "heap_budget": 32768,
+    "stack": 4984,
+    "heap": 1536,
+    "ram": 6528,
     "vm_ops": 7711,
-    "ram": 14220,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -747,9 +763,11 @@
     }
    },
    "C": {
-    "insns": 23398,
+    "ram": 10628,
+    "nursery": 8,
     "stack": 2900,
-    "ram": 11404
+    "insns": 23403,
+    "insns_min_ram": 28748
    }
   },
   {
@@ -762,10 +780,9 @@
    "E": {
     "insns": 753939,
     "stack": 4984,
-    "heap": 32684,
-    "heap_budget": 32768,
+    "heap": 2560,
+    "ram": 7552,
     "vm_ops": 25052,
-    "ram": 37668,
     "gc": {
      "count": 1,
      "pct": 4.42,
@@ -774,9 +791,11 @@
     }
    },
    "C": {
-    "insns": 92613,
+    "ram": 16784,
+    "nursery": 8,
     "stack": 4960,
-    "ram": 21656
+    "insns": 92619,
+    "insns_min_ram": 134720
    }
   },
   {
@@ -789,10 +808,9 @@
    "E": {
     "insns": 1488893,
     "stack": 4984,
-    "heap": 32692,
-    "heap_budget": 32768,
+    "heap": 3584,
+    "ram": 8576,
     "vm_ops": 49118,
-    "ram": 37676,
     "gc": {
      "count": 2,
      "pct": 4.59,
@@ -801,7 +819,11 @@
     }
    },
    "C": {
-    "fail": "arena"
+    "ram": 29088,
+    "nursery": 8,
+    "stack": 9072,
+    "insns": 222745,
+    "insns_min_ram": 346334
    }
   },
   {
@@ -814,10 +836,9 @@
    "E": {
     "insns": 8648430,
     "stack": 4984,
-    "heap": 32696,
-    "heap_budget": 32768,
+    "heap": 13056,
+    "ram": 18048,
     "vm_ops": 257662,
-    "ram": 37680,
     "gc": {
      "count": 13,
      "pct": 9.75,
@@ -826,7 +847,7 @@
     }
    },
    "C": {
-    "fail": "arena"
+    "fail": "stack"
    }
   }
  ],
@@ -840,11 +861,10 @@
    },
    "E": {
     "insns": 425436,
-    "stack": 4980,
-    "heap": 16336,
-    "heap_budget": 32768,
+    "stack": 5000,
+    "heap": 512,
+    "ram": 5520,
     "vm_ops": 16651,
-    "ram": 21316,
     "gc": {
      "count": 0,
      "pct": 0.0,
@@ -863,10 +883,9 @@
    "E": {
     "insns": 1783635,
     "stack": 5000,
-    "heap": 32660,
-    "heap_budget": 32768,
+    "heap": 512,
+    "ram": 5520,
     "vm_ops": 66383,
-    "ram": 37660,
     "gc": {
      "count": 2,
      "pct": 3.39,
@@ -885,10 +904,9 @@
    "E": {
     "insns": 7123170,
     "stack": 5000,
-    "heap": 32672,
-    "heap_budget": 32768,
+    "heap": 512,
+    "ram": 5520,
     "vm_ops": 265311,
-    "ram": 37672,
     "gc": {
      "count": 8,
      "pct": 3.35,
@@ -907,10 +925,9 @@
    "E": {
     "insns": 28481923,
     "stack": 5000,
-    "heap": 32672,
-    "heap_budget": 32768,
+    "heap": 512,
+    "ram": 5520,
     "vm_ops": 1061007,
-    "ram": 37672,
     "gc": {
      "count": 32,
      "pct": 3.35,
