@@ -120,46 +120,53 @@
 
 == Overview
 
-#let box-node(pos, body, name: none, fill: none, stroke: 0.8pt + luma(60)) = node(
-  pos, name: name, fill: fill, stroke: stroke, inset: 7pt, corner-radius: 3pt,
-  align(center, text(size: 13pt, body)))
-#let group(nodes, label, fill) = node(
-  enclose: nodes, fill: fill, stroke: none, inset: 10pt, corner-radius: 6pt)
-#let group-label(pos, body, name: none) = node(pos, name: name, stroke: none, inset: 2pt,
-  text(size: 12pt, weight: "bold", fill: muted, body))
+// Reference diagram (draw.io), redrawn here: the compilation chain from
+// Rocq down to bytecode, and how it sits on the device.
+#let green = (fill: rgb("#d5e8d4"), stroke: 0.8pt + rgb("#82b366"))
+#let blue = (fill: rgb("#dae8fc"), stroke: 0.8pt + rgb("#6c8ebf"))
+#let red = (fill: rgb("#f8cecc"), stroke: 0.8pt + rgb("#b85450"))
+#let grey = (fill: luma(244), stroke: 0.8pt + luma(110))
+#let stepbox(pos, name, style, body, width: 5.4cm) = node(pos, name: name,
+  fill: style.fill, stroke: style.stroke, corner-radius: 4pt, inset: 6pt,
+  box(width: width, align(center, text(size: 13pt, body))))
+#let label(pos, name, body) = node(pos, name: name, stroke: none, inset: 2pt, text(size: 13pt, body))
+#let frame(name, nodes, style) = node(name: name, enclose: nodes,
+  fill: style.fill, stroke: style.stroke, corner-radius: 6pt, inset: 8pt)
 
 #align(center + horizon, diagram(
-  spacing: (0.9cm, 0.8cm),
-  edge-stroke: 0.8pt + luma(60),
+  spacing: (0.6cm, 0.5cm),
+  edge-stroke: 0.9pt + black,
   mark-scale: 80%,
 
-  group((<spec>, <step>, <sdk>, <l1>), none, accent.lighten(88%)),
-  group-label((0, -0.8), name: <l1>)[In Rocq: proved],
-  group-label((2, 0.25))[On the build machine],
-  group-label((4.2, -0.8), name: <l3>)[On the device],
-  box-node((0, 0), name: <spec>)[*Specification* \ theorems on `step`],
-  box-node((0, 1), name: <step>)[*Application* \ `step : State × Event` \ `→ State × list Effect`],
-  box-node((0, 2), name: <sdk>)[*Formal SDK* \ events, effects, axioms],
+  stepbox((0, 0), <rocq>, green)[Rocq \ (Gallina code)],
+  stepbox((0, 1), <scm>, green)[Scheme code],
+  stepbox((0, 2), <cps>, green)[Continuation-passing style (CPS)],
+  stepbox((1, 2), <opt>, (fill: white, stroke: 0.8pt + black), width: 3cm)[CPS optimizer],
 
-  group((<scm>, <comp>), none, luma(240)),
-  box-node((1.4, 1), name: <scm>)[Extracted \ Scheme],
-  box-node((2.6, 1), name: <comp>)[*Encore compiler*],
+  // On the device: nested frames, drawn first so the boxes sit on top.
+  frame(<os>, (<host>, <other>, <os-l>), grey),
+  frame(<host>, (<vm>, <main>, <build>, <host-l>), red),
+  frame(<vm>, (<bc>, <vm-l>), blue),
 
-  group((<vm>, <drv>, <ext>, <l3>), none, luma(240)),
-  box-node((4.2, 1), name: <vm>, fill: accent, stroke: none)[#text(fill: white)[#text(weight: "bold")[Encore VM] \ runs `step`]],
-  box-node((4.2, 0), name: <drv>)[Rust driver \ events in, effects out],
-  box-node((4.2, 2), name: <ext>)[Host functions \ hash, CRC, crypto],
+  stepbox((0, 3.6), <bc>, green, width: 4.2cm)[Bytecode],
+  label((0, 4.35), <vm-l>, align(center)[#text(weight: "bold", fill: black)[Encore VM] \ (a library of the Rust application)]),
+  stepbox((1, 3.7), <main>, red, width: 5.6cm)[
+    #box(fill: luma(246), inset: 5pt, text(size: 10pt)[```rust
+encore_heap!(HEAP, 40_000);
+let mut vm = boot(HEAP())?;
+```]) \
+    `main.rs`],
+  stepbox((1, 4.95), <build>, red, width: 5.6cm)[runs the Encore compiler \ `build.rs`],
+  label((0.5, 5.75), <host-l>)[#text(weight: "bold", fill: black)[Host] (Rust application)],
+  stepbox((2, 4.2), <other>, grey, width: 2.6cm)[Other \ application],
+  label((0.9, 6.75), <os-l>, text(weight: "bold", fill: black)[Microcontroller OS]),
 
-  edge(<spec>, <step>, "-", stroke: (dash: "dashed")),
-  edge(<sdk>, <step>, "-", stroke: (dash: "dashed")),
-  edge(<step>, <scm>, "-|>", label: text(size: 11pt)[extraction], label-side: left),
-  edge(<scm>, <comp>, "-|>"),
-  edge(<comp>, <vm>, "-|>", label: text(size: 11pt)[bytecode], label-side: left),
-  edge(<drv>, <vm>, "<|-|>"),
-  edge(<ext>, <vm>, "<|-|>"),
+  edge(<rocq>, <scm>, "-|>"),
+  edge(<scm>, <cps>, "-|>"),
+  edge(<cps>, <opt>, "-|>", shift: 0.12cm),
+  edge(<opt>, <cps>, "-|>", shift: 0.12cm),
+  edge(<cps>, <bc>, "-|>"),
 ))
-#v(0.2em)
-#align(center, note[Placeholder until the reference diagram is dropped in.])
 
 == Maximise the pure core
 
