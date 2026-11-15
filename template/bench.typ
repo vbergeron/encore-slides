@@ -95,3 +95,135 @@
     }).flatten(),
   )
 }
+
+// ---------------------------------------------------------------------------
+// Evaluation tables of the VeCOS deck: one research question each, one value
+// per cell (no ranges), every column labelled with what it measures.
+
+#let _ran(cell) = cell != none and "insns" in cell
+#let _fmt(x) = str(calc.round(x, digits: if x < 10 { 1 } else { 0 }))
+#let _cross(why) = text(fill: accent, weight: "bold")[✗ #why]
+#let _na(body) = text(fill: muted, size: 12pt, body)
+
+#let _eval-table(columns, groups, sub, rows, size: 14pt) = {
+  set text(size: size)
+  show table.cell.where(y: 0): set text(weight: "bold")
+  show table.cell.where(y: 1): set text(weight: "bold", fill: muted, size: size - 2pt)
+  let starts = ()
+  let x = 2
+  for (_, span) in groups { starts.push(x); x += span }
+  table(
+    columns: columns,
+    align: (col, row) => if col < 2 { left + horizon } else { center + horizon },
+    stroke: (x, y) => (
+      bottom: if y == 1 { 0.8pt + black } else if y > 1 { 0.3pt + luma(220) } else { none },
+      left: if x in starts and y > 0 { 0.3pt + luma(200) } else { none },
+    ),
+    inset: (x: 7pt, y: 4.5pt),
+    table.header(
+      table.cell(rowspan: 2)[], table.cell(rowspan: 2, align: left + bottom)[Workload],
+      ..groups.map(((label, span)) => table.cell(colspan: span, align: center, label)),
+      ..sub,
+    ),
+    ..rows.flatten(),
+  )
+}
+
+// RQ1: how many of the input sizes each variant completes within 50 KiB,
+// whatever its heap or arena size (minheap search), output checked against Rust.
+#let fit-table(workloads) = _eval-table(
+  (auto, 1fr, auto, auto, auto),
+  (([Input sizes completed within 50 KiB], 3),),
+  ([Rust], [CertiRocq], [Encore]),
+  workloads.map(((id, key, name)) => {
+    let cases = bench.at(key)
+    let n = cases.len()
+    let built = cases.any(c => "C" in c)
+    let c-ok = cases.filter(c => "need" in c.at("C", default: (:))).len()
+    let fails = cases.filter(c => "need_fail" in c.at("C", default: (:)))
+    (
+      id, name,
+      [#cases.filter(c => _ran(c.R)).len() / #n],
+      if built [#c-ok / #n #if fails.len() > 0 { text(size: 11pt, fill: accent)[ (✗ stack)] }] else { _na[not built] },
+      text(fill: accent, weight: "bold")[#cases.filter(c => "need" in c.E).len() / #n],
+    )
+  }),
+)
+
+// RQ2: RAM needed in all (statics + smallest heap or arena that passes + stack),
+// at the smallest and the largest input size.
+#let ram-table(workloads) = {
+  let kib(b) = _fmt(b / 1024)
+  let need(c, v) = {
+    let cell = c.at(v, default: none)
+    if cell == none { _na[n/b] }
+    else if v == "R" { kib(cell.ram) }
+    else if "need" in cell { if v == "E" { text(fill: accent, weight: "bold", kib(cell.need)) } else { kib(cell.need) } }
+    else { _cross(cell.at("need_fail", default: "")) }
+  }
+  _eval-table(
+    (auto, 1fr, auto, auto, auto, auto, auto, auto, auto, auto),
+    (([Smallest N], 4), ([Largest N], 4)),
+    ([N], [Rust], [CertiRocq], [Encore], [N], [Rust], [CertiRocq], [Encore]),
+    workloads.map(((id, key, name)) => {
+      let cases = bench.at(key)
+      let lo = cases.first()
+      let hi = cases.last()
+      (id, name,
+        text(fill: muted, str(lo.n)), need(lo, "R"), need(lo, "C"), need(lo, "E"),
+        text(fill: muted, str(hi.n)), need(hi, "R"), need(hi, "C"), need(hi, "E"))
+    }),
+  )
+}
+
+// RQ3: Encore's instructions per run divided by Rust's and CertiRocq's,
+// at the smallest input size and at the largest one the other variant completes
+// (timing runs: CertiRocq with a 20 KiB arena).
+#let slowdown-table(workloads) = {
+  let x(r) = text(fill: accent, weight: "bold", "×" + _fmt(r))
+  let pair(cases, v) = {
+    let both = cases.filter(c => _ran(c.at(v, default: none)))
+    if both.len() == 0 { return (_na[not built], _na[–]) }
+    let lo = both.first()
+    let hi = both.last()
+    (x(lo.E.insns / lo.at(v).insns), [#x(hi.E.insns / hi.at(v).insns) #text(size: 11pt, fill: muted)[(N=#hi.n)]])
+  }
+  _eval-table(
+    (auto, 1fr, auto, auto, auto, auto),
+    (([Encore ÷ Rust (instructions)], 2), ([Encore ÷ CertiRocq (instructions)], 2)),
+    ([smallest N], [largest N], [smallest N], [largest common N]),
+    workloads.map(((id, key, name)) => {
+      let cases = bench.at(key)
+      (id, name, ..pair(cases, "R"), ..pair(cases, "C"))
+    }),
+  )
+}
+
+// RQ3: where Encore's time goes, at the largest input size. The slowdown
+// against Rust factors into how many bytecode operations the functional
+// program executes per Rust instruction, times the cost of one operation;
+// within the VM, the share spent in each collector phase.
+#let breakdown-table(workloads) = {
+  let phases = (("mark", luma(90)), ("forward", accent.darken(20%)), ("update", accent), ("compact", accent.lighten(45%)))
+  let bar(gc) = {
+    let rt = gc.run_time
+    let w = 4.2cm
+    align(left, box(width: w, height: 0.42em, fill: luma(225), radius: 1pt, clip: true,
+      stack(dir: ltr, ..phases.map(((k, col)) => box(width: w * 4 * gc.at(k) / rt, height: 100%, fill: col)))))
+  }
+  _eval-table(
+    (auto, 1fr, auto, auto, auto, auto, auto, auto),
+    (([Why Encore is slower than Rust], 3), ([Garbage collector, share of VM time], 2), ([GC stop], 1)),
+    ([ops / Rust insn], [insns / op], [slowdown], [%], [mark · forward · update · compact], [longest]),
+    workloads.map(((id, key, name)) => {
+      let c = bench.at(key).last()
+      let gc = c.E.gc
+      (id, name,
+        _fmt(c.E.vm_ops / c.R.insns), _fmt(c.E.insns / c.E.vm_ops),
+        text(fill: accent, weight: "bold", "×" + _fmt(c.E.insns / c.R.insns)),
+        _fmt(100 * gc.pause_total / gc.run_time) + " %", bar(gc),
+        _fmt(gc.pause_max / 1000) + " k")
+    }),
+    size: 13pt,
+  )
+}

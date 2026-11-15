@@ -67,10 +67,12 @@ typst compile --root . decks/2026-09-28-lirmm-seminar.typ out.pdf
 The result slides read `data/bench.json`, extracted from
 [encore-benchmarks](https://github.com/vbergeron/encore-benchmarks)'
 `results/benchmarks.jsonl` (latest row per case, QEMU Cortex-M3, E with the
-CPS optimizer, C with its 20 KiB arena). To refresh it after new runs:
+CPS optimizer, C with its 20 KiB arena) and `results/minheap.jsonl` (the RAM
+each E and C case needs in all, comparable between the two). To refresh it
+after new runs:
 
 ```sh
-mise run bench-data ../encore-benchmarks/results/benchmarks.jsonl
+mise run bench-data ../encore-benchmarks/results
 ```
 
 ## Publishing
