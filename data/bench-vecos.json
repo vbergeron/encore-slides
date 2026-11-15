@@ -1,0 +1,1205 @@
+{
+ "w0_smoke": [
+  {
+   "n": 1,
+   "R": {
+    "insns": 17,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 3639,
+    "stack": 4964,
+    "heap": 104,
+    "heap_budget": 32768,
+    "vm_ops": 66,
+    "ram": 5068,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 2720,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 5228
+   },
+   "C": {
+    "insns": 502,
+    "stack": 392,
+    "ram": 8896,
+    "need": 9136
+   }
+  },
+  {
+   "n": 10,
+   "R": {
+    "insns": 23,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 12162,
+    "stack": 4964,
+    "heap": 612,
+    "heap_budget": 32768,
+    "vm_ops": 381,
+    "ram": 5576,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 16160,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 5504
+   },
+   "C": {
+    "insns": 1636,
+    "stack": 968,
+    "ram": 9472,
+    "need": 9712
+   }
+  },
+  {
+   "n": 100,
+   "R": {
+    "insns": 23,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 97392,
+    "stack": 4964,
+    "heap": 5476,
+    "heap_budget": 32768,
+    "vm_ops": 3531,
+    "ram": 10440,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 150000,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 8320
+   },
+   "C": {
+    "insns": 20893,
+    "stack": 6728,
+    "ram": 23424,
+    "need": 23664
+   }
+  },
+  {
+   "n": 1000,
+   "R": {
+    "insns": 23,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 2737430,
+    "stack": 4984,
+    "heap": 32752,
+    "heap_budget": 32768,
+    "vm_ops": 35031,
+    "ram": 37736,
+    "gc": {
+     "count": 7,
+     "pct": 56.93,
+     "pause_max": 294480,
+     "live": 31912,
+     "run_time": 3459840,
+     "pause_total": 1969520,
+     "mark": 662000,
+     "forward": 161200,
+     "update": 686800,
+     "compact": 459520
+    },
+    "need": 37248
+   },
+   "C": {
+    "fail": "stack",
+    "need_fail": "stack"
+   }
+  }
+ ],
+ "w1_apdu": [
+  {
+   "n": 5,
+   "R": {
+    "insns": 67,
+    "stack": 252,
+    "ram": 1828
+   },
+   "E": {
+    "insns": 11257,
+    "stack": 4964,
+    "heap": 780,
+    "heap_budget": 32768,
+    "vm_ops": 333,
+    "ram": 5744,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 14800,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 5764
+   },
+   "C": {
+    "insns": 4822,
+    "stack": 720,
+    "ram": 9224,
+    "need": 9472
+   }
+  },
+  {
+   "n": 32,
+   "R": {
+    "insns": 331,
+    "stack": 300,
+    "ram": 1876
+   },
+   "E": {
+    "insns": 148404,
+    "stack": 4964,
+    "heap": 10052,
+    "heap_budget": 32768,
+    "vm_ops": 4961,
+    "ram": 15016,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 226080,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 6788
+   },
+   "C": {
+    "insns": 22344,
+    "stack": 2664,
+    "ram": 19360,
+    "need": 19608
+   }
+  },
+  {
+   "n": 128,
+   "R": {
+    "insns": 791,
+    "stack": 396,
+    "ram": 1972
+   },
+   "E": {
+    "insns": 846795,
+    "stack": 4984,
+    "heap": 32632,
+    "heap_budget": 32768,
+    "vm_ops": 24814,
+    "ram": 37616,
+    "gc": {
+     "count": 2,
+     "pct": 13.2,
+     "pause_max": 90160,
+     "live": 3408,
+     "run_time": 1318880,
+     "pause_total": 174080,
+     "mark": 26320,
+     "forward": 38560,
+     "update": 61200,
+     "compact": 48000
+    },
+    "need": 10628
+   },
+   "C": {
+    "insns": 174944,
+    "stack": 9628,
+    "ram": 42708,
+    "need": 42956
+   }
+  },
+  {
+   "n": 261,
+   "R": {
+    "insns": 819,
+    "stack": 396,
+    "ram": 1972
+   },
+   "E": {
+    "insns": 1825357,
+    "stack": 4984,
+    "heap": 32632,
+    "heap_budget": 32768,
+    "vm_ops": 49572,
+    "ram": 37616,
+    "gc": {
+     "count": 4,
+     "pct": 15.84,
+     "pause_max": 119280,
+     "live": 6620,
+     "run_time": 2726960,
+     "pause_total": 431840,
+     "mark": 86080,
+     "forward": 80240,
+     "update": 151280,
+     "compact": 114240
+    },
+    "need": 15748
+   },
+   "C": {
+    "fail": "stack",
+    "need_fail": "stack"
+   }
+  }
+ ],
+ "w2_rlp": [
+  {
+   "n": 0,
+   "R": {
+    "insns": 3902,
+    "stack": 540,
+    "ram": 1964
+   },
+   "E": {
+    "insns": 499041,
+    "stack": 4984,
+    "heap": 23368,
+    "heap_budget": 32768,
+    "vm_ops": 14756,
+    "ram": 28352,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 659760,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 7812
+   },
+   "C": {
+    "insns": 75451,
+    "stack": 3608,
+    "ram": 20304,
+    "need": 20552
+   }
+  },
+  {
+   "n": 4,
+   "R": {
+    "insns": 2457,
+    "stack": 540,
+    "ram": 1964
+   },
+   "E": {
+    "insns": 350742,
+    "stack": 4984,
+    "heap": 32588,
+    "heap_budget": 32768,
+    "vm_ops": 9979,
+    "ram": 37572,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 69680,
+     "live": 1556,
+     "run_time": 446160,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 7556
+   },
+   "C": {
+    "insns": 54481,
+    "stack": 3248,
+    "ram": 19944,
+    "need": 20192
+   }
+  },
+  {
+   "n": 68,
+   "R": {
+    "insns": 3659,
+    "stack": 540,
+    "ram": 1964
+   },
+   "E": {
+    "insns": 698104,
+    "stack": 4984,
+    "heap": 32588,
+    "heap_budget": 32768,
+    "vm_ops": 21095,
+    "ram": 37572,
+    "gc": {
+     "count": 1,
+     "pct": 7.45,
+     "pause_max": 76640,
+     "live": 2336,
+     "run_time": 1028080,
+     "pause_total": 76640,
+     "mark": 10400,
+     "forward": 17840,
+     "update": 27120,
+     "compact": 21280
+    },
+    "need": 10884
+   },
+   "C": {
+    "insns": 115496,
+    "stack": 8000,
+    "ram": 24696,
+    "need": 24944
+   }
+  },
+  {
+   "n": 260,
+   "R": {
+    "insns": 9868,
+    "stack": 540,
+    "ram": 1964
+   },
+   "E": {
+    "insns": 2275170,
+    "stack": 4984,
+    "heap": 32592,
+    "heap_budget": 32768,
+    "vm_ops": 63436,
+    "ram": 37576,
+    "gc": {
+     "count": 4,
+     "pct": 13.24,
+     "pause_max": 133280,
+     "live": 5356,
+     "run_time": 3314080,
+     "pause_total": 438880,
+     "mark": 94320,
+     "forward": 77120,
+     "update": 153440,
+     "compact": 114000
+    },
+    "need": 22148
+   },
+   "C": {
+    "fail": "stack",
+    "need_fail": "stack"
+   }
+  }
+ ],
+ "w3_policy": [
+  {
+   "n": 1,
+   "R": {
+    "insns": 3303,
+    "stack": 456,
+    "ram": 480
+   },
+   "E": {
+    "insns": 758683,
+    "stack": 4984,
+    "heap": 31056,
+    "heap_budget": 32768,
+    "vm_ops": 26542,
+    "ram": 36040,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 1165040,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 6016
+   },
+   "C": {
+    "insns": 76371,
+    "stack": 2752,
+    "ram": 19448,
+    "need": 19696
+   }
+  },
+  {
+   "n": 4,
+   "R": {
+    "insns": 6028,
+    "stack": 456,
+    "ram": 480
+   },
+   "E": {
+    "insns": 2661323,
+    "stack": 4984,
+    "heap": 32660,
+    "heap_budget": 32768,
+    "vm_ops": 93914,
+    "ram": 37644,
+    "gc": {
+     "count": 4,
+     "pct": 4.41,
+     "pause_max": 48240,
+     "live": 628,
+     "run_time": 4319920,
+     "pause_total": 190400,
+     "mark": 15520,
+     "forward": 51040,
+     "update": 69840,
+     "compact": 54000
+    },
+    "need": 6016
+   },
+   "C": {
+    "insns": 267456,
+    "stack": 3016,
+    "ram": 19712,
+    "need": 19960
+   }
+  },
+  {
+   "n": 16,
+   "R": {
+    "insns": 15335,
+    "stack": 456,
+    "ram": 480
+   },
+   "E": {
+    "insns": 9028858,
+    "stack": 4984,
+    "heap": 32664,
+    "heap_budget": 32768,
+    "vm_ops": 317452,
+    "ram": 37648,
+    "gc": {
+     "count": 12,
+     "pct": 3.93,
+     "pause_max": 48640,
+     "live": 684,
+     "run_time": 14524240,
+     "pause_total": 570480,
+     "mark": 47120,
+     "forward": 152320,
+     "update": 209360,
+     "compact": 161680
+    },
+    "need": 6016
+   },
+   "C": {
+    "insns": 897018,
+    "stack": 4072,
+    "ram": 20768,
+    "need": 21016
+   }
+  },
+  {
+   "n": 64,
+   "R": {
+    "insns": 44455,
+    "stack": 456,
+    "ram": 480
+   },
+   "E": {
+    "insns": 28071611,
+    "stack": 4984,
+    "heap": 32664,
+    "heap_budget": 32768,
+    "vm_ops": 986811,
+    "ram": 37648,
+    "gc": {
+     "count": 36,
+     "pct": 3.79,
+     "pause_max": 48640,
+     "live": 592,
+     "run_time": 45025920,
+     "pause_total": 1706640,
+     "mark": 140640,
+     "forward": 455920,
+     "update": 626400,
+     "compact": 483680
+    },
+    "need": 6016
+   },
+   "C": {
+    "insns": 2770188,
+    "stack": 8960,
+    "ram": 42040,
+    "need": 42288
+   }
+  }
+ ],
+ "w4_pin": [
+  {
+   "n": 1,
+   "R": {
+    "insns": 118,
+    "stack": 312,
+    "ram": 1320
+   },
+   "E": {
+    "insns": 14530,
+    "stack": 4964,
+    "heap": 960,
+    "heap_budget": 32768,
+    "vm_ops": 455,
+    "ram": 5924,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 20000,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 5760
+   },
+   "C": {
+    "insns": 3333,
+    "stack": 720,
+    "ram": 9224,
+    "need": 9472
+   }
+  },
+  {
+   "n": 10,
+   "R": {
+    "insns": 694,
+    "stack": 312,
+    "ram": 1320
+   },
+   "E": {
+    "insns": 117829,
+    "stack": 4964,
+    "heap": 7952,
+    "heap_budget": 32768,
+    "vm_ops": 4176,
+    "ram": 12916,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 184160,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 6016
+   },
+   "C": {
+    "insns": 12411,
+    "stack": 1512,
+    "ram": 10016,
+    "need": 10264
+   }
+  },
+  {
+   "n": 100,
+   "R": {
+    "insns": 7003,
+    "stack": 312,
+    "ram": 1320
+   },
+   "E": {
+    "insns": 1455298,
+    "stack": 4984,
+    "heap": 32684,
+    "heap_budget": 32768,
+    "vm_ops": 48954,
+    "ram": 37668,
+    "gc": {
+     "count": 2,
+     "pct": 4.74,
+     "pause_max": 57120,
+     "live": 1764,
+     "run_time": 2255440,
+     "pause_total": 106880,
+     "mark": 13200,
+     "forward": 25440,
+     "update": 38880,
+     "compact": 29360
+    },
+    "need": 7552
+   },
+   "C": {
+    "insns": 172373,
+    "stack": 9444,
+    "ram": 26140,
+    "need": 26388
+   }
+  },
+  {
+   "n": 1000,
+   "R": {
+    "insns": 69692,
+    "stack": 312,
+    "ram": 1320
+   },
+   "E": {
+    "insns": 17289413,
+    "stack": 4984,
+    "heap": 32688,
+    "heap_budget": 32768,
+    "vm_ops": 492804,
+    "ram": 37672,
+    "gc": {
+     "count": 31,
+     "pct": 14.56,
+     "pause_max": 203760,
+     "live": 20000,
+     "run_time": 25317200,
+     "pause_total": 3686640,
+     "mark": 990240,
+     "forward": 478720,
+     "update": 1310880,
+     "compact": 906800
+    },
+    "need": 33664
+   },
+   "C": {
+    "fail": "stack",
+    "need_fail": "stack"
+   }
+  }
+ ],
+ "w5_update": [
+  {
+   "n": 10,
+   "R": {
+    "insns": 2053,
+    "stack": 336,
+    "ram": 4408
+   },
+   "E": {
+    "insns": 264628,
+    "stack": 4964,
+    "heap": 12216,
+    "heap_budget": 32768,
+    "vm_ops": 9679,
+    "ram": 17180,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 420880,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 6016
+   },
+   "C": {
+    "insns": 27411,
+    "stack": 2528,
+    "ram": 19224,
+    "need": 19472
+   }
+  },
+  {
+   "n": 100,
+   "R": {
+    "insns": 17152,
+    "stack": 336,
+    "ram": 4408
+   },
+   "E": {
+    "insns": 2655750,
+    "stack": 4984,
+    "heap": 32560,
+    "heap_budget": 32768,
+    "vm_ops": 91252,
+    "ram": 37544,
+    "gc": {
+     "count": 4,
+     "pct": 5.39,
+     "pause_max": 62480,
+     "live": 2008,
+     "run_time": 4200960,
+     "pause_total": 226240,
+     "mark": 26000,
+     "forward": 55120,
+     "update": 82640,
+     "compact": 62480
+    },
+    "need": 7552
+   },
+   "C": {
+    "insns": 266599,
+    "stack": 11784,
+    "ram": 28480,
+    "need": 28728
+   }
+  },
+  {
+   "n": 1000,
+   "R": {
+    "insns": 164928,
+    "stack": 336,
+    "ram": 4408
+   },
+   "E": {
+    "insns": 30097071,
+    "stack": 4984,
+    "heap": 32564,
+    "heap_budget": 32768,
+    "vm_ops": 887925,
+    "ram": 37548,
+    "gc": {
+     "count": 48,
+     "pct": 13.17,
+     "pause_max": 271440,
+     "live": 27592,
+     "run_time": 44564240,
+     "pause_total": 5868080,
+     "mark": 1555280,
+     "forward": 775520,
+     "update": 2092640,
+     "compact": 1444640
+    },
+    "need": 33664
+   },
+   "C": {
+    "fail": "stack",
+    "need_fail": "stack"
+   }
+  }
+ ],
+ "w6_cobs": [
+  {
+   "n": 16,
+   "R": {
+    "insns": 453,
+    "stack": 244,
+    "ram": 2308
+   },
+   "E": {
+    "insns": 75741,
+    "stack": 4996,
+    "heap": 3760,
+    "heap_budget": 40960,
+    "vm_ops": 2596,
+    "ram": 8756,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 113280,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 6048
+   },
+   "C": {
+    "insns": 14072,
+    "stack": 3240,
+    "ram": 19936,
+    "need": 20184
+   }
+  },
+  {
+   "n": 64,
+   "R": {
+    "insns": 1490,
+    "stack": 244,
+    "ram": 2308
+   },
+   "E": {
+    "insns": 278712,
+    "stack": 4996,
+    "heap": 21532,
+    "heap_budget": 40960,
+    "vm_ops": 9904,
+    "ram": 26528,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 433040,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 7840
+   },
+   "C": {
+    "insns": 57667,
+    "stack": 11256,
+    "ram": 27952,
+    "need": 28200
+   }
+  },
+  {
+   "n": 256,
+   "R": {
+    "insns": 6152,
+    "stack": 244,
+    "ram": 2308
+   },
+   "E": {
+    "insns": 1191117,
+    "stack": 5016,
+    "heap": 40888,
+    "heap_budget": 40960,
+    "vm_ops": 39217,
+    "ram": 45904,
+    "gc": {
+     "count": 2,
+     "pct": 10.1,
+     "pause_max": 112080,
+     "live": 5928,
+     "run_time": 1908080,
+     "pause_total": 192720,
+     "mark": 30960,
+     "forward": 41600,
+     "update": 67120,
+     "compact": 53040
+    },
+    "need": 13472
+   },
+   "C": {
+    "fail": "stack",
+    "need_fail": "stack"
+   }
+  },
+  {
+   "n": 1024,
+   "R": {
+    "insns": 23331,
+    "stack": 288,
+    "ram": 2352
+   },
+   "E": {
+    "insns": 6541353,
+    "stack": 5016,
+    "heap": 40892,
+    "heap_budget": 40960,
+    "vm_ops": 162136,
+    "ram": 45908,
+    "gc": {
+     "count": 10,
+     "pct": 21.97,
+     "pause_max": 309360,
+     "live": 28172,
+     "run_time": 9124560,
+     "pause_total": 2004880,
+     "mark": 570640,
+     "forward": 247680,
+     "update": 696480,
+     "compact": 490080
+    },
+    "need": 38048
+   },
+   "C": {
+    "fail": "stack",
+    "need_fail": "stack"
+   }
+  }
+ ],
+ "w7_store": [
+  {
+   "n": 10,
+   "R": {
+    "insns": 4598,
+    "stack": 244,
+    "ram": 3384
+   },
+   "E": {
+    "insns": 213850,
+    "stack": 4964,
+    "heap": 9256,
+    "heap_budget": 32768,
+    "vm_ops": 7711,
+    "ram": 14220,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 337920,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 6528
+   },
+   "C": {
+    "insns": 23403,
+    "stack": 2900,
+    "ram": 11404,
+    "need": 11652
+   }
+  },
+  {
+   "n": 50,
+   "R": {
+    "insns": 22354,
+    "stack": 300,
+    "ram": 3440
+   },
+   "E": {
+    "insns": 753939,
+    "stack": 4984,
+    "heap": 32684,
+    "heap_budget": 32768,
+    "vm_ops": 25052,
+    "ram": 37668,
+    "gc": {
+     "count": 1,
+     "pct": 4.42,
+     "pause_max": 51280,
+     "live": 940,
+     "run_time": 1158880,
+     "pause_total": 51280,
+     "mark": 5200,
+     "forward": 12880,
+     "update": 18960,
+     "compact": 14240
+    },
+    "need": 7552
+   },
+   "C": {
+    "insns": 92619,
+    "stack": 4960,
+    "ram": 21656,
+    "need": 21904
+   }
+  },
+  {
+   "n": 100,
+   "R": {
+    "insns": 61152,
+    "stack": 300,
+    "ram": 3440
+   },
+   "E": {
+    "insns": 1488893,
+    "stack": 4984,
+    "heap": 32692,
+    "heap_budget": 32768,
+    "vm_ops": 49118,
+    "ram": 37676,
+    "gc": {
+     "count": 2,
+     "pct": 4.59,
+     "pause_max": 56640,
+     "live": 2292,
+     "run_time": 2277520,
+     "pause_total": 104480,
+     "mark": 14560,
+     "forward": 23120,
+     "update": 39040,
+     "compact": 27760
+    },
+    "need": 8576
+   },
+   "C": {
+    "insns": 222745,
+    "stack": 9236,
+    "ram": 42316,
+    "need": 42564
+   }
+  },
+  {
+   "n": 500,
+   "R": {
+    "insns": 910172,
+    "stack": 300,
+    "ram": 3440
+   },
+   "E": {
+    "insns": 8648430,
+    "stack": 4984,
+    "heap": 32696,
+    "heap_budget": 32768,
+    "vm_ops": 257662,
+    "ram": 37680,
+    "gc": {
+     "count": 13,
+     "pct": 9.75,
+     "pause_max": 132960,
+     "live": 12036,
+     "run_time": 12623840,
+     "pause_total": 1230240,
+     "mark": 320400,
+     "forward": 152400,
+     "update": 469520,
+     "compact": 287920
+    },
+    "need": 18048
+   },
+   "C": {
+    "fail": "stack",
+    "need_fail": "stack"
+   }
+  }
+ ],
+ "w8_crc": [
+  {
+   "n": 16,
+   "R": {
+    "insns": 272,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 425436,
+    "stack": 4980,
+    "heap": 16336,
+    "heap_budget": 32768,
+    "vm_ops": 16651,
+    "ram": 21316,
+    "gc": {
+     "count": 0,
+     "pct": 0.0,
+     "pause_max": 0,
+     "live": 0,
+     "run_time": 680640,
+     "pause_total": 0,
+     "mark": 0,
+     "forward": 0,
+     "update": 0,
+     "compact": 0
+    },
+    "need": 5520
+   }
+  },
+  {
+   "n": 64,
+   "R": {
+    "insns": 992,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 1783635,
+    "stack": 5000,
+    "heap": 32660,
+    "heap_budget": 32768,
+    "vm_ops": 66383,
+    "ram": 37660,
+    "gc": {
+     "count": 2,
+     "pct": 3.39,
+     "pause_max": 48560,
+     "live": 356,
+     "run_time": 2808880,
+     "pause_total": 95360,
+     "mark": 6640,
+     "forward": 26480,
+     "update": 34800,
+     "compact": 27440
+    },
+    "need": 5520
+   }
+  },
+  {
+   "n": 256,
+   "R": {
+    "insns": 3872,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 7123170,
+    "stack": 5000,
+    "heap": 32672,
+    "heap_budget": 32768,
+    "vm_ops": 265311,
+    "ram": 37672,
+    "gc": {
+     "count": 8,
+     "pct": 3.35,
+     "pause_max": 50640,
+     "live": 356,
+     "run_time": 11220240,
+     "pause_total": 375680,
+     "mark": 27120,
+     "forward": 103440,
+     "update": 137440,
+     "compact": 107680
+    },
+    "need": 5520
+   }
+  },
+  {
+   "n": 1024,
+   "R": {
+    "insns": 15392,
+    "stack": 224,
+    "ram": 232
+   },
+   "E": {
+    "insns": 28481923,
+    "stack": 5000,
+    "heap": 32672,
+    "heap_budget": 32768,
+    "vm_ops": 1061007,
+    "ram": 37672,
+    "gc": {
+     "count": 32,
+     "pct": 3.35,
+     "pause_max": 50640,
+     "live": 356,
+     "run_time": 44870640,
+     "pause_total": 1501120,
+     "mark": 107920,
+     "forward": 414080,
+     "update": 548880,
+     "compact": 430240
+    },
+    "need": 5520
+   }
+  }
+ ]
+}

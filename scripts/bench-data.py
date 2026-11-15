@@ -14,14 +14,18 @@ live after the latest collection. A C case left out
 of the run (it does not fit the RAM budget) is reported with its reason.
 
     scripts/bench-data.py benchmarks.jsonl minheap.jsonl > data/bench.json
+    scripts/bench-data.py benchmarks.jsonl minheap.jsonl --c-arena 36864 > data/bench-vecos.json
 
 With minheap.jsonl as well, each E and C case also gets `need`: the RAM it
 needs in all (smallest heap or arena that passes, plus statics and stack),
 comparable between the two, or `need_fail` with the reason it never fits.
+`--c-arena` picks the CertiRocq arena of the timing rows (default 20 KiB, the
+LIRMM seminar's; 36 KiB is the one size that passes every case C can run).
 E cases also get the VM time split: `run_time` (instructions inside the VM,
 collections included) and the collector's phases, all on the memory run.
 """
 
+import argparse
 import json
 import sys
 
@@ -41,13 +45,13 @@ C_SKIPPED = {
 }
 
 
-def keep(r):
+def keep(r, c_arena):
     if r["board"] != BOARD:
         return False
     if r["variant"] == "E":
         return r["build"].get("cps_optimize") is True
     if r["variant"] == "C":
-        return r["build"]["heap_bytes"] == 20480
+        return r["build"]["heap_bytes"] == c_arena
     return True
 
 
@@ -60,11 +64,11 @@ def minheap(path):
     return latest
 
 
-def main(path, minheap_path=None):
+def main(path, minheap_path=None, c_arena=20480):
     latest = {}
     for line in open(path):
         r = json.loads(line)
-        if keep(r):
+        if keep(r, c_arena):
             latest[(r["workload"], r["variant"], r["profile"], r["n"])] = r
 
     out = {}
@@ -95,8 +99,9 @@ def main(path, minheap_path=None):
                           "update": gc["update"], "compact": gc["compact"]}
         case[v] = cell
 
-    for (w, n), why in C_SKIPPED.items():
-        out[w][str(n)].setdefault("C", {"fail": why})
+    if c_arena == 20480:
+        for (w, n), why in C_SKIPPED.items():
+            out[w][str(n)].setdefault("C", {"fail": why})
 
     if minheap_path:
         for (w, v, n), r in minheap(minheap_path).items():
@@ -116,4 +121,9 @@ def main(path, minheap_path=None):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:3])
+    ap = argparse.ArgumentParser()
+    ap.add_argument("results")
+    ap.add_argument("minheap", nargs="?")
+    ap.add_argument("--c-arena", type=int, default=20480)
+    a = ap.parse_args()
+    main(a.results, a.minheap, a.c_arena)

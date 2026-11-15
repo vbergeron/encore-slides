@@ -35,6 +35,10 @@
 #let no = text(fill: accent, weight: "bold")[✗]
 #let note(body) = text(size: 14pt, fill: muted, body)
 
+// Results snapshot: encore-benchmarks main, 2026-11-04 (CertiRocq timed with
+// a 36 KiB arena, RAM needs from minheap.jsonl).
+#let vb = json("/data/bench-vecos.json")
+
 #let workloads = (
   ([W1], "w1_apdu", [Smart-card command parser]),
   ([W2], "w2_rlp", [Transaction decoder]),
@@ -300,12 +304,14 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
   (deterministic; cycles need real boards)
 - *Memory*: RAM needed in all, statics + stack + the smallest heap or arena
   with which the run still succeeds, found by binary search
+- *CertiRocq* is timed with a 36 KiB arena: the one size at which every case
+  it can run passes; its instruction counts do not depend on the arena size
 
 = Results
 
 == RQ1: Feasibility
 
-#fit-table(workloads)
+#fit-table(workloads, data: vb)
 #v(0.3em)
 #text(size: 15pt)[
   Encore completes *every input size of every workload*, with the same output as Rust.
@@ -317,7 +323,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 
 #text(size: 14pt)[RAM needed in all (KiB): statics + stack + the smallest heap or arena that passes.]
 #v(0.1em)
-#ram-table(workloads)
+#ram-table(workloads, data: vb)
 #v(0.2em)
 #text(size: 14pt)[
   Encore needs less RAM than CertiRocq wherever both run (1.7–7× less), and
@@ -326,7 +332,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 
 == RQ3: Performance — the cost
 
-#slowdown-table(workloads)
+#slowdown-table(workloads, data: vb)
 #v(0.3em)
 #text(size: 15pt)[
   Encore executes 2–10× more instructions than CertiRocq and 10–2,200× more
@@ -338,7 +344,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 
 #text(size: 14pt)[Largest input size. Slowdown vs Rust = bytecode operations per Rust instruction × instructions per operation.]
 #v(0.1em)
-#breakdown-table(workloads)
+#breakdown-table(workloads, data: vb)
 #v(0.2em)
 #text(size: 13pt)[
   *Interpretation* costs a steady 30 or so instructions per bytecode operation: this is

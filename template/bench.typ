@@ -98,7 +98,9 @@
 
 // ---------------------------------------------------------------------------
 // Evaluation tables of the VeCOS deck: one research question each, one value
-// per cell (no ranges), every column labelled with what it measures.
+// per cell (no ranges), every column labelled with what it measures. Each
+// takes `data:`, a snapshot written by scripts/bench-data.py (the VeCOS deck
+// passes data/bench-vecos.json: CertiRocq timed with a 36 KiB arena).
 
 #let _ran(cell) = cell != none and "insns" in cell
 #let _fmt(x) = str(calc.round(x, digits: if x < 10 { 1 } else { 0 }))
@@ -131,12 +133,12 @@
 
 // RQ1: how many of the input sizes each variant completes within 50 KiB,
 // whatever its heap or arena size (minheap search), output checked against Rust.
-#let fit-table(workloads) = _eval-table(
+#let fit-table(workloads, data: bench) = _eval-table(
   (auto, 1fr, auto, auto, auto),
   (([Input sizes completed within 50 KiB], 3),),
   ([Rust], [CertiRocq], [Encore]),
   workloads.map(((id, key, name)) => {
-    let cases = bench.at(key)
+    let cases = data.at(key)
     let n = cases.len()
     let built = cases.any(c => "C" in c)
     let c-ok = cases.filter(c => "need" in c.at("C", default: (:))).len()
@@ -152,7 +154,7 @@
 
 // RQ2: RAM needed in all (statics + smallest heap or arena that passes + stack),
 // at the smallest and the largest input size.
-#let ram-table(workloads) = {
+#let ram-table(workloads, data: bench) = {
   let kib(b) = _fmt(b / 1024)
   let need(c, v) = {
     let cell = c.at(v, default: none)
@@ -166,7 +168,7 @@
     (([Smallest N], 4), ([Largest N], 4)),
     ([N], [Rust], [CertiRocq], [Encore], [N], [Rust], [CertiRocq], [Encore]),
     workloads.map(((id, key, name)) => {
-      let cases = bench.at(key)
+      let cases = data.at(key)
       let lo = cases.first()
       let hi = cases.last()
       (id, name,
@@ -178,8 +180,8 @@
 
 // RQ3: Encore's instructions per run divided by Rust's and CertiRocq's,
 // at the smallest input size and at the largest one the other variant completes
-// (timing runs: CertiRocq with a 20 KiB arena).
-#let slowdown-table(workloads) = {
+// (CertiRocq timing rows at the snapshot's arena size).
+#let slowdown-table(workloads, data: bench) = {
   let x(r) = text(fill: accent, weight: "bold", "×" + _fmt(r))
   let pair(cases, v) = {
     let both = cases.filter(c => _ran(c.at(v, default: none)))
@@ -193,7 +195,7 @@
     (([Encore ÷ Rust (instructions)], 2), ([Encore ÷ CertiRocq (instructions)], 2)),
     ([smallest N], [largest N], [smallest N], [largest common N]),
     workloads.map(((id, key, name)) => {
-      let cases = bench.at(key)
+      let cases = data.at(key)
       (id, name, ..pair(cases, "R"), ..pair(cases, "C"))
     }),
   )
@@ -203,7 +205,7 @@
 // against Rust factors into how many bytecode operations the functional
 // program executes per Rust instruction, times the cost of one operation;
 // within the VM, the share spent in each collector phase.
-#let breakdown-table(workloads) = {
+#let breakdown-table(workloads, data: bench) = {
   let phases = (("mark", luma(90)), ("forward", accent.darken(20%)), ("update", accent), ("compact", accent.lighten(45%)))
   let bar(gc) = {
     let rt = gc.run_time
@@ -216,7 +218,7 @@
     (([Why Encore is slower than Rust], 3), ([Garbage collector, share of VM time], 2), ([GC stop], 1)),
     ([ops / Rust insn], [insns / op], [slowdown], [%], [mark · forward · update · compact], [longest]),
     workloads.map(((id, key, name)) => {
-      let c = bench.at(key).last()
+      let c = data.at(key).last()
       let gc = c.E.gc
       (id, name,
         _fmt(c.E.vm_ops / c.R.insns), _fmt(c.E.insns / c.E.vm_ops),
