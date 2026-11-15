@@ -144,7 +144,7 @@
   stepbox((1, 2), <opt>, (fill: white, stroke: 0.8pt + black), width: 3cm)[CPS optimizer],
 
   // On the device: nested frames, drawn first so the boxes sit on top.
-  frame(<os>, (<host>, <other>, <os-l>), grey),
+  frame(<os>, (<host>, <os-l>), grey),
   frame(<host>, (<vm>, <main>, <build>, <host-l>), red),
   frame(<vm>, (<bc>, <vm-l>), blue),
 
@@ -158,8 +158,7 @@ let mut vm = boot(HEAP())?;
     `main.rs`],
   stepbox((1, 4.95), <build>, red, width: 5.6cm)[runs the Encore compiler \ `build.rs`],
   label((0.5, 5.75), <host-l>)[#text(weight: "bold", fill: black)[Host] (Rust application)],
-  stepbox((2, 4.2), <other>, grey, width: 2.6cm)[Other \ application],
-  label((0.9, 6.75), <os-l>, text(weight: "bold", fill: black)[Microcontroller OS]),
+  label((0.5, 6.75), <os-l>, text(weight: "bold", fill: black)[Microcontroller]),
 
   edge(<rocq>, <scm>, "-|>"),
   edge(<scm>, <cps>, "-|>"),
