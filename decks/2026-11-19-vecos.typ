@@ -272,15 +272,15 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 
 == Compared systems
 
-#simple-table((auto, 1fr, 1fr, 1fr), size: 15pt,
-  [], [*Encore*], [*CertiRocq*], [*Rust*],
-  [Role], [system under study], [closest verified competitor], [performance ceiling, output oracle],
-  [Source], [the proved Rocq code], [the same Rocq code], [hand-written, idiomatic],
-  [Compiled to], [Encore bytecode, interpreted], [C (verified chain), then native code], [native code],
-  [Memory], [fixed heap, garbage collected], [arena, garbage collected; recursion on the C stack], [static buffers only],
-  [Trusted], [extraction, compiler, VM], [C compiler, runtime], [everything: nothing is proved],
-)
 #v(0.3em)
+- *Encore*, the system under study: the proved Rocq code, compiled to Encore
+  bytecode and interpreted; fixed heap, garbage collected
+- *CertiRocq*, the closest verified competitor: the same Rocq code, compiled
+  through a verified chain to C, then to native code; garbage collected arena,
+  recursion on the C stack
+- *Rust*, the performance ceiling and output oracle: hand-written idiomatic
+  code, native; static buffers only, nothing proved
+#v(0.5em)
 #note[Integers: both Rocq variants map Rocq's `nat` to machine integers, the same unproven assumption.]
 
 == Custom dataset: eight representative firmware workloads
