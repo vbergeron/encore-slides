@@ -126,6 +126,39 @@
 
 = Approach
 
+== Maximise the pure core
+
+#align(center, text(size: 22pt)[`step : State × Event → State × list Effect`])
+#v(0.3em)
+- The whole application is one pure function: a state and an event in, the
+  next state and a list of effects out
+- Parsing, policy, state machines, storage layout: all under `step`
+- Costly pure functions (hashes, checksums, signatures) are *axiomatised* and
+  provided by the host, often by a hardware accelerator
+- Proofs are invariants over `step`: what holds before an event holds after it
+
+== What is proved, what is trusted
+
+#grid(
+  columns: (1fr, 1fr),
+  column-gutter: 1cm,
+  [
+    *Proved in Rocq*
+    - the `step` function and its lemmas
+    - grows with the application
+  ],
+  [
+    *Trusted*
+    - Rocq kernel and extraction
+    - the Encore compiler and VM
+    - the Rust compiler
+    - host functions behind the axioms
+    - the driver: events in, effects out
+  ],
+)
+#v(0.5em)
+#text(size: 17pt, fill: muted)[The trusted part changes only when new hardware actions or host functions are added.]
+
 == Overview
 
 // Reference diagram (draw.io), redrawn here: the compilation chain from
@@ -174,41 +207,6 @@ let mut vm = boot(HEAP())?;
   edge(<opt>, <cps>, "-|>", shift: 0.12cm),
   edge(<cps>, <bc>, "-|>"),
 ))
-
-== Maximise the pure core
-
-#align(center, text(size: 22pt)[`step : State × Event → State × list Effect`])
-#v(0.3em)
-- The whole application is one pure function: a state and an event in, the
-  next state and a list of effects out
-- Parsing, policy, state machines, storage layout: all under `step`
-- Costly pure functions (hashes, checksums, signatures) are *axiomatised* and
-  provided by the host, often by a hardware accelerator
-- Proofs are invariants over `step`: what holds before an event holds after it
-
-== What is proved, what is trusted
-
-#grid(
-  columns: (1fr, 1fr),
-  column-gutter: 1cm,
-  [
-    *Proved in Rocq*
-    - the `step` function and its lemmas
-    - grows with the application
-  ],
-  [
-    *Trusted*
-    - Rocq kernel and extraction
-    - the Encore compiler and VM
-    - the Rust compiler
-    - host functions behind the axioms
-    - the driver: events in, effects out
-  ],
-)
-#v(0.5em)
-#text(size: 17pt, fill: muted)[The trusted part changes only when new hardware actions or host functions are added.]
-
-= Encore
 
 == Compiler
 
