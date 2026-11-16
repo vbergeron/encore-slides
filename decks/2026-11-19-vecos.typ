@@ -377,12 +377,10 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 #v(0.1em)
 #breakdown-table(workloads, data: vb)
 #v(0.2em)
-#text(size: 13pt)[
+#text(size: 15pt)[
   *Interpretation* costs a steady 30 or so instructions per bytecode operation: this is
   the main gap with CertiRocq, which runs native code. *Functional code* executes
-  more operations than Rust, most on arithmetic (W8). The *garbage collector* takes
-  0–22% of VM time (bar: 0–25%); while it runs the program is stopped, at most
-  about 300 k instructions, some 5 ms at 60 MHz.
+  more operations than Rust, most on arithmetic (W8).
 ]
 
 = Conclusion

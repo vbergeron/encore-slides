@@ -202,29 +202,15 @@
 
 // RQ3: where Encore's time goes, at the largest input size. The slowdown
 // against Rust factors into how many bytecode operations the functional
-// program executes per Rust instruction, times the cost of one operation;
-// within the VM, the share spent in each collector phase.
-#let breakdown-table(workloads, data: bench) = {
-  let phases = (("mark", luma(90)), ("forward", accent.darken(20%)), ("update", accent), ("compact", accent.lighten(45%)))
-  let bar(gc) = {
-    let rt = gc.run_time
-    let w = 4.2cm
-    align(left, box(width: w, height: 0.42em, fill: luma(225), radius: 1pt, clip: true,
-      stack(dir: ltr, ..phases.map(((k, col)) => box(width: w * 4 * gc.at(k) / rt, height: 100%, fill: col)))))
-  }
-  _eval-table(
-    (auto, 1fr, auto, auto, auto, auto, auto, auto),
-    (([Why Encore is slower than Rust], 3), ([Garbage collector, share of VM time], 2), ([GC stop], 1)),
-    ([ops / Rust insn], [insns / op], [slowdown], [%], [mark · forward · update · compact], [longest]),
-    workloads.map(((id, key, name)) => {
-      let c = data.at(key).last()
-      let gc = c.E.gc
-      (id, name,
-        _fmt(c.E.vm_ops / c.R.insns), _fmt(c.E.insns / c.E.vm_ops),
-        text(fill: accent, weight: "bold", "×" + _fmt(c.E.insns / c.R.insns)),
-        _fmt(100 * gc.pause_total / gc.run_time) + " %", bar(gc),
-        _fmt(gc.pause_max / 1000) + " k")
-    }),
-    size: 13pt,
-  )
-}
+// program executes per Rust instruction, times the cost of one operation.
+#let breakdown-table(workloads, data: bench) = _eval-table(
+  (auto, 1fr, auto, auto, auto),
+  (([Why Encore is slower than Rust], 3),),
+  ([bytecode ops per Rust instruction], [instructions per bytecode op], [slowdown]),
+  workloads.map(((id, key, name)) => {
+    let c = data.at(key).last()
+    (id, name,
+      _fmt(c.E.vm_ops / c.R.insns), _fmt(c.E.insns / c.E.vm_ops),
+      text(fill: accent, weight: "bold", "×" + _fmt(c.E.insns / c.R.insns)))
+  }),
+)
