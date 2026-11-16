@@ -142,11 +142,10 @@
     let n = cases.len()
     let built = cases.any(c => "C" in c)
     let c-ok = cases.filter(c => "need" in c.at("C", default: (:))).len()
-    let fails = cases.filter(c => "need_fail" in c.at("C", default: (:)))
     (
       id, name,
       [#cases.filter(c => _ran(c.R)).len() / #n],
-      if built [#c-ok / #n #if fails.len() > 0 { text(size: 11pt, fill: accent)[ (✗ stack)] }] else { _na[not built] },
+      if built [#c-ok / #n] else { _na[not built] },
       text(fill: accent, weight: "bold")[#cases.filter(c => "need" in c.E).len() / #n],
     )
   }),
