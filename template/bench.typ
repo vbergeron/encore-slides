@@ -202,15 +202,18 @@
 
 // RQ3: where Encore's time goes, at the largest input size. The slowdown
 // against Rust factors into how many bytecode operations the functional
-// program executes per Rust instruction, times the cost of one operation.
+// program executes per Rust instruction, times the cost of one operation;
+// then the share of VM time spent in the garbage collector.
 #let breakdown-table(workloads, data: bench) = _eval-table(
-  (auto, 1fr, auto, auto, auto),
-  (([Why Encore is slower than Rust], 3),),
-  ([bytecode ops per Rust instruction], [instructions per bytecode op], [slowdown]),
+  (auto, 1fr, auto, auto, auto, auto),
+  (([Why Encore is slower than Rust], 3), ([GC overhead], 1)),
+  ([bytecode ops per Rust instruction], [instructions per bytecode op], [slowdown], [share of VM time]),
   workloads.map(((id, key, name)) => {
     let c = data.at(key).last()
+    let gc = c.E.gc
     (id, name,
       _fmt(c.E.vm_ops / c.R.insns), _fmt(c.E.insns / c.E.vm_ops),
-      text(fill: accent, weight: "bold", "×" + _fmt(c.E.insns / c.R.insns)))
+      text(fill: accent, weight: "bold", "×" + _fmt(c.E.insns / c.R.insns)),
+      _fmt(100 * gc.pause_total / gc.run_time) + " %")
   }),
 )
