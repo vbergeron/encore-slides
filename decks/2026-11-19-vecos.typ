@@ -13,6 +13,7 @@
   institution: [VeCOS 2026 — Amsterdam],
   date: datetime(year: 2026, month: 11, day: 19),
   slug: "2026-11-19-vecos",
+  section-header: true,
   links: (
     (url: "https://arxiv.org/pdf/2606.02651", label: "Paper"),
     (url: "https://github.com/vbergeron/encore", label: "encore"),
@@ -34,6 +35,10 @@
 #let yes = text(fill: rgb("#2e7d32"), weight: "bold")[✓]
 #let no = text(fill: accent, weight: "bold")[✗]
 #let note(body) = text(size: 14pt, fill: muted, body)
+#let partial = text(fill: muted, weight: "bold")[–]
+// The slide headers show the section, so a slide that needs its own name
+// states it at the top.
+#let kicker(body) = block(below: 0.6em, text(size: 18pt, weight: "bold", fill: accent, body))
 
 // Results snapshot: encore-benchmarks main, 2026-11-04 (CertiRocq timed with
 // a 36 KiB arena, RAM needs from minheap.jsonl).
@@ -59,7 +64,10 @@
 - Rocq can prove that logic, but *extracted code needs a runtime*
 - The usual answer on a microcontroller: *re-implement the specification by
   hand* in C or Rust, and lose the link to the proof
-- Question: can the extracted program itself run on the chip?
+
+== The question
+
+#hero[Can the extracted program *itself* run on the chip?]
 
 == The target: 50 KB of RAM
 
@@ -93,13 +101,13 @@
     [native port needs assembly patches, linker script, library stubs],
   [*OCaml VM* (OMicroB)], [small bytecode VM], yes, yes, no,
     [AVR and PIC32 only; Cortex-M0 port unmerged],
-  [*CertiRocq* → C], [GC-aware heap, C call stack for recursion], yes, [partly], [largely],
+  [*CertiRocq* → C], [GC-aware heap, C call stack for recursion], yes, partial, partial,
     [runs after patching its runtime; deep recursion overflows the stack],
-  [*Rocq → Scheme*], [a small Scheme runtime], yes, [depends], no,
+  [*Rocq → Scheme*], [a small Scheme runtime], yes, partial, no,
     [needs a runtime that fits: next table],
 )
 #v(0.3em)
-#note[CertiRocq is the closest verified competitor. Scheme extraction is the only path whose runtime we can make fit: Encore is that runtime.]
+#note[#yes yes · #no no · #partial partly. CertiRocq is the closest verified competitor. Scheme extraction is the only path whose runtime we can make fit: Encore is that runtime.]
 
 == Scheme runtimes for the extracted code
 
@@ -317,6 +325,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 
 == RQ1: Feasibility
 
+#kicker[RQ1 · Feasibility]
 #fit-table(workloads, data: vb)
 #v(0.3em)
 #text(size: 15pt)[
@@ -327,6 +336,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 
 == RQ2: Memory
 
+#kicker[RQ2 · Memory]
 #text(size: 14pt)[RAM needed in all (KiB): statics + stack + the smallest heap or arena that passes.]
 #v(0.1em)
 #ram-table(workloads, data: vb)
@@ -338,6 +348,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 
 == RQ3: Performance — the cost
 
+#kicker[RQ3 · Performance: the cost]
 #slowdown-table(workloads, data: vb)
 #v(0.3em)
 #text(size: 15pt)[
@@ -348,6 +359,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 
 == RQ3: Performance — where the time goes
 
+#kicker[RQ3 · Performance: where the time goes]
 #text(size: 14pt)[Largest input size. Slowdown vs Rust = bytecode operations per Rust instruction × instructions per operation.]
 #v(0.1em)
 #breakdown-table(workloads, data: vb)

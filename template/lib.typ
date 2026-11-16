@@ -26,6 +26,9 @@
   date: datetime.today(),
   slug: "",
   links: (),
+  // true: every slide's header shows its section (the `=` heading) instead
+  // of its own `==` title.
+  section-header: false,
   body,
 ) = {
   // Typst bundles no grammar for these; each file lists the tags it answers
@@ -41,6 +44,10 @@
   show: metropolis-theme.with(
     aspect-ratio: "16-9",
     footer: self => self.info.institution,
+    ..if section-header {
+      (header: self => utils.display-current-heading(
+        level: 1, setting: utils.fit-to-width.with(grow: false, 100%)))
+    },
     config-colors(
       primary: rgb("#B5303B"),
       primary-light: rgb("#d4777e"),
