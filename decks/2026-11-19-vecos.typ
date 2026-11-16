@@ -283,6 +283,27 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 #v(0.5em)
 #note[Integers: both Rocq variants map Rocq's `nat` to machine integers, the same unproven assumption.]
 
+== Adapting CertiRocq
+
+#kicker[Adapting CertiRocq to a bare-metal Cortex-M]
+#simple-table((auto, 0.7fr, 1.3fr), size: 13pt,
+  [], [Out of the box], [What we did],
+  [*Integers*], [`nat` stays unary (Peano)],
+    [map `nat` to 31-bit machine integers and `Nat.*` to C functions (`BenchNat.v`); the same assumption as Encore, through an erasure pass we must trust],
+  [*Memory*], [a GC that expects a hosted `malloc`],
+    [bump allocator over a fixed arena; 32-bit ARM settings; nursery size made configurable],
+  [*Heap model*], [one heap per program execution],
+    [a fresh arena for every run, about 2.2k instructions each],
+  [*Recursion*], [direct-style C: recursion uses the C stack],
+    [a stack guard aborts the run cleanly instead of overwriting the arena; `-cps` cannot be combined with the integer mapping in this release],
+  [*Failures*], [the runtime calls `exit()`],
+    [unwind to the Rust driver, so a failed case is recorded and the next one runs],
+  [*Build*], [toolchain needs the Wasm backend],
+    [patch it out to build from source; Docker image, and CI checks the generated C],
+)
+#v(0.2em)
+#note[Arena size: CertiRocq is timed with 36 KiB, the one size that passes every case it can run.]
+
 == Custom dataset: eight representative firmware workloads
 
 #text(size: 15pt)[Each is a `step` function whose bug would be a security hole or a field failure, with one property proved in Rocq, run at 3–4 input sizes N.]
