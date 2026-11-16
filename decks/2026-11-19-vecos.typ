@@ -373,7 +373,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 == RQ3: Performance — where the time goes
 
 #kicker[RQ3 · Performance: where the time goes]
-#text(size: 14pt)[Largest input size. Slowdown vs Rust = bytecode operations per Rust instruction × instructions per operation.]
+#text(size: 14pt)[Largest input size. Total slowdown = work (bytecode operations per Rust instruction) × interpretation (instructions per bytecode operation).]
 #v(0.1em)
 #breakdown-table(workloads, data: vb)
 #v(0.2em)
@@ -394,8 +394,6 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
   depend on recursion depth
 - *RQ3*: the price is time: 2–10× CertiRocq, 10–2,200× hand-written Rust,
   mostly from interpretation
-- *The architecture scales*: the proved `step` grows with the application,
-  the trusted part does not
 
 == Next steps
 

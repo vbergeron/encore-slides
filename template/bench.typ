@@ -206,8 +206,8 @@
 // then the share of VM time spent in the garbage collector.
 #let breakdown-table(workloads, data: bench) = _eval-table(
   (auto, 1fr, auto, auto, auto, auto),
-  (([Why Encore is slower than Rust], 3), ([GC overhead], 1)),
-  ([bytecode ops per Rust instruction], [instructions per bytecode op], [slowdown], [share of VM time]),
+  (([Slowdown vs Rust], 3), ([GC overhead], 1)),
+  ([work (ops / Rust insn)], [interpretation (insns / op)], [total (×)], [% of VM time]),
   workloads.map(((id, key, name)) => {
     let c = data.at(key).last()
     let gc = c.E.gc
