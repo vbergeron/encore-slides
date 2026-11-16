@@ -228,8 +228,8 @@ let mut vm = boot(HEAP())?;
   mark-scale: 80%,
   node((0, 0), name: <a>, stage[Extracted \ Scheme][from Rocq]),
   node((1, 0), name: <b>, stage[Uncurry][one call per \ function, not \ per argument]),
-  node((2, 0), name: <c>, stage[Continuations][every call \ becomes a jump]),
-  node((3, 0), name: <d>, stage[Simplify][inline, fold, \ drop dead code]),
+  node((2, 0), name: <c>, stage[CPS][continuation-passing \ style: every call \ becomes a jump]),
+  node((3, 0), name: <d>, stage[CPS optimizer][inline, fold, \ drop dead code]),
   node((4, 0), name: <e>, stage[Registers][name every \ intermediate value]),
   node((5, 0), name: <f>, fill: accent, stroke: none, text(size: 15pt, fill: white, weight: "bold")[Bytecode]),
   edge(<a>, <b>, "-|>"),
@@ -240,9 +240,9 @@ let mut vm = boot(HEAP())?;
   edge(<e>, <f>, "-|>"),
 ))
 #v(0.6em)
-- *Continuations*: each function receives "what to do next" as an argument
+- *Continuation-passing style (CPS)*: each function receives "what to do next" as an argument
   and never returns, so the program needs *no call stack*
-- Rocq's extracted code is already curried and close to this form: the
+- Rocq's extracted code is already curried and close to CPS: the
   rewrite is cheap and its result is small
 
 == Virtual machine
