@@ -15,7 +15,7 @@ published to GitHub Pages.
 template/lib.typ    the template: theme, page setup, slide + QR functions
 template/bench.typ  benchmark result tables, read from data/bench.json
 template/syntaxes/  highlighting grammars Typst lacks: coq, cue, scheme, fleche, ir
-data/bench.json     numbers extracted from encore-benchmarks' results
+data/bench*.json    numbers extracted from encore-benchmarks' results
 scripts/            bench-data.py, which writes data/bench.json
 decks/               one dated .typ file per talk
 site/index.html      the GitHub Pages site listing every deck
@@ -67,11 +67,17 @@ typst compile --root . decks/2026-09-28-lirmm-seminar.typ out.pdf
 The result slides read `data/bench.json`, extracted from
 [encore-benchmarks](https://github.com/vbergeron/encore-benchmarks)'
 `results/benchmarks.jsonl` (latest row per case, QEMU Cortex-M3, E with the
-CPS optimizer, C with its 20 KiB arena). To refresh it after new runs:
+CPS optimizer, C with its 20 KiB arena) and `results/minheap.jsonl` (the RAM
+each E and C case needs in all, comparable between the two). To refresh it
+after new runs:
 
 ```sh
-mise run bench-data ../encore-benchmarks/results/benchmarks.jsonl
+mise run bench-data ../encore-benchmarks/results
 ```
+
+This also writes `data/bench-vecos.json`, the VeCOS deck's snapshot, where
+CertiRocq is timed with a 36 KiB arena: the one size at which every case it
+can run passes.
 
 ## Publishing
 

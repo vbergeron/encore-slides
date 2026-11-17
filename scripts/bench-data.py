@@ -12,8 +12,20 @@ garbage collector's activity on the memory run: collections, share of VM
 time spent collecting, longest pause since boot (instructions) and bytes
 live after the latest collection. A C case left out
 of the run (it does not fit the RAM budget) is reported with its reason.
+
+    scripts/bench-data.py benchmarks.jsonl minheap.jsonl > data/bench.json
+    scripts/bench-data.py benchmarks.jsonl minheap.jsonl --c-arena 36864 > data/bench-vecos.json
+
+With minheap.jsonl as well, each E and C case also gets `need`: the RAM it
+needs in all (smallest heap or arena that passes, plus statics and stack),
+comparable between the two, or `need_fail` with the reason it never fits.
+`--c-arena` picks the CertiRocq arena of the timing rows (default 20 KiB, the
+LIRMM seminar's; 36 KiB is the one size that passes every case C can run).
+E cases also get the VM time split: `run_time` (instructions inside the VM,
+collections included) and the collector's phases, all on the memory run.
 """
 
+import argparse
 import json
 import sys
 
@@ -33,21 +45,30 @@ C_SKIPPED = {
 }
 
 
-def keep(r):
+def keep(r, c_arena):
     if r["board"] != BOARD:
         return False
     if r["variant"] == "E":
         return r["build"].get("cps_optimize") is True
     if r["variant"] == "C":
-        return r["build"]["heap_bytes"] == 20480
+        return r["build"]["heap_bytes"] == c_arena
     return True
 
 
-def main(path):
+def minheap(path):
     latest = {}
     for line in open(path):
         r = json.loads(line)
-        if keep(r):
+        if r["board"] == BOARD and r["build"].get("cps_optimize") in ("on", True, None):
+            latest[(r["workload"], r["variant"], r["n"])] = r
+    return latest
+
+
+def main(path, minheap_path=None, c_arena=20480):
+    latest = {}
+    for line in open(path):
+        r = json.loads(line)
+        if keep(r, c_arena):
             latest[(r["workload"], r["variant"], r["profile"], r["n"])] = r
 
     out = {}
@@ -72,11 +93,27 @@ def main(path):
             cell["ram"] = mem["heap_peak_bytes"] + r["stack_peak_bytes"]
             gc = mem["gc"]
             cell["gc"] = {"count": gc["count"], "pct": gc["pct"],
-                          "pause_max": gc["pause_max_since_boot"], "live": gc["live_bytes"]}
+                          "pause_max": gc["pause_max_since_boot"], "live": gc["live_bytes"],
+                          "run_time": gc["run_time"], "pause_total": gc["pause_total"],
+                          "mark": gc["mark"], "forward": gc["forward"],
+                          "update": gc["update"], "compact": gc["compact"]}
         case[v] = cell
 
-    for (w, n), why in C_SKIPPED.items():
-        out[w][str(n)].setdefault("C", {"fail": why})
+    if c_arena == 20480:
+        for (w, n), why in C_SKIPPED.items():
+            out[w][str(n)].setdefault("C", {"fail": why})
+
+    if minheap_path:
+        for (w, v, n), r in minheap(minheap_path).items():
+            case = out.get(w, {}).get(str(n))
+            if case is None or v not in ("E", "C"):
+                continue
+            cell = case.setdefault(v, {})
+            if r["ok"]:
+                cell["need"] = r["ram_total_bytes"]
+            else:
+                reason = r.get("reason", "")
+                cell["need_fail"] = "stack" if "stack" in reason else "arena"
 
     json.dump({w: list(cases.values()) for w, cases in sorted(out.items())},
               sys.stdout, indent=1)
@@ -84,4 +121,9 @@ def main(path):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    ap = argparse.ArgumentParser()
+    ap.add_argument("results")
+    ap.add_argument("minheap", nargs="?")
+    ap.add_argument("--c-arena", type=int, default=20480)
+    a = ap.parse_args()
+    main(a.results, a.minheap, a.c_arena)

@@ -3,7 +3,7 @@ typst = "latest"
 go = "1.25"
 
 [vars]
-deck = "decks/2026-09-28-lirmm-seminar.typ"
+deck = "decks/2026-11-19-vecos.typ"
 
 [tasks.build]
 description = "Compile a deck to <stem>.pdf"
@@ -35,5 +35,8 @@ install -m 644 "$(go env GOROOT)/lib/wasm/wasm_exec.js" ../site/play/
 
 [tasks.bench-data]
 description = "Regenerate data/bench.json from encore-benchmarks results"
-usage = 'arg "[results]" default="../encore-benchmarks/results/benchmarks.jsonl"'
-run = 'python3 scripts/bench-data.py "${usage_results}" > data/bench.json'
+usage = 'arg "[results]" default="../encore-benchmarks/results"'
+run = '''
+python3 scripts/bench-data.py "${usage_results}/benchmarks.jsonl" "${usage_results}/minheap.jsonl" > data/bench.json
+python3 scripts/bench-data.py "${usage_results}/benchmarks.jsonl" "${usage_results}/minheap.jsonl" --c-arena 36864 > data/bench-vecos.json
+'''
