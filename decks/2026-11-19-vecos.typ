@@ -21,6 +21,7 @@
   date: datetime(year: 2026, month: 11, day: 19),
   slug: "2026-11-19-vecos",
   section-header: true,
+  content-align: top,
   links: (
     (url: "https://arxiv.org/pdf/2606.02651", label: "Paper"),
     (url: "https://github.com/vbergeron/encore", label: "encore"),
@@ -66,6 +67,8 @@
 
 == Proved logic, unproved runtime
 
+#kicker[Proved logic, unproved runtime]
+
 - Secure elements and hardware wallets run small, critical logic: command
   parsing, PIN counters, signing policy, firmware updates
 - Rocq can prove that logic, but *extracted code needs a runtime*
@@ -74,9 +77,13 @@
 
 == The question
 
+#kicker[The question]
+
 #hero[Can the extracted program *itself* run on the chip?]
 
 == The target: 50 KiB of RAM
+
+#kicker[The target: 50 KiB of RAM]
 
 #grid(
   columns: (1fr, 1fr),
@@ -100,6 +107,8 @@
 
 == Running extracted code: the options
 
+#kicker[Running extracted code: the options]
+
 #simple-table((auto, 1fr, auto, auto, auto, 1fr), size: 13pt,
   [Path], [Runtime it needs], [No OS], [Fits\ 50 KiB], [Verified\ compiler], [Status on a Cortex-M],
   [*Lean 4* → C], [C++ library, reference counting, threads, hosted IO], no, no, no,
@@ -118,6 +127,8 @@
 
 == Scheme runtimes for the extracted code
 
+#kicker[Scheme runtimes for the extracted code]
+
 #simple-table((auto, 1fr, 1fr, 1fr), size: 15pt,
   [], [Chibi Scheme], [Ribbit], [*Encore*],
   [Model], [interpreter, in C], [compact VM, in C], [compiler + VM, in Rust],
@@ -135,6 +146,8 @@
 
 == Maximise the pure core
 
+#kicker[Maximise the pure core]
+
 #align(center, text(size: 22pt)[`step : State × Event → State × list Effect`])
 #v(0.3em)
 - The whole application is one pure function: a state and an event in, the
@@ -145,6 +158,8 @@
 - Proofs are invariants over `step`: what holds before an event holds after it
 
 == What is proved, what is trusted
+
+#kicker[What is proved, what is trusted]
 
 #grid(
   columns: (1fr, 1fr),
@@ -167,6 +182,8 @@
 #text(size: 17pt, fill: muted)[The trusted part changes only when new hardware actions or host functions are added.]
 
 == Overview
+
+#kicker[Overview: from Rocq to the microcontroller]
 
 // Reference diagram (draw.io), redrawn here: the compilation chain from
 // Rocq down to bytecode, and how it sits on the device.
@@ -388,6 +405,8 @@ vm.register_extern(0, input_byte);
 
 == Research questions
 
+#kicker[Research questions]
+
 #v(0.5em)
 #{
   set text(size: 19pt)
@@ -402,6 +421,8 @@ vm.register_extern(0, input_byte);
 }
 
 == Compared systems
+
+#kicker[Compared systems]
 
 #v(0.3em)
 - *Encore*, the system under study: the proved Rocq code, compiled to Encore
@@ -429,6 +450,8 @@ vm.register_extern(0, input_byte);
 
 == Custom dataset: eight representative firmware workloads
 
+#kicker[Custom dataset: eight representative firmware workloads]
+
 #text(size: 15pt)[Each is a `step` function whose bug would be a security hole or a field failure, with one property proved in Rocq, run at 3–4 input sizes N.]
 #v(0.2em)
 #{
@@ -452,6 +475,8 @@ vm.register_extern(0, input_byte);
 }
 
 == Methodology
+
+#kicker[Methodology]
 
 - *Platform*: emulated ARM Cortex-M3 (QEMU), RAM budget fixed at *50 KiB*
 - *Same harness*: one Rust driver feeds the same inputs to all three variants
@@ -517,6 +542,8 @@ vm.register_extern(0, input_byte);
 
 == Takeaways
 
+#kicker[Takeaways]
+
 - *RQ1*: Rocq-extracted code runs unmodified within 50 KiB on all eight
   workloads; CertiRocq overflows its stack on the largest inputs
 - *RQ2*: Encore needs 1.7–7× less RAM than CertiRocq, and its needs do not
@@ -525,6 +552,8 @@ vm.register_extern(0, input_byte);
   from interpretation and from the extra operations of functional code
 
 == Next steps
+
+#kicker[Next steps]
 
 - *Prove the optimizer*: show each simplification preserves the program's
   meaning, CompCert style
