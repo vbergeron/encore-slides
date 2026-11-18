@@ -16,7 +16,7 @@
     column-gutter: 1.5cm,
     row-gutter: 0.35em,
     [*Valentin Bergeron*], [*Karolina Gorna*],
-    text(size: 0.85em)[Independent researcher], text(size: 0.85em)[Ledger-Donjon & Telecom ParisTech],
+    text(size: 0.85em)[Independent researcher], text(size: 0.85em)[Télécom Paris and Ledger Donjon, Paris, France],
   ),
   date: datetime(year: 2026, month: 11, day: 19),
   slug: "2026-11-19-vecos",
