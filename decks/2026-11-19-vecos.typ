@@ -180,12 +180,11 @@
   mark-scale: 80%,
 
   // At build time, on the developer's machine.
-  frame(<build-time>, (<rocq>, <cps>, <opt>, <build>, <bt-l>), (fill: white, stroke: (paint: luma(110), thickness: 0.8pt, dash: "dashed"))),
+  frame(<build-time>, (<rocq>, <comp>, <build>, <bt-l>), (fill: white, stroke: (paint: luma(110), thickness: 0.8pt, dash: "dashed"))),
   stepbox((0, 0), <rocq>, green)[Rocq \ (Gallina code)],
   stepbox((0, 1), <scm>, green)[Scheme code],
-  stepbox((0, 2), <cps>, green)[Continuation-passing style (CPS)],
-  stepbox((1, 2), <opt>, (fill: white, stroke: 0.8pt + black), width: 3cm)[CPS optimizer],
-  stepbox((1, 0.5), <build>, red, width: 4.6cm)[`build.rs` runs the \ Encore compiler],
+  stepbox((0, 2), <comp>, (fill: white, stroke: 0.8pt + black))[#text(weight: "bold", fill: black)[Encore compiler]],
+  stepbox((1, 2), <build>, red, width: 2.6cm)[`build.rs`],
   label((1, -0.75), <bt-l>, text(weight: "bold", fill: black)[At build time]),
 
   // On the device: nested frames, drawn first so the boxes sit on top.
@@ -205,11 +204,9 @@ let mut vm = boot(HEAP())?;
   label((0.5, 6.3), <os-l>, text(weight: "bold", fill: black)[Microcontroller]),
 
   edge(<rocq>, <scm>, "-|>"),
-  edge(<scm>, <cps>, "-|>"),
-  edge(<cps>, <opt>, "-|>", shift: 0.12cm),
-  edge(<opt>, <cps>, "-|>", shift: 0.12cm),
-  edge(<build>, <scm>, "-|>", stroke: (dash: "dashed")),
-  edge(<cps>, <bc>, "-|>"),
+  edge(<scm>, <comp>, "-|>"),
+  edge(<build>, <comp>, "-|>", stroke: (dash: "dashed"), label: text(size: 11pt)[runs], label-side: right),
+  edge(<comp>, <bc>, "-|>"),
 ))
 
 == Compiler
