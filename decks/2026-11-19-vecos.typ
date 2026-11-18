@@ -11,6 +11,13 @@
   title: [From Rocq to Metal],
   subtitle: [A pipeline for formally verified microcontroller firmware],
   institution: [VeCOS 2026 — Amsterdam],
+  author: grid(
+    columns: 2,
+    column-gutter: 1.5cm,
+    row-gutter: 0.35em,
+    [*Valentin Bergeron*], [*Karolina Gorna*],
+    text(size: 0.85em)[Independent researcher, Montpellier, France], text(size: 0.85em)[Télécom Paris and Ledger Donjon, Paris, France],
+  ),
   date: datetime(year: 2026, month: 11, day: 19),
   slug: "2026-11-19-vecos",
   section-header: true,
@@ -41,7 +48,8 @@
 #let kicker(body) = block(below: 0.6em, text(size: 18pt, weight: "bold", fill: accent, body))
 
 // Results snapshot: encore-benchmarks main, 2026-11-04 (CertiRocq timed with
-// a 36 KiB arena, RAM needs from minheap.jsonl).
+// a 36 KiB arena, RAM needs from minheap.jsonl), with W7's Rust variant
+// re-measured as a red-black tree (encore-benchmarks#20, 2026-11-18).
 #let vb = json("/data/bench-vecos.json")
 
 #let workloads = (
@@ -69,7 +77,7 @@
 
 #hero[Can the extracted program *itself* run on the chip?]
 
-== The target: 50 KB of RAM
+== The target: 50 KiB of RAM
 
 #grid(
   columns: (1fr, 1fr),
@@ -77,8 +85,8 @@
   simple-table((auto, 1fr),
     [], [ST33J2M0 secure element],
     [CPU], [ARM Cortex-M, Thumb-2],
-    [Flash], [2 MB],
-    [RAM], [*50 KB*],
+    [Flash], [2 MiB],
+    [RAM], [*50 KiB*],
     [Clock], [60 MHz],
     [Cache], [none],
   ),
@@ -94,9 +102,9 @@
 == Running extracted code: the options
 
 #simple-table((auto, 1fr, auto, auto, auto, 1fr), size: 13pt,
-  [Path], [Runtime it needs], [No OS], [Fits\ 50 KB], [Verified\ compiler], [Status on a Cortex-M],
+  [Path], [Runtime it needs], [No OS], [Fits\ 50 KiB], [Verified\ compiler], [Status on a Cortex-M],
   [*Lean 4* → C], [C++ library, reference counting, threads, hosted IO], no, no, no,
-    [ESP32 port needs a patched C++ library and 384 KB of RAM],
+    [ESP32 port needs a patched C++ library and 384 KiB of RAM],
   [*Rocq → OCaml*], [generational GC, C library and maths library], no, no, no,
     [native port needs assembly patches, linker script, library stubs],
   [*OCaml VM* (OMicroB)], [small bytecode VM], yes, yes, no,
@@ -116,8 +124,8 @@
   [Model], [interpreter, in C], [compact VM, in C], [compiler + VM, in Rust],
   [Program on the device], [source text, re-read at every boot], [bytecode], [bytecode],
   [Runs Rocq-extracted Scheme], [#yes], [#no lacks quasiquote], [#yes],
-  [Fits 256 KB of flash], [#no], [#yes], [#yes],
-  [Fits 50 KB of RAM], [#no], [#yes], [#yes],
+  [Fits 256 KiB of flash], [#no], [#yes], [#yes],
+  [Fits 50 KiB of RAM], [#no], [#yes], [#yes],
   [Memory model], [C stack + GC], [static heap + GC], [no call stack, fixed heap + GC],
   [Ran bare-metal in our tests], [#no too large], [hand-written code only], [#yes all 8 workloads],
 )
@@ -203,7 +211,7 @@ let mut vm = boot(HEAP())?;
   label((0.5, 5.25), <host-l>)[#text(weight: "bold", fill: black)[Host] (Rust application)],
   label((0.5, 6.3), <os-l>, text(weight: "bold", fill: black)[Microcontroller]),
 
-  edge(<rocq>, <scm>, "-|>"),
+  edge(<rocq>, <scm>, "-|>", label: text(size: 11pt)[extraction], label-side: left),
   edge(<scm>, <comp>, "-|>"),
   edge(<build>, <comp>, "-|>", stroke: (dash: "dashed"), label: text(size: 11pt)[runs], label-side: right),
   edge(<comp>, <bc>, "-|>"),
@@ -220,9 +228,9 @@ let mut vm = boot(HEAP())?;
     column-gutter: 0.7cm,
     row-gutter: 0.9cm,
     text(weight: "bold", fill: accent)[1], [*No call stack*: the program is compiled to CPS, every call is a jump],
-    text(weight: "bold", fill: accent)[2], [*One word per value*: everything fits in 32 bits],
+    text(weight: "bold", fill: accent)[2], [*One word per value*: every value is a single 32-bit word],
     text(weight: "bold", fill: accent)[3], [*Fixed heap, its own GC*: no `malloc`, no OS],
-    text(weight: "bold", fill: accent)[4], [*Typed host interface*: Rust calls `step` and provides the axioms],
+    text(weight: "bold", fill: accent)[4], [*Typed host interface*: Rust calls the program and provides the axioms],
   )
 }
 
@@ -342,35 +350,38 @@ let mut vm = boot(HEAP())?;
   text(size: 12pt, body)
 })
 #grid(
-  columns: (1.15fr, 1fr),
+  columns: (1fr, 1.1fr),
   column-gutter: 0.7cm,
   align: top,
-  code-panel([Rust host calls the proved `step`])[
+  code-panel([Rust host calls the proved program (W1)])[
 ```rust
-#[derive(ValueEncode)]          // Rust -> VM
-enum Event { #[ctor(ctors::APDU)] Apdu(VmBytes) }
+encore_program!(env!("OUT_DIR"));
+encore_heap!(HEAP, config::HEAP_BYTES);
 
-#[derive(ValueDecode)]          // VM -> Rust
-struct StepResult { state: State, effects: VmList<Effect> }
-
-let r: StepResult =
-    vm.call_global(funcs::STEP, (state, event))?;
+fn run(vm: &mut Vm, n: u32)
+    -> Result<VmList<i32>, ExternError> {
+    vm.call_global(funcs::RUN, (n as i32,))
+}
 ```
   ],
-  code-panel([Axioms become host functions])[
-```coq
-Parameter sha256 : bytes -> bytes.
-Extract Constant sha256 =>
-  "(extern (slot 3) b)".
+  code-panel([A Rocq parameter becomes a host function])[
+```scheme
+;; extracted Scheme, from ExtrEncoreInput
+(define input_byte (extern (slot 0) i))
 ```
 ```rust
-vm.register_extern(3, extern_fn!(sha256));
+fn input_byte(vm: &mut Vm, arg: Value)
+    -> Result<Value, ExternError> {
+    let i = vm.ctor_field(arg, 0).int_value()?;
+    /* byte i of the current command */
+}
+vm.register_extern(0, input_byte);
 ```
   ],
 )
 #v(0.4em)
 #text(size: 16pt)[
-  Constructor tags and global addresses are generated with the bytecode: a type
+  `funcs::RUN` and the constructor tags are generated with the bytecode: a type
   mismatch is an `Err`, not a crash, and host and program cannot drift apart.
 ]
 
@@ -385,7 +396,7 @@ vm.register_extern(3, extern_fn!(sha256));
     columns: (auto, 1fr),
     column-gutter: 0.8cm,
     row-gutter: 1cm,
-    text(weight: "bold", fill: accent)[RQ1], [*Feasibility* — Can Rocq-extracted code run unmodified within the 50 KB of a secure element, and produce correct results?],
+    text(weight: "bold", fill: accent)[RQ1], [*Feasibility* — Can Rocq-extracted code run unmodified within the 50 KiB of a secure element, and produce correct results?],
     text(weight: "bold", fill: accent)[RQ2], [*Memory* — How much RAM does each approach need, and how does it grow with the input size?],
     text(weight: "bold", fill: accent)[RQ3], [*Performance* — How much slower is Encore than compiled code, and where does the time go?],
   )
@@ -410,14 +421,12 @@ vm.register_extern(3, extern_fn!(sha256));
 #simple-table((auto, 0.7fr, 1.3fr), size: 16pt,
   [], [Out of the box], [What we did],
   [*Integers*], [`nat` stays unary (Peano)],
-    [map `nat` to 31-bit machine integers and `Nat.*` to C functions (`BenchNat.v`); the same assumption as Encore, through an erasure pass we must trust],
+    [map `nat` to 31-bit machine integers and `Nat.*` to C functions (`BenchNat.v`), through an erasure pass we must trust],
   [*Memory*], [a GC that expects a hosted `malloc`],
     [bump allocator over a fixed arena; 32-bit ARM settings; nursery size made configurable],
   [*Recursion*], [direct-style C: recursion uses the C stack],
     [a stack guard aborts the run cleanly instead of overwriting the arena; `-cps` cannot be combined with the integer mapping in this release],
 )
-#v(0.2em)
-#note[Arena size: CertiRocq is timed with 36 KiB, the one size that passes every case it can run.]
 
 == Custom dataset: eight representative firmware workloads
 
@@ -477,7 +486,7 @@ vm.register_extern(3, extern_fn!(sha256));
 #v(0.2em)
 #text(size: 14pt)[
   Encore needs less RAM than CertiRocq wherever both run (1.7–7× less), and
-  stays within 38 KiB at the largest sizes. Rust needs almost none: its buffers are static.
+  stays within 38 KiB at the largest sizes. Rust needs at most 7 KiB: its buffers are static.
 ]
 
 == RQ3: Performance — the cost
@@ -486,7 +495,7 @@ vm.register_extern(3, extern_fn!(sha256));
 #slowdown-table(workloads, data: vb)
 #v(0.3em)
 #text(size: 15pt)[
-  Encore executes 2–10× more instructions than CertiRocq and 10–2,200× more
+  Encore executes 2–10× more instructions than CertiRocq and 60–2,200× more
   than hand-written Rust. The worst case is pure arithmetic (W8), where Rust does
   one table lookup per byte.
 ]
@@ -499,9 +508,9 @@ vm.register_extern(3, extern_fn!(sha256));
 #breakdown-table(workloads, data: vb)
 #v(0.2em)
 #text(size: 15pt)[
-  *Interpretation* costs a steady 30 or so instructions per bytecode operation: this is
-  the main gap with CertiRocq, which runs native code. *Functional code* executes
-  more operations than Rust, most on arithmetic (W8). The *garbage collector*
+  *Interpretation* costs a steady 30 or so instructions per bytecode operation.
+  *Functional code* executes more operations than Rust, up to 60–70 per Rust
+  instruction (W1, W8): both factors weigh on the largest slowdowns. The *garbage collector*
   takes at most 22% of VM time.
 ]
 
@@ -513,8 +522,8 @@ vm.register_extern(3, extern_fn!(sha256));
   workloads; CertiRocq overflows its stack on the largest inputs
 - *RQ2*: Encore needs 1.7–7× less RAM than CertiRocq, and its needs do not
   depend on recursion depth
-- *RQ3*: the price is time: 2–10× CertiRocq, 10–2,200× hand-written Rust,
-  mostly from interpretation
+- *RQ3*: the price is time: 2–10× CertiRocq, 60–2,200× hand-written Rust,
+  from interpretation and from the extra operations of functional code
 
 == Next steps
 

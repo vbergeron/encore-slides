@@ -23,6 +23,7 @@
   title: [],
   subtitle: [],
   institution: [Encore],
+  author: none,
   date: datetime.today(),
   slug: "",
   links: (),
@@ -55,6 +56,7 @@
     config-info(
       title: title,
       subtitle: subtitle,
+      author: author,
       date: date,
       institution: institution,
     ),
