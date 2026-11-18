@@ -282,7 +282,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 - *Rust*, the performance ceiling and output oracle: hand-written idiomatic
   code, native; static buffers only, nothing proved
 #v(0.5em)
-#note[Integers: both Rocq variants map Rocq's `nat` to machine integers, the same unproven assumption.]
+#note[Integers: both Rocq variants map Rocq's `nat` to machine integers.]
 
 == Adapting CertiRocq
 
