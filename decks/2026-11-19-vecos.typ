@@ -175,37 +175,38 @@
   fill: style.fill, stroke: style.stroke, corner-radius: 6pt, inset: 8pt)
 
 #align(center + horizon, diagram(
-  spacing: (0.6cm, 0.5cm),
+  spacing: (0.6cm, 0.45cm),
   edge-stroke: 0.9pt + black,
   mark-scale: 80%,
 
+  // At build time, on the developer's machine.
+  frame(<build-time>, (<rocq>, <comp>, <build>, <bt-l>), (fill: white, stroke: (paint: luma(110), thickness: 0.8pt, dash: "dashed"))),
   stepbox((0, 0), <rocq>, green)[Rocq \ (Gallina code)],
   stepbox((0, 1), <scm>, green)[Scheme code],
-  stepbox((0, 2), <cps>, green)[Continuation-passing style (CPS)],
-  stepbox((1, 2), <opt>, (fill: white, stroke: 0.8pt + black), width: 3cm)[CPS optimizer],
+  stepbox((0, 2), <comp>, (fill: white, stroke: 0.8pt + black))[#text(weight: "bold", fill: black)[Encore compiler]],
+  stepbox((1, 2), <build>, red, width: 2.6cm)[`build.rs`],
+  label((1, -0.75), <bt-l>, text(weight: "bold", fill: black)[At build time]),
 
   // On the device: nested frames, drawn first so the boxes sit on top.
   frame(<os>, (<host>, <os-l>), grey),
-  frame(<host>, (<vm>, <main>, <build>, <host-l>), red),
+  frame(<host>, (<vm>, <main>, <host-l>), red),
   frame(<vm>, (<bc>, <vm-l>), blue),
 
-  stepbox((0, 3.6), <bc>, green, width: 4.2cm)[Bytecode],
-  label((0, 4.35), <vm-l>, align(center)[#text(weight: "bold", fill: black)[Encore VM] \ (a library of the Rust application)]),
-  stepbox((1, 3.7), <main>, red, width: 5.6cm)[
+  stepbox((0, 3.7), <bc>, green, width: 4.2cm)[Bytecode],
+  label((0, 4.45), <vm-l>, align(center)[#text(weight: "bold", fill: black)[Encore VM] \ (a library of the Rust application)]),
+  stepbox((1, 4.05), <main>, red, width: 5.6cm)[
     #box(fill: luma(246), inset: 5pt, text(size: 10pt)[```rust
 encore_heap!(HEAP, 40_000);
 let mut vm = boot(HEAP())?;
 ```]) \
     `main.rs`],
-  stepbox((1, 4.95), <build>, red, width: 5.6cm)[runs the Encore compiler \ `build.rs`],
-  label((0.5, 5.75), <host-l>)[#text(weight: "bold", fill: black)[Host] (Rust application)],
-  label((0.5, 6.75), <os-l>, text(weight: "bold", fill: black)[Microcontroller]),
+  label((0.5, 5.25), <host-l>)[#text(weight: "bold", fill: black)[Host] (Rust application)],
+  label((0.5, 6.3), <os-l>, text(weight: "bold", fill: black)[Microcontroller]),
 
   edge(<rocq>, <scm>, "-|>"),
-  edge(<scm>, <cps>, "-|>"),
-  edge(<cps>, <opt>, "-|>", shift: 0.12cm),
-  edge(<opt>, <cps>, "-|>", shift: 0.12cm),
-  edge(<cps>, <bc>, "-|>"),
+  edge(<scm>, <comp>, "-|>"),
+  edge(<build>, <comp>, "-|>", stroke: (dash: "dashed"), label: text(size: 11pt)[runs], label-side: right),
+  edge(<comp>, <bc>, "-|>"),
 ))
 
 == Compiler
@@ -233,7 +234,7 @@ let mut vm = boot(HEAP())?;
   edge(<a>, <b>, "-|>"),
   edge(<b>, <c>, "-|>"),
   edge(<c>, <d>, "-|>"),
-  edge(<d>, <c>, "-|>", bend: 40deg, label: text(size: 11pt)[until nothing changes], label-side: left),
+  edge(<d>, <d>, "-|>", bend: -130deg, loop-angle: -90deg),
   edge(<d>, <e>, "-|>"),
   edge(<e>, <f>, "-|>"),
 ))
@@ -281,7 +282,7 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 - *Rust*, the performance ceiling and output oracle: hand-written idiomatic
   code, native; static buffers only, nothing proved
 #v(0.5em)
-#note[Integers: both Rocq variants map Rocq's `nat` to machine integers, the same unproven assumption.]
+#note[Integers: both Rocq variants map Rocq's `nat` to machine integers.]
 
 == Adapting CertiRocq
 
