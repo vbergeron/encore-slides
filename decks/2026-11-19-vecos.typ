@@ -209,8 +209,26 @@ let mut vm = boot(HEAP())?;
   edge(<comp>, <bc>, "-|>"),
 ))
 
+== Virtual machine
+
+#kicker[Encore VM: four design choices]
+#v(0.4em)
+#{
+  set text(size: 20pt)
+  grid(
+    columns: (auto, 1fr),
+    column-gutter: 0.7cm,
+    row-gutter: 0.9cm,
+    text(weight: "bold", fill: accent)[1], [*No call stack*: the program is compiled to CPS, every call is a jump],
+    text(weight: "bold", fill: accent)[2], [*One word per value*: everything fits in 32 bits],
+    text(weight: "bold", fill: accent)[3], [*Fixed heap, its own GC*: no `malloc`, no OS],
+    text(weight: "bold", fill: accent)[4], [*Typed host interface*: Rust calls `step` and provides the axioms],
+  )
+}
+
 == Compiler
 
+#kicker[1 · No call stack: compiling to CPS]
 #let stage(body, sub) = align(center, {
   text(size: 15pt, weight: "bold", body)
   linebreak()
@@ -244,19 +262,9 @@ let mut vm = boot(HEAP())?;
 - Rocq's extracted code is already curried and close to CPS: the
   rewrite is cheap and its result is small
 
-== Virtual machine
-
-A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
-
-- No call stack: memory use is bounded by the heap, *not by recursion depth*
-- 256 registers; values packed in 32 bits: integers, closures, constructors, bytes
-- Garbage collector finds live data from the registers alone, and runs only when the heap is full
-- The Rust driver calls `step` with typed values and receives the effects;
-  axiomatised functions are host functions the program calls
-
 == Value representation
 
-#kicker[Value representation: one 32-bit word]
+#kicker[2 · One word per value]
 // A 32-bit word as a strip of fields: (body, bits, fill).
 #let vr-w = 0.62cm
 #let vr-heap = rgb("#fde6d2")
@@ -297,6 +305,74 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
   [Closure header], vr-bits(([code address], 16, vr-code), ([`env_len`], 8, vr-num), vr-tag-f("02")),
   [Bytes header], vr-bits(([byte length, 24 bits], 24, vr-num), vr-tag-f("07")),
 )))
+
+== Garbage collector
+
+#kicker[3 · Fixed heap, its own garbage collector]
+#let cell-strip(..cells) = grid(
+  columns: cells.pos().map(c => c.at(1)),
+  stroke: 0.8pt + black,
+  inset: (x: 6pt, y: 9pt),
+  align: center + horizon,
+  ..cells.pos().map(c => grid.cell(fill: c.at(2, default: none), text(size: 15pt, c.at(0)))),
+)
+#v(0.3em)
+#align(center)[
+  #text(size: 14pt, fill: muted)[One arena handed over by the host (`encore_heap!(HEAP, 40_000)`)]
+  #v(-0.3em)
+  #cell-strip(
+    ([heap, allocated upwards #h(1fr) →], 10cm, rgb("#fde6d2")),
+    ([free], 5cm),
+    ([globals], 3cm, luma(224)),
+  )
+]
+#v(0.5em)
+- *Bump allocation*: allocating is moving a pointer
+- *Collects only when the heap is full*, in place: mark, compute new addresses,
+  update pointers, slide objects down
+- *Roots are the registers and globals*: with no call stack, there is no stack to scan
+- Memory use is bounded by the arena, whatever the recursion depth
+
+== Host interface
+
+#kicker[4 · Typed host interface]
+#let code-panel(caption, body) = block(width: 100%, fill: luma(244), inset: 10pt, radius: 3pt, {
+  text(size: 12pt, fill: muted, caption)
+  v(-0.2em)
+  text(size: 12pt, body)
+})
+#grid(
+  columns: (1.15fr, 1fr),
+  column-gutter: 0.7cm,
+  align: top,
+  code-panel([Rust host calls the proved `step`])[
+```rust
+#[derive(ValueEncode)]          // Rust -> VM
+enum Event { #[ctor(ctors::APDU)] Apdu(VmBytes) }
+
+#[derive(ValueDecode)]          // VM -> Rust
+struct StepResult { state: State, effects: VmList<Effect> }
+
+let r: StepResult =
+    vm.call_global(funcs::STEP, (state, event))?;
+```
+  ],
+  code-panel([Axioms become host functions])[
+```coq
+Parameter sha256 : bytes -> bytes.
+Extract Constant sha256 =>
+  "(extern (slot 3) b)".
+```
+```rust
+vm.register_extern(3, extern_fn!(sha256));
+```
+  ],
+)
+#v(0.4em)
+#text(size: 16pt)[
+  Constructor tags and global addresses are generated with the bytecode: a type
+  mismatch is an `Err`, not a crash, and host and program cannot drift apart.
+]
 
 = Experimental setup
 
