@@ -254,6 +254,50 @@ A fixed memory area and nothing else: `no_std` Rust, its own garbage collector.
 - The Rust driver calls `step` with typed values and receives the effects;
   axiomatised functions are host functions the program calls
 
+== Value representation
+
+#kicker[Value representation: one 32-bit word]
+// A 32-bit word as a strip of fields: (body, bits, fill).
+#let vr-w = 0.62cm
+#let vr-heap = rgb("#fde6d2")
+#let vr-code = rgb("#dfe0fb")
+#let vr-num = rgb("#fdf8d0")
+#let vr-tag = luma(224)
+#let vr-bits(..fields) = grid(
+  columns: fields.pos().map(f => f.at(1) * vr-w),
+  stroke: 0.8pt + black,
+  inset: (x: 3pt, y: 6pt),
+  align: center + horizon,
+  ..fields.pos().map(f => grid.cell(fill: f.at(2, default: white), text(size: 15pt, f.at(0)))),
+)
+#let vr-tag-f(n) = ([#raw(n)], 8, vr-tag)
+#let vr-unused = ([–], 8)
+#let vr-group(body) = grid.cell(colspan: 2, align: left, inset: (top: 4pt, bottom: 0pt),
+  text(size: 16pt, weight: "bold", fill: black, body))
+
+#align(center, text(size: 16pt, grid(
+  columns: (auto, 32 * vr-w),
+  column-gutter: 0.5cm,
+  row-gutter: 4pt,
+  align: (right + horizon, center + horizon),
+  [], grid(
+    columns: (8 * vr-w,) * 4 + (0pt,),
+    align: left,
+    ..(31, 24, 16, 8).map(i => text(size: 12pt, fill: muted, str(i))),
+    place(right, dx: 0pt, text(size: 12pt, fill: muted, "0")),
+  ),
+  vr-group[Values (registers, globals, fields)],
+  [Integer], vr-bits(([signed integer, 24 bits], 24, vr-num), vr-tag-f("04")),
+  [Function], vr-bits(([code address], 16, vr-code), vr-unused, vr-tag-f("05")),
+  [Closure], vr-bits(([heap address], 16, vr-heap), vr-unused, vr-tag-f("00")),
+  [Constructor], vr-bits(([heap address or `NULL`], 16, vr-heap), ([tag], 8), vr-tag-f("01")),
+  [Bytes], vr-bits(([heap address], 16, vr-heap), vr-unused, vr-tag-f("06")),
+  vr-group[Headers (first words of a heap object)],
+  [GC header], vr-bits(([forwarding address], 16, vr-heap), ([mark, size], 8, vr-num), vr-tag-f("03")),
+  [Closure header], vr-bits(([code address], 16, vr-code), ([`env_len`], 8, vr-num), vr-tag-f("02")),
+  [Bytes header], vr-bits(([byte length, 24 bits], 24, vr-num), vr-tag-f("07")),
+)))
+
 = Experimental setup
 
 == Research questions
