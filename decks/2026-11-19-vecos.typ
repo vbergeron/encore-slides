@@ -234,7 +234,7 @@ let mut vm = boot(HEAP())?;
   edge(<a>, <b>, "-|>"),
   edge(<b>, <c>, "-|>"),
   edge(<c>, <d>, "-|>"),
-  edge(<d>, <d>, "-|>", bend: -130deg, loop-angle: -90deg, label: text(size: 11pt)[until nothing changes], label-side: right),
+  edge(<d>, <d>, "-|>", bend: -130deg, loop-angle: -90deg),
   edge(<d>, <e>, "-|>"),
   edge(<e>, <f>, "-|>"),
 ))
