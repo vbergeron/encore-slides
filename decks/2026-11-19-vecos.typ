@@ -11,6 +11,13 @@
   title: [From Rocq to Metal],
   subtitle: [A pipeline for formally verified microcontroller firmware],
   institution: [VeCOS 2026 — Amsterdam],
+  author: grid(
+    columns: 2,
+    column-gutter: 1.5cm,
+    row-gutter: 0.35em,
+    [*Valentin Bergeron*], [*Karolina Gorna*],
+    text(size: 0.85em)[Independent researcher], text(size: 0.85em)[Ledger-Donjon & Telecom ParisTech],
+  ),
   date: datetime(year: 2026, month: 11, day: 19),
   slug: "2026-11-19-vecos",
   section-header: true,
