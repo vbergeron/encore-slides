@@ -30,8 +30,6 @@
   // true: every slide's header shows its section (the `=` heading) instead
   // of its own `==` title.
   section-header: false,
-  // Vertical alignment of slide content: horizon (centred) or top.
-  content-align: horizon,
   body,
 ) = {
   // Typst bundles no grammar for these; each file lists the tags it answers
@@ -46,7 +44,6 @@
   ))
   show: metropolis-theme.with(
     aspect-ratio: "16-9",
-    align: content-align,
     footer: self => self.info.institution,
     ..if section-header {
       (header: self => utils.display-current-heading(
