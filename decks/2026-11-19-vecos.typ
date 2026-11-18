@@ -48,7 +48,8 @@
 #let kicker(body) = block(below: 0.6em, text(size: 18pt, weight: "bold", fill: accent, body))
 
 // Results snapshot: encore-benchmarks main, 2026-11-04 (CertiRocq timed with
-// a 36 KiB arena, RAM needs from minheap.jsonl).
+// a 36 KiB arena, RAM needs from minheap.jsonl), with W7's Rust variant
+// re-measured as a red-black tree (encore-benchmarks#20, 2026-11-18).
 #let vb = json("/data/bench-vecos.json")
 
 #let workloads = (
@@ -485,7 +486,7 @@ vm.register_extern(0, input_byte);
 #v(0.2em)
 #text(size: 14pt)[
   Encore needs less RAM than CertiRocq wherever both run (1.7–7× less), and
-  stays within 38 KiB at the largest sizes. Rust needs almost none: its buffers are static.
+  stays within 38 KiB at the largest sizes. Rust needs at most 7 KiB: its buffers are static.
 ]
 
 == RQ3: Performance — the cost
@@ -494,7 +495,7 @@ vm.register_extern(0, input_byte);
 #slowdown-table(workloads, data: vb)
 #v(0.3em)
 #text(size: 15pt)[
-  Encore executes 2–10× more instructions than CertiRocq and 10–2,200× more
+  Encore executes 2–10× more instructions than CertiRocq and 60–2,200× more
   than hand-written Rust. The worst case is pure arithmetic (W8), where Rust does
   one table lookup per byte.
 ]
@@ -521,7 +522,7 @@ vm.register_extern(0, input_byte);
   workloads; CertiRocq overflows its stack on the largest inputs
 - *RQ2*: Encore needs 1.7–7× less RAM than CertiRocq, and its needs do not
   depend on recursion depth
-- *RQ3*: the price is time: 2–10× CertiRocq, 10–2,200× hand-written Rust,
+- *RQ3*: the price is time: 2–10× CertiRocq, 60–2,200× hand-written Rust,
   from interpretation and from the extra operations of functional code
 
 == Next steps
