@@ -69,7 +69,7 @@
 
 - Secure elements and hardware wallets run small, critical logic: command
   parsing, PIN counters, signing policy, firmware updates
-- Rocq can prove that logic, but *extracted code needs a runtime*
+- A proof assistant can prove that logic, but *extracted code needs a runtime*
 - The usual answer on a microcontroller: *re-implement the specification by
   hand* in C or Rust, and lose the link to the proof
 
